@@ -1,10 +1,16 @@
 # bigdata-learning-notes
 
+<details>
+CLICK ME
 # 大数据学习笔记
 
 * 大数据
   * scala
     * [scala 模式匹配](note/scala/scala模式匹配match.md)
+    * scala
+    * [scala 模式匹配](note/scala/scala模式匹配match.md)
+  
+    
 * 大数据运维
   * zabbix
     * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
@@ -17,4 +23,4 @@
     * [Zabbix5.0 中文乱码](note/zabbix/Zabbix5.0中文乱码.md)
     * [Zabbix: 添加被监控主机、创建主机、监控项、触发器、图形和模板](note/zabbix/Zabbix添加被监控主机、创建主机、监控项、触发器、图形和模板.md)
     * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
-   
+</details>
