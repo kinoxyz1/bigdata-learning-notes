@@ -6,7 +6,7 @@
 
 ## 大数据
 <details>
-<summary>scala-test</summary>
+<summary>scala</summary>
 
 * [scala 模式匹配](note/scala/scala模式匹配match.md)
 </details>
