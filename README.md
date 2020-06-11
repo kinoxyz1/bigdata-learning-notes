@@ -13,5 +13,5 @@
         * [Centos7.7 编译源码安装使用 Zabbix(zabbix-agent)](Centos7.7编译源码安装使用Zabbix(zabbix-agent).md)
       * 二进制文件安装使用 Zabbix5.0
         * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-server)](Centos7.7二进制文件安装使用Zabbix5.0(zabbix-server).md)
-        * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-agent)](
+        * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-agent)](Centos7.7二进制文件安装使用Zabbix5.0(zabbix-agent).md)
 
