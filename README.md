@@ -10,6 +10,12 @@
 
 * [scala 模式匹配](note/scala/scala模式匹配match.md)
 </details>
+
+<details>
+<summary>spark</summary>
+
+* [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
+</details>
   
 ---
 
