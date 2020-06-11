@@ -6,4 +6,7 @@
 
 * 大数据
   * scala
-    * [scala 模式匹配](note/scala模式匹配match.md)
+    * [scala 模式匹配](note/scala/scala模式匹配match.md)
+* 大数据运维
+  * zabbix
+    * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
