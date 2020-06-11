@@ -14,4 +14,4 @@
       * 二进制文件安装使用 Zabbix5.0
         * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-server)](Centos7.7二进制文件安装使用Zabbix5.0(zabbix-server).md)
         * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-agent)](Centos7.7二进制文件安装使用Zabbix5.0(zabbix-agent).md)
-
+    * [Zabbix5.0 中文乱码](note/zabbix/Zabbix5.0中文乱码.md)
