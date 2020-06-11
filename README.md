@@ -16,6 +16,10 @@
 
 * [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
 * [Spark 常用 API](note/spark/Spark常用API.md)
+* [Spark Streaming 的 reduceByKeyAndWindow 窗口函数](note/spark/SparkStreaming的reduceByKeyAndWindow窗口函数.md)
+* [Spark源码分析(一)：Master 启动](note/spark/Spark源码分析(一)：Master启动.md)
+* [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
+* [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
 </details>
 
 ---
