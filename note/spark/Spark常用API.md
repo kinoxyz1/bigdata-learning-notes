@@ -47,7 +47,7 @@
 ![map](../../img/spark/20190915144536376.gif)
 
 
-```java
+```scala
 /**
  * map: 返回一个新的 RDD, 该 RDD 是由原 RDD 的每个元素经过函数转换后的值组成,
  * 就是对 RDD 中的数据做转换
@@ -70,7 +70,7 @@ def main(args: Array[String]): Unit = {
 ```
 
 运行结果：
-```java
+```scala
 [Stage 0:>(0 + 0) / 2]
 执行了....
 执行了....
@@ -92,7 +92,7 @@ def main(args: Array[String]): Unit = {
 
 说明：执行次数 按分区数决定，如果有两个分区，将元素放入到指定 Iterator 中执行
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("mapPartitions").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -108,7 +108,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 rdd2 分区数: 2
 执行了....
 执行了....
@@ -126,7 +126,7 @@ rdd2 分区数: 2
 
 
 
-```java
+```scala
 /**
  * mapPartitionsWithIndex(fun):
  *     和 mapPartitions(fun) 类似, 但是会给 fun 多提供一个 Int 值来表示分区的索引,
@@ -142,7 +142,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (0,10)
 (0,20)
 (0,30)
@@ -163,7 +163,7 @@ def main(args: Array[String]): Unit = {
 
 作用： 类似于map，但是每一个输入元素可以被映射为 0 或多个输出元素（所以func应该返回一个序列，而不是单一元素 T => TraversableOnce[U]）
 ![flatMap](../../img/spark/201909151446513.gif)
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("flatMap").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -173,14 +173,14 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 hello, world, hi, kino, kino, hi, kino
 ```
 ---
 
 # 五、`glom()`
 作用：将每一个分区的元素合并成一个数组，形成新的 RDD 类型是RDD[Array[T]]
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("glom").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -194,7 +194,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 ---------------------分区分隔符----------------------
 10
 ---------------------分区分隔符----------------------
@@ -214,7 +214,7 @@ def main(args: Array[String]): Unit = {
 # 六、`groupBy(func)`
 作用： 按照 func 的返回值进行分组
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("groupBy").setMaster("local")
     val sc = new SparkContext(conf)
@@ -240,7 +240,7 @@ def main(args: Array[String]): Unit = {
 # 七、`filter(func)`
 作用： 过滤，返回一个新的 RDD， 是由 func 的返回值为 true 的那些元素组成
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("filter").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -250,7 +250,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 xiaoli
 xiaocang
 xiaojing
@@ -292,7 +292,7 @@ xiaokong
 ```
 
 运行结果：
-```java
+```scala
 不放回抽样: 1 3 5 7 10
 放回抽样: 1 1 1 1 2 2 2 2 3 3 4 4 5 5 6 7 7 8 8 8 8 9 10 10 10
 ```
@@ -302,7 +302,7 @@ xiaokong
 # 九、`distinct([numTasks])`
 
 作用：对 RDD 中元素执行去重操作， 参数表示任务的数量，默认值和分区数保持一直。
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("distinct").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -311,7 +311,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 6, 10, 2, 1, 3, 9, 5
 ```
 
@@ -321,7 +321,7 @@ def main(args: Array[String]): Unit = {
 # 十、`coalesce(numPartitions)`
 作用：缩减分区数到指定的数量，用于大数据集过滤后，提高小数据集的执行效率
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("coalesce").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -335,7 +335,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 rdd1 的分区数: 5
 减少分区后, rdd1 的分区数: 2
 ```
@@ -351,7 +351,7 @@ rdd1.coalesce()：第二个参数表示是否shuffle, 如果不传或者传入�
 
 新的分区数相比以前可以多, 也可以少
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("coalesce").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -365,7 +365,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 repartition 减小后的分区大小: 3
 repartition 增加后的分区大小: 10
 ```
@@ -385,7 +385,7 @@ repartition 增加后的分区大小: 10
 ---
 # 十二、`sortBy(func, [ascending], [numTasks])`
 作用： 使用 func 先对数据进行处理，按照处理后结果排序
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("sortBy").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -405,7 +405,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 默认排序: 1, 3, 4, 4, 6, 9, 10, 16, 20, 30
 指定升序: 1, 3, 4, 4, 6, 9, 10, 16, 20, 30
 指定降序: 30, 20, 16, 10, 9, 6, 4, 4, 3, 1
@@ -453,7 +453,7 @@ res2: Array[String] = Array(hello, >>>10, >>>20, hello, >>>30, >>>40)
 作用：求并集，对源 RDD 和参数 RDD 求并集后返回一个新的 RDD
 
 需求： 创建 两个 RDD，求并集
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("union").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -467,7 +467,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 rdd1 和 rdd2 并集: 1, 2, 3, 4, 5, 6, 4, 5, 6, 7, 8, 9, 10
 ```
 
@@ -475,7 +475,7 @@ rdd1 和 rdd2 并集: 1, 2, 3, 4, 5, 6, 4, 5, 6, 7, 8, 9, 10
 ----
 # 十五、`subtract(otherDataset)`
 作用：计算差集，从原 RDD 中减去 原 RDD 和 otherDataset 中的共同部分
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("union").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -490,7 +490,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 rdd1.subtract(rdd2): 2, 1, 3
 rdd2.subtract(rdd1): 8, 10, 7, 9
 ```
@@ -498,7 +498,7 @@ rdd2.subtract(rdd1): 8, 10, 7, 9
 ---
 # 十六、 `intersection(otherDataset)`
 作用：计算交集，对源 RDD 和 参数RDD 求交集后返回一个新的 RDD
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("union").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -510,14 +510,14 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 4, 6, 5
 ```
 
 ---
 # 十七、`cartesian(otherDataset)`
 作用：计算 2 个 RDD 的笛卡尔积，尽量避免使用
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("union").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -529,7 +529,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (1,4), (1,5), (1,6), (2,4), (2,5), (2,6), (3,4), (3,5), (3,6), (1,7), (1,8), (1,9), 
 (1,10), (2,7), (2,8), (2,9), (2,10), (3,7), (3,8), (3,9), (3,10), (4,4), (4,5), 
 (4,6), (5,4), (5,5), (5,6), (6,4), (6,5), (6,6), (4,7), (4,8), (4,9), (4,10), (5,7), 
@@ -544,7 +544,7 @@ def main(args: Array[String]): Unit = {
 
 其实本质就是：**要求的没法分区的元素的数量相同**
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("union").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -557,7 +557,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (1,11)
 (2,12)
 (3,13)
@@ -570,7 +570,7 @@ def main(args: Array[String]): Unit = {
 作用：对 `pairRDD(键值对)` 进行分区操作，如果原有的 partitionRDD 的分区器和传入的分区器相同，则返回原 pairRDD，否则会生成 ShuffleRDD，即会产生 shuffle 过程。
 
 partitionBy 源码：
-```java
+```scala
 def partitionBy(partitioner: Partitioner): RDD[(K, V)] = self.withScope {
   if (keyClass.isArray && partitioner.isInstanceOf[HashPartitioner]) {
     throw new SparkException("HashPartitioner cannot partition array keys.")
@@ -584,7 +584,7 @@ def partitionBy(partitioner: Partitioner): RDD[(K, V)] = self.withScope {
 ```
 
 案例：
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -601,7 +601,7 @@ def main(args: Array[String]): Unit = {
 ```
 
 运行结果：
-```java
+```scala
 (1,a), (2,b)
 (3,c), (4,d)
 ---------------
@@ -612,7 +612,7 @@ def main(args: Array[String]): Unit = {
 对 pairRDD 进行分区操作，可以传入分区器，`Partitioner` 有两个 实现类:
 - `HashPartitioner`：
 	根据 Key 的 Hash 值进行分区，关键源码如下:
-	```java
+	```scala
 	def getPartition(key: Any): Int = key match {
 	    case null => 0
 	    case _ => Utils.nonNegativeMod(key.hashCode, numPartitions)
@@ -624,7 +624,7 @@ def main(args: Array[String]): Unit = {
 	}
 	```
 - `RangePartitioner`：抽样进行分区，涉及到 鱼塘抽样
-	```java
+	```scala
 	def getPartition(key: Any): Int = {
 	 val k = key.asInstanceOf[K]
 	  var partition = 0
@@ -655,7 +655,7 @@ def main(args: Array[String]): Unit = {
 # 二十、`reduceByKey(func, [numTasks])`
 作用：在一个 (k, v) 的 RDD 上调用, 返回一个 (k, v) 的 RDD, 使用 指定的 reduce 函数,将相同 key 的 value 聚合到一起, reduce 任务的个数可以通过第二个可选的参数来设置
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -669,7 +669,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (female,6)
 (male,7)
 ```
@@ -677,7 +677,7 @@ def main(args: Array[String]): Unit = {
 ---
 # 二十一、`groupByKey()`
 作用：按照 key 进行分组
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -690,7 +690,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (female,CompactBuffer(1, 5))
 (male,CompactBuffer(5, 2))
 ```
@@ -752,7 +752,7 @@ def main(args: Array[String]): Unit = {
 ```
 
 运行结果：
-```java
+```scala
 (female,5)
 (male,10)
 --------------------新需求-------------------
@@ -772,7 +772,7 @@ def main(args: Array[String]): Unit = {
 
 说明：相比 `reduceByKey`, 多了一个初始值(零值), 如果不需要零值, 可以使用 `reduceByKey`
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -784,7 +784,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 (female,6)
 (male,7)
 ```
@@ -798,7 +798,7 @@ def main(args: Array[String]): Unit = {
 2. `mergeValue: `如果不是第一个遇到这个key, 则调用这个函数进行合并操作. 分区内合并
 3. `mergeCombiners：` 跨分区合并相同的key的值(C). 跨分区合并
 
-```java
+```scala
 /**
   * createCombiner: 创建 零值,
   * mergeValue: 分区内聚合
@@ -819,7 +819,7 @@ def main(args: Array[String]): Unit = {
 # 二十五、`sortByKey`
 作用：在一个(K,V)的 RDD 上调用, K必须实现 Ordered[K] 接口(或者有一个隐式值: Ordering[K]), 返回一个按照key进行排序的(K,V)的 RDD
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -845,7 +845,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 默认按 Key 升序 排序: 
 (a,3)
 (a,2)
@@ -874,7 +874,7 @@ def main(args: Array[String]): Unit = {
 ---
 # 二十六、`mapValue`
 作用：针对 (K, V) 形式的类型只对 V 进行操作
-```java
+```scala
 def main(args: Array[String]): Unit = {
      val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
      val sc = new SparkContext(conf)
@@ -886,7 +886,7 @@ def main(args: Array[String]): Unit = {
  }
 ```
 运行结果：
-```java
+```scala
 (female,<1>)
 (male,<5>)
 (female,<5>)
@@ -899,7 +899,7 @@ def main(args: Array[String]): Unit = {
 
 在类型为 (K, V) 和 (K, W) 的 RDD 上调用，返回一个相同 key 对应的所有元素对在一起的(K,(V,W))的RDD
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -922,7 +922,7 @@ def main(args: Array[String]): Unit = {
 }
 ```
 运行结果：
-```java
+```scala
 join: 
 (2,(c,cc))
 (1,(a,aa))
@@ -953,7 +953,7 @@ fullOuterJoin:
 # 二十八、`cogroup(otherDataset, [numTasks])`
 作用： 在类型为 (K, V) 和 (K, W) 的 RDD 上调用，返回一个  `(K,(Iterable<V>,Iterable<W>))` 类型的 RDD
 
-```java
+```scala
 def main(args: Array[String]): Unit = {
     val conf: SparkConf = new SparkConf().setAppName("CreateRDD").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -967,7 +967,7 @@ def main(args: Array[String]): Unit = {
 ```
 
 运行结果：
-```java
+```scala
 (1,(CompactBuffer(10, 100),CompactBuffer(a, aa)))
 (3,(CompactBuffer(30),CompactBuffer(c)))
 (2,(CompactBuffer(20),CompactBuffer(b)))
@@ -980,7 +980,7 @@ def main(args: Array[String]): Unit = {
 # 二十九、`reduce(func)`
 通过func函数聚集 RDD 中的所有元素，先聚合分区内数据，再聚合分区间数据。
 
-```java
+```scala
 scala> val rdd1 = sc.parallelize(1 to 100)
 rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[0] at parallelize at <console>:24
 
@@ -1023,7 +1023,7 @@ take 的数据也会拉倒 driver 端，应该只对小数据集使用
 aggregate函数将每个分区里面的元素通过seqOp和初始值进行聚合，然后用combine函数将每个分区的结果和初始值(zeroValue)进行combine操作。这个函数最终返回的类型不需要和RDD中元素类型一致
 注意:
 - zeroValue 分区内聚合和分区间聚合的时候各会使用一次.
-```java
+```scala
 scala> val rdd1 = sc.makeRDD(Array(100, 30, 10, 30, 1, 50, 1, 60, 1), 2)
 rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[8] at makeRDD at <console>:24
 
@@ -1041,7 +1041,7 @@ res13: String = xxabxcd
 ---
 # 三十六、`fold`
 折叠操作，`aggregate` 的简化操作， seqop 和 combop 一样的时候，可以使用 fold
-```java
+```scala
 scala> val rdd1 = sc.makeRDD(Array(100, 30, 10, 30, 1, 50, 1, 60, 1), 2)
 rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[10] at makeRDD at <console>:24
 
@@ -1061,7 +1061,7 @@ res17: String = xxabxcd
 
 应用：可以用来查看数据是否倾斜
 
-```java
+```scala
 scala> val rdd1 = sc.parallelize(Array(("a", 10), ("a", 20), ("b", 100), ("c", 200)))
 rdd1: org.apache.spark.rdd.RDD[(String, Int)] = ParallelCollectionRDD[15] at parallelize at <console>:24
 

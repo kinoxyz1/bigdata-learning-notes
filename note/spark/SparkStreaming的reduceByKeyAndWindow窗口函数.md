@@ -3,6 +3,7 @@
 
 Spark Streaming提供了窗口计算，可让您在数据的滑动窗口上应用转换
 ![官方SparkStreaming-window图](../../img/spark/20190926194138557.png)
+
 一些常见的窗口操作如下。所有这些操作都采用上述两个参数-`windowLength(窗口长度)`和`slideInterval(滑动步长)`。
 窗口函数  | 描述
 --|--
@@ -17,9 +18,8 @@ countByValueAndWindow（windowLength， slideInterval，[ numTasks ]）|	When ca
 reduceByKeyAndWindow 窗口函数有两个重载方法
 
 一般情况下，我们会写 
-```java
+```scala
 //reduceByKeyAndWindow（func，windowLength，slideInterval，[ numTasks ]）
-
 val df = socketDStream // 从socket 得到值
           .flatMap(_.split(" "))
           .map((_, 1))
@@ -30,7 +30,7 @@ val df = socketDStream // 从socket 得到值
 ```
 
 也就是最上面官方给出的那种图，每 2 秒，统计前3秒的数据(当前时间点的前3秒)，此时此刻我们看到，当前窗口和前一个窗口重叠了一部分数据，导致 time3 会被计算两次，要想 time3不被计算两次，我们就要用到 reduceByKeyAndWindow 的重载方法：
-```java
+```scala
 reduceByKeyAndWindow(func，invFunc，windowLength， slideInterval，[ numTasks ])
 ```
 
@@ -45,7 +45,7 @@ reduceByKeyAndWindow(func，invFunc，windowLength， slideInterval，[ numTasks
 window2 = window1 + time3 + time 4 - time1 - time2 => time3 + time4 + time5
 
 那么实现起来就是
-```java
+```scala
 val df1 = socketDStream
           .flatMap(_.split(" "))
           .map((_, 1))
@@ -60,7 +60,7 @@ val df1 = socketDStream
 
 ---
 看一节完整案例：**从 socket 接受数据做 wordCount**
-```java
+```scala
 package apache
 
 import org.apache.spark.SparkConf

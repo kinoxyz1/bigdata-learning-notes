@@ -16,7 +16,7 @@
 ---
 #  二、问题描述
 在 Spark 向 Hive分区表 写入数据时，抛出异常如下：
-```java
+```scala
 org.apache.spark.SparkException: Requested partitioning does not match the test_table_name table:
 Requested partitions: 
 Table partitions: city, year, month, day
@@ -44,7 +44,7 @@ Table partitions: city, year, month, day
 ```
 出错的代码如下:
 
-```java
+```scala
 val rdd = hdfs2RDD(dir: String, spark: SparkSession, task: EtlTask)
     import spark.implicits._
     val res = spark.createDataset(rdd).as[String]
@@ -78,7 +78,7 @@ TaskOutput.hive[s_vai_primary](spark, task, Array("city", "year", "month", "day"
 ---
 # 三、问题分析
 从上面的报错信息，可以看到是分区不匹配造成的
-```java
+```scala
 org.apache.spark.SparkException: Requested partitioning does not match the test_table_name table:
 Requested partitions: 
 Table partitions: city,day,month,day
@@ -90,7 +90,7 @@ Requested partitions后面的值为空，但是去hive元数据里面查发现�
 问题代码如下，我们走的是if分支，因为表存在，我们也没有删除操作，那么创建InsertIntoHiveTable对象时把分区字段置成了一个空的map
 
 CreateHiveTableAsSelectCommand类 的 run方法
-```java
+```scala
   override def run(sparkSession: SparkSession, child: SparkPlan): Seq[Row] = {
     val catalog = sparkSession.sessionState.catalog
     //查看表是否存在，如果存在走if分支，不存在走else分支
@@ -148,7 +148,7 @@ CreateHiveTableAsSelectCommand类 的 run方法
 ```
 我们看看InsertIntoHiveTable.run方法如何使用这个空map的
 
-```java
+```scala
 override def run(sparkSession: SparkSession, child: SparkPlan): Seq[Row] = {
     val externalCatalog = sparkSession.sharedState.externalCatalog
     val hadoopConf = sparkSession.sessionState.newHadoopConf()
@@ -348,7 +348,7 @@ org\apache\spark\sql\hive\execution\CreateHiveTableAsSelectCommand.scala
 修改如下代码:
 
 将
-```java
+```scala
 InsertIntoHiveTable(
         tableDesc,
         Map.empty,
@@ -358,7 +358,7 @@ InsertIntoHiveTable(
         outputColumnNames = outputColumnNames).run(sparkSession, child)
 ```
 修改为
-```java
+```scala
 val partition = tableDesc.partitionColumnNames.map(_ -> None).toMap
 InsertIntoHiveTable(
         tableDesc,

@@ -266,7 +266,7 @@ Spark 针对每个节点（Client/Master/Worker）都称之为一个 RpcEndpoint
 RPC 端点需要发送消息或者从远程 RPC 端点接收到的消息，分发至对应的指令收件箱/发件箱。
 •	如果指令接收方是自己则存入收件箱
 •	如果指令接收方不是自己则放入发件箱
-	```java
+	```scala
 	// org.apache.spark.rpc.netty.NettyRpcEnv 类的 send 方法
 	
 	private[netty] def send(message: RequestMessage): Unit = {
@@ -310,7 +310,7 @@ RPC 端点需要发送消息或者从远程 RPC 端点接收到的消息，分�
 从 shell 脚本中知道了，Master 的启动会来到 `org.apache.spark.deploy.master.Master` 类，启动 Master 的主入口为 Master 伴生对象 的 `main `方法
 
 **1.** `org.apache.spark.deploy.master.Master.main`:
-```java
+```scala
 private[deploy] object Master extends Logging {
     val SYSTEM_NAME = "sparkMaster"
     val ENDPOINT_NAME = "Master"
@@ -360,7 +360,7 @@ private[deploy] object Master extends Logging {
 创建 `NettyRpcEnv` 的时候, 会创建消息分发器, 收件箱和存储远程地址与发件箱的 Map
 
 **`org.apache.spark.rpc.RpcEnv:`**
-```java
+```scala
 def create(
                   name: String,
                   host: String,
@@ -388,7 +388,7 @@ def create(
 ```
 
 **`org.apache.spark.rpc.netty.NettyRpcEnvFactory:`**
-```java
+```scala
 private[rpc] class NettyRpcEnvFactory extends RpcEnvFactory with Logging {
 
     def create(config: RpcEnvConfig): RpcEnv = {
@@ -430,7 +430,7 @@ private[rpc] class NettyRpcEnvFactory extends RpcEnvFactory with Logging {
 ---
 
 **4.`new Master(rpcEnv, rpcEnv.address, webUiPort, securityMgr, conf): `** 
-```java
+```scala
 private[deploy] class Master(
                                 override val rpcEnv: RpcEnv,
                                 address: RpcAddress,
@@ -444,7 +444,7 @@ private[deploy] class Master(
 `RpcEndpoint` 是一个 特质类(trait)， 看该类的注释：
 - 保证按顺序调用“onstart”、“receive”和“onstop”。
 - 声明周期为: constructor -> onStart -> receive* -> onStop
-```java
+```scala
 /**
  * An end point for the RPC that defines what functions to trigger given a message.
  *
@@ -468,7 +468,7 @@ private[spark] trait RpcEndpoint {
 知道了该类的声明周期，我们回到 Master 类中: 
 
 **onStart() 方法：** 
-```java
+```scala
 override def onStart(): Unit = {
     logInfo("Starting Spark master at " + masterUrl)
     logInfo(s"Running Spark version ${org.apache.spark.SPARK_VERSION}")
@@ -532,7 +532,7 @@ override def onStart(): Unit = {
 ```
 
 **receive() 方法：**
-```java
+```scala
 override def receive: PartialFunction[Any, Unit] = {
     case ElectedLeader =>
         val (storedApps, storedDrivers, storedWorkers) = persistenceEngine.readPersistedData(rpcEnv)
@@ -739,7 +739,7 @@ private def timeOutDeadWorkers() {
 }
 ```
 **onStop() 方法：**
-```java
+```scala
 override def onStop() {
     masterMetricsSystem.report()
     applicationMetricsSystem.report()
