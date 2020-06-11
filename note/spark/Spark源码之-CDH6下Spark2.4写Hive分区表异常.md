@@ -1,4 +1,8 @@
-@[TOC]
+* [一、组件版本](#%E4%B8%80%E7%BB%84%E4%BB%B6%E7%89%88%E6%9C%AC)
+* [二、问题描述](#%E4%BA%8C%E9%97%AE%E9%A2%98%E6%8F%8F%E8%BF%B0)
+* [三、问题分析](#%E4%B8%89%E9%97%AE%E9%A2%98%E5%88%86%E6%9E%90)
+* [四、解决办法](#%E5%9B%9B%E8%A7%A3%E5%86%B3%E5%8A%9E%E6%B3%95)
+
 
 
 ----
@@ -366,6 +370,8 @@ InsertIntoHiveTable(
 ```
 编译代码，替换CDH中 spark-hive jar包的`CreateHiveTableAsSelectCommand` class文件
 ![编译代码](../../img/spark/20200601102530865.png)
+
+
 具体相关操作我已经改好了，只需下载替换即可，下载链接
 链接：https://pan.baidu.com/s/10B-1sdIN3NGJtNrcxqxFHg 
 提取码：lic7 
