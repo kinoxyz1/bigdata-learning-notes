@@ -6,12 +6,14 @@
 
 * 大数据
   <details>
-  * scala
+  <summary>* scala</summary>
+  
     * [scala 模式匹配](note/scala/scala模式匹配match.md)
   </details>
   
 * 大数据运维
   <details>
+  
   * zabbix
     * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
       * 编译源码安装zabbix4.4
