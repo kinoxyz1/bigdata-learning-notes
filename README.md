@@ -4,14 +4,16 @@
 
 # 大数据学习笔记
 
-* 大数据
+## 大数据
   <details>
   <summary>scala</summary>
   
     * [scala 模式匹配](note/scala/scala模式匹配match.md)
   </details>
   
-* 大数据运维
+---
+
+## 大数据运维
   <details>
   <summary>zabbix</summary>
   
