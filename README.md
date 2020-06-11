@@ -1,7 +1,7 @@
 # bigdata-learning-notes
 
 <details>
-CLICK ME
+
 # 大数据学习笔记
 
 * 大数据
