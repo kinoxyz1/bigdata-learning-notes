@@ -1,8 +1,6 @@
 # bigdata-learning-notes
-大数据学习笔记
 
-
-# 笔记
+# 大数据学习笔记
 
 * 大数据
   * scala
@@ -10,3 +8,10 @@
 * 大数据运维
   * zabbix
     * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
+      * 编译源码安装zabbix4.4
+        * [Centos7.7 编译源码安装使用 Zabbix(zabbix-server)](Centos7.7编译源码安装使用Zabbix(zabbix-server).md)
+        * [Centos7.7 编译源码安装使用 Zabbix(zabbix-agent)](Centos7.7编译源码安装使用Zabbix(zabbix-agent).md)
+      * 二进制文件安装使用 Zabbix5.0
+        * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-server)](Centos7.7二进制文件安装使用Zabbix5.0(zabbix-server).md)
+        * [Centos7.7 二进制文件安装使用 Zabbix5.0(zabbix-agent)](
+
