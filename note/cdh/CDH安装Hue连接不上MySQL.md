@@ -1,0 +1,1 @@
+执行：`yum install -y python-lxml` 即可

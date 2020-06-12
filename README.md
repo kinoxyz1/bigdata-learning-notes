@@ -5,8 +5,15 @@
 # 大数据学习笔记
 
 ## 大数据
+
 <details>
-<summary>hive</summary>
+<summary>Hadoop</summary>
+
+* [Hadoop数据迁移](note/hadoop/Hadoop数据迁移.md)
+</details>
+
+<details>
+<summary>Hive</summary>
 
 * [Hive beeline连接](note/hive/Hive-beeline连接.md)
 * [Hive 导出 csv 文件](note/hive/Hive导出csv文件.md)
@@ -17,7 +24,40 @@
 </details>
 
 <details>
-<summary>scala</summary>
+<summary>Kafka</summary>
+
+* [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
+</details>
+
+
+<details>
+<summary>Sentry</summary>
+
+* [CDH安全之Sentry权限管理](note/sentry/CDH安全之Sentry权限管理.md)
+* [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
+</details>
+
+
+<details>
+<summary>Phoenix</summary>
+
+* [CDH 平台安装 Apache Phoenix](note/phoenix/CDH平台安装Apache-Phoenix.md)
+</details>
+
+
+
+<details>
+<summary>CDH</summary>
+
+* [Centos7.7 CDH6.2.1 安装教程](note/cdh/Centos7.7-CDH6.2.1安装教程.md)
+* [CDH 安装 Hue 连接不上MySQL](note/cdh/CDH安装Hue连接不上MySQL.md)
+* [centos 克隆后要做的操作](note/cdh/centos克隆后要做的操作.md)
+* [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
+</details>
+
+
+<details>
+<summary>Scala</summary>
 
 * [scala 模式匹配](note/scala/scala模式匹配match.md)
 * [scala 隐式转换](note/scala/scala隐式转换.md)
@@ -38,7 +78,7 @@
 </details>
 
 <details>
-<summary>spark</summary>
+<summary>Spark</summary>
 
 * [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
 * [Spark 常用 API](note/spark/Spark常用API.md)
@@ -48,11 +88,19 @@
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
 </details>
 
+
+
+<details>
+<summary>Canal</summary>
+
+* [使用 canal 实时监控 mysql 并读取到 Kafka(scala 版)](note/canal/使用canal实时监控mysql并读取到Kafka-scala版.md)
+</details>
+
 ---
 
 ## 大数据运维
 <details>
-<summary>zabbix</summary>
+<summary>Zabbix</summary>
   
 * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
   * 编译源码安装zabbix4.4
@@ -64,4 +112,32 @@
 * [Zabbix5.0 中文乱码](note/zabbix/Zabbix5.0中文乱码.md)
 * [Zabbix: 添加被监控主机、创建主机、监控项、触发器、图形和模板](note/zabbix/Zabbix添加被监控主机、创建主机、监控项、触发器、图形和模板.md)
 * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
+* [CentOS7安装 docker](note/docker/CentOS7安装docker.md)
   </details>
+
+
+
+
+---
+
+## Linux 相关
+<details>
+<summary>Linux</summary>
+  
+* [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
+* [Linux下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
+* [Linux Swap分区](note/linux/Linux-Swap分区.md)
+* [Linux扩展/删除swap分区](note/linux/Linux扩展-删除swap分区.md)
+* [kill pid 和 kill -9 pid 的区别](note/linux/kill-pid.md)
+* [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
+  </details>  
+
+  
+---
+
+## Centos 相关
+<details>
+<summary>Centos</summary>
+  
+* [Centos7系统更换yum源镜像为国内镜像](note/centos/Centos7系统更换yum源镜像为国内镜像.md)
+  </details>  
