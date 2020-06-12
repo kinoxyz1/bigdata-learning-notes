@@ -6,6 +6,17 @@
 
 ## 大数据
 <details>
+<summary>hive</summary>
+
+* [Hive beeline连接](note/hive/Hive-beeline连接.md)
+* [Hive 导出 csv 文件](note/hive/Hive导出csv文件.md)
+* [Hive drop database删除数据库](note/hive/Hive-Drop-Database删除数据库.md)
+* [Unable to instantiate org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient](note/hive/Hive异常1.md)
+* [Hive DDL 数据定义](note/hive/Hive-DDL数据定义.md)
+* [Hive 查询](note/hive/Hive查询.md)
+</details>
+
+<details>
 <summary>scala</summary>
 
 * [scala 模式匹配](note/scala/scala模式匹配match.md)
