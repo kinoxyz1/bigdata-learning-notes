@@ -1,4 +1,15 @@
-
+* [一、Sentry概述](#%E4%B8%80sentry%E6%A6%82%E8%BF%B0)
+  * [1\.1 Sentry是什么](#11-sentry%E6%98%AF%E4%BB%80%E4%B9%88)
+  * [1\.2 Sentry中的角色](#12-sentry%E4%B8%AD%E7%9A%84%E8%A7%92%E8%89%B2)
+* [二、Sentry安装部署](#%E4%BA%8Csentry%E5%AE%89%E8%A3%85%E9%83%A8%E7%BD%B2)
+* [三、Sentry与Hive/Impala集成](#%E4%B8%89sentry%E4%B8%8Ehiveimpala%E9%9B%86%E6%88%90)
+  * [3\.1 修改配置参数](#31-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E5%8F%82%E6%95%B0)
+  * [3\.2 配置Hive使用Sentry](#32-%E9%85%8D%E7%BD%AEhive%E4%BD%BF%E7%94%A8sentry)
+  * [3\.3 配置Impala使用Sentry](#33-%E9%85%8D%E7%BD%AEimpala%E4%BD%BF%E7%94%A8sentry)
+  * [3\.4 配置HDFS权限与Sentry同步](#34-%E9%85%8D%E7%BD%AEhdfs%E6%9D%83%E9%99%90%E4%B8%8Esentry%E5%90%8C%E6%AD%A5)
+* [四、Sentry 授权](#%E5%9B%9Bsentry-%E6%8E%88%E6%9D%83)
+  * [4\.1 基于 Hue](#41-%E5%9F%BA%E4%BA%8E-hue)
+  * [4\.2 基于 命令行](#42-%E5%9F%BA%E4%BA%8E-%E5%91%BD%E4%BB%A4%E8%A1%8C)
 
 ---
 # 一、Sentry概述

@@ -1,4 +1,14 @@
-
+* [一、canal 安装和启动](#%E4%B8%80canal-%E5%AE%89%E8%A3%85%E5%92%8C%E5%90%AF%E5%8A%A8)
+  * [1\.1下载 canal](#11%E4%B8%8B%E8%BD%BD-canal)
+  * [1\.2 解压](#12-%E8%A7%A3%E5%8E%8B)
+  * [1\.3 配置](#13-%E9%85%8D%E7%BD%AE)
+  * [1\.4 启动canal](#14-%E5%90%AF%E5%8A%A8canal)
+  * [1\.5 查看日志](#15-%E6%9F%A5%E7%9C%8B%E6%97%A5%E5%BF%97)
+  * [1\.6 关闭canal](#16-%E5%85%B3%E9%97%ADcanal)
+* [二、从 canal 读取数据到Kafka](#%E4%BA%8C%E4%BB%8E-canal-%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE%E5%88%B0kafka)
+  * [2\.1 创建 maven 工程](#21-%E5%88%9B%E5%BB%BA-maven-%E5%B7%A5%E7%A8%8B)
+  * [2\.2 从 canal 服务读取数据的客户端](#22-%E4%BB%8E-canal-%E6%9C%8D%E5%8A%A1%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE%E7%9A%84%E5%AE%A2%E6%88%B7%E7%AB%AF)
+  * [2\.3 专门处理数据的工具类： CanalHandler](#23-%E4%B8%93%E9%97%A8%E5%A4%84%E7%90%86%E6%95%B0%E6%8D%AE%E7%9A%84%E5%B7%A5%E5%85%B7%E7%B1%BB-canalhandler)
 
 ---
 # 一、canal 安装和启动

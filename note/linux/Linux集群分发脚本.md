@@ -1,4 +1,17 @@
+* [一、scp（secure copy）安全拷贝](#%E4%B8%80scpsecure-copy%E5%AE%89%E5%85%A8%E6%8B%B7%E8%B4%9D)
+  * [1\.1 scp定义](#11-scp%E5%AE%9A%E4%B9%89)
+  * [1\.2 基本语法](#12-%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95)
+  * [1\.3 案例实操](#13-%E6%A1%88%E4%BE%8B%E5%AE%9E%E6%93%8D)
+* [二、 rsync 远程同步工具](#%E4%BA%8C-rsync-%E8%BF%9C%E7%A8%8B%E5%90%8C%E6%AD%A5%E5%B7%A5%E5%85%B7)
+  * [2\.1 基本语法](#21-%E5%9F%BA%E6%9C%AC%E8%AF%AD%E6%B3%95)
+  * [2\.2 案例实操](#22-%E6%A1%88%E4%BE%8B%E5%AE%9E%E6%93%8D)
+* [三、 xsync集群分发脚本](#%E4%B8%89-xsync%E9%9B%86%E7%BE%A4%E5%88%86%E5%8F%91%E8%84%9A%E6%9C%AC)
+  * [前提: 需要有多个虚拟机, 名字保持相似性，例如: linux01、linux02、linux03\.\.\.\.\.](#%E5%89%8D%E6%8F%90-%E9%9C%80%E8%A6%81%E6%9C%89%E5%A4%9A%E4%B8%AA%E8%99%9A%E6%8B%9F%E6%9C%BA-%E5%90%8D%E5%AD%97%E4%BF%9D%E6%8C%81%E7%9B%B8%E4%BC%BC%E6%80%A7%E4%BE%8B%E5%A6%82-linux01linux02linux03)
+  * [3\.1 需求：循环复制文件到所有节点的相同目录下](#31-%E9%9C%80%E6%B1%82%E5%BE%AA%E7%8E%AF%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6%E5%88%B0%E6%89%80%E6%9C%89%E8%8A%82%E7%82%B9%E7%9A%84%E7%9B%B8%E5%90%8C%E7%9B%AE%E5%BD%95%E4%B8%8B)
+  * [3\.2 需求分析](#32-%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90)
+* [常见问题](#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98)
 
+---
 
 # 一、scp（secure copy）安全拷贝
 ## 1.1 scp定义
@@ -46,7 +59,6 @@ rsync    -av       $pdir/$fname              $user@linux01$host:$pdir/$fname
 
 `[kino@linux01opt]$ rsync -av /opt/software/ linux02:/opt/software`
 
-
 ---
 
 # 三、 xsync集群分发脚本
@@ -57,7 +69,7 @@ rsync    -av       $pdir/$fname              $user@linux01$host:$pdir/$fname
 ## 3.1 需求：循环复制文件到所有节点的相同目录下
 ## 3.2 需求分析
 - rsync命令原始拷贝：
-`rsync  -av     /opt/module  		 root@linux01:/opt/`
+	`rsync  -av     /opt/module  		 root@linux01:/opt/`
 - 期望脚本：
 	xsync要同步的文件名称
 - 说明：在`/home/kino/bin`这个目录下存放的脚本，kino用户可以在系统任何地方直接执行。

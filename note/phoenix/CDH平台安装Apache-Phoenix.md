@@ -1,7 +1,16 @@
 
 
+* [下载 Phoenix](#%E4%B8%8B%E8%BD%BD-phoenix)
+* [解压](#%E8%A7%A3%E5%8E%8B)
+* [拷贝指定 jar到 HBase 的lib目录](#%E6%8B%B7%E8%B4%9D%E6%8C%87%E5%AE%9A-jar%E5%88%B0-hbase-%E7%9A%84lib%E7%9B%AE%E5%BD%95)
+* [在 CDG \- hbase配置中加入相关参数](#%E5%9C%A8-cdg---hbase%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%8A%A0%E5%85%A5%E7%9B%B8%E5%85%B3%E5%8F%82%E6%95%B0)
+* [将 hdfs 和 hbase 相关配置文件拷贝到 Phoenix/bin目录下](#%E5%B0%86-hdfs-%E5%92%8C-hbase-%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D%E5%88%B0-phoenixbin%E7%9B%AE%E5%BD%95%E4%B8%8B)
+* [重启 Hbase即可连接Phoenix](#%E9%87%8D%E5%90%AF-hbase%E5%8D%B3%E5%8F%AF%E8%BF%9E%E6%8E%A5phoenix)
+
+---
 
 # 下载 Phoenix
+
 http://phoenix.apache.org/download.html
 
 ---

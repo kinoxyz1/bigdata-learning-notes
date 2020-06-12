@@ -1,5 +1,12 @@
-
-
+* [一、创建数据库](#%E4%B8%80%E5%88%9B%E5%BB%BA%E6%95%B0%E6%8D%AE%E5%BA%93)
+* [二、查询数据库](#%E4%BA%8C%E6%9F%A5%E8%AF%A2%E6%95%B0%E6%8D%AE%E5%BA%93)
+* [三、 修改数据库](#%E4%B8%89-%E4%BF%AE%E6%94%B9%E6%95%B0%E6%8D%AE%E5%BA%93)
+* [四、删除数据库](#%E5%9B%9B%E5%88%A0%E9%99%A4%E6%95%B0%E6%8D%AE%E5%BA%93)
+* [五、 创建表](#%E4%BA%94-%E5%88%9B%E5%BB%BA%E8%A1%A8)
+* [六、 管理表](#%E5%85%AD-%E7%AE%A1%E7%90%86%E8%A1%A8)
+* [七、 外部表](#%E4%B8%83-%E5%A4%96%E9%83%A8%E8%A1%A8)
+* [八、管理表与外部表的互相转换](#%E5%85%AB%E7%AE%A1%E7%90%86%E8%A1%A8%E4%B8%8E%E5%A4%96%E9%83%A8%E8%A1%A8%E7%9A%84%E4%BA%92%E7%9B%B8%E8%BD%AC%E6%8D%A2)
+* [九、分区表](#%E4%B9%9D%E5%88%86%E5%8C%BA%E8%A1%A8)
 
 ----
 
@@ -192,15 +199,14 @@ SequenceFile支持三种压缩选择：NONE，RECORD，BLOCK。Record压缩率�
 		```
 	
 		<font color='red'>**相比TEXTFILE和SEQUENCEFILE，RCFILE由于列式存储方式，数据加载时性能消耗较大，但是具有较好的压缩比和查询响应。数据仓库的特点是一次写入、多次读取，因此，整体来看，RCFILE相比其余两种格式具有较明显的优势。**</font>
-
+	
 	9. <font color='red'>LOCATION ：指定表在HDFS上的存储位置。</font>
 	10. LIKE允许用户复制现有的表结构，但是不复制数据。
-
 
 ---
 # 六、 管理表
 1. 理论
-默认创建的表都是所谓的管理表，有时也被称为内部表。因为这种表，Hive会（或多或少地）控制着数据的生命周期。Hive默认情况下会将这些表的数据存储在由配置项hive.metastore.warehouse.dir(例如，/user/hive/warehouse)所定义的目录的子目录下。	<font color='red'>当我们删除一个管理表时，Hive也会删除这个表中数据</font>。管理表不适合和其他工具共享数据。
+	默认创建的表都是所谓的管理表，有时也被称为内部表。因为这种表，Hive会（或多或少地）控制着数据的生命周期。Hive默认情况下会将这些表的数据存储在由配置项hive.metastore.warehouse.dir(例如，/user/hive/warehouse)所定义的目录的子目录下。	<font color='red'>当我们删除一个管理表时，Hive也会删除这个表中数据</font>。管理表不适合和其他工具共享数据。
 
 2. 案例
 	① 普通创建表
@@ -366,7 +372,6 @@ dept:
 	```
 
 <font color='red'>**注意：('EXTERNAL'='TRUE')和('EXTERNAL'='FALSE')为固定写法，区分大小写！**</font>
-
 
 ---
 # 九、分区表

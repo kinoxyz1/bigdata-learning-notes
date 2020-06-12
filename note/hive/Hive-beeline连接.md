@@ -1,5 +1,11 @@
+* [启动hiveserver2服务](#%E5%90%AF%E5%8A%A8hiveserver2%E6%9C%8D%E5%8A%A1)
+* [启动beeline](#%E5%90%AF%E5%8A%A8beeline)
+* [连接hiveserver2](#%E8%BF%9E%E6%8E%A5hiveserver2)
+
+---
 
 # 启动hiveserver2服务
+
 ```bash
 [kino@bigdata01.sutpc hive]$ bin/hiveserver2
 ```
