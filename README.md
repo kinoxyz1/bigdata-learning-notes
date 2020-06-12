@@ -9,6 +9,21 @@
 <summary>scala</summary>
 
 * [scala 模式匹配](note/scala/scala模式匹配match.md)
+* [scala 隐式转换](note/scala/scala隐式转换.md)
+* [scala 的排序](note/scala/scala的排序.md)
+* [scala 集合的 map 映射、高阶函数使用、集合的压平、 集合的过滤、集合的简化、集合的折叠、集合的扫描、集合的拉链、集合的迭代器、集合的分组](note/scala/scala集合的map映射等.md)
+* [scala API](note/scala/scala-API.md)
+* [scala 数组](note/scala/scala数组.md)
+* [scala 给类取别名](note/scala/scala给类取别名.md)
+* [scala 的 trait](note/scala/scala的trait.md)
+* [scala 包声明和包导入](note/scala/scala包声明和包导入.md)
+* [scala类和对象](note/scala/scala类和对象.md)
+* [scala 值调用、名调用和控制抽象](note/scala/scala值调用、名调用和控制抽象.md)
+* [scala 闭包和柯里化](note/scala/scala闭包和柯里化.md)
+* [scala 高阶函数(高阶算子)](note/scala/scala高阶函数(高阶算子).md)
+* [scala 流程控制](note/scala/scala流程控制.md)
+* [scala 变量和数据类型](note/scala/scala变量和数据类型.md)
+* [scala 部分应用函数与偏函数](note/scala/scala部分应用函数与偏函数.md)
 </details>
 
 <details>

@@ -43,7 +43,7 @@ def main(args: Array[String]): Unit = {
 4. 可以在 match 中使用其他类型，而不仅仅是字符
 5. `=>` 等价于 Java switch 的 `:`
 6. `=>` 后面的代码块到下一个 case，是作为一整体执行，可以使用 {} 括起来， 也可以不括
-![scala模式匹配match](../..//img/scala/scala模式匹配match-img/20190909210151143.png)
+![scala模式匹配match](../../img/scala/scala模式匹配match-img/20190909210151143.png)
 ---
 # 三、模式匹配之条件守卫
 概念： 如果想要表达匹配某个范围的数据，就需要在 模式匹配中增加条件守卫
