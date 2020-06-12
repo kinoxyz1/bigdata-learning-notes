@@ -124,6 +124,12 @@
 <details>
 <summary>Linux</summary>
   
+* Linux 用户管理
+  * [vi和vim的使用](note/linux/Linux用户管理/vi和vim的使用.md)
+  * [开机、重启和用户登录注销](note/linux/Linux用户管理/开机、重启和用户登录注销.md)
+  * [用户管理](note/linux/Linux用户管理/用户管理.md)
+
+
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
 * [Linux下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
 * [Linux Swap分区](note/linux/Linux-Swap分区.md)
