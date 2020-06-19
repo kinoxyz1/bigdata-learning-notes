@@ -13,14 +13,14 @@
 zookeeper存储数据结构就像一棵树一样，这棵树由节点组成，这种节点叫做Znode。
 ![zookeeper 节点](../../img/zookeeper/zookeeper节点.jpg)
 
-- 持久节点(Persistent)
-    客户端与 Zookeeper 断开连接后, 该节点依旧存在;
-- 持久节点顺序节点(Persistent_Sequential)
-    客户端与 Zookeeper 断开连接后, 该节点依旧存在, 只是Zookeeper 给该节点名称进行顺序编号;
-- 临时节点(Ephemeral)
-    客户端与 Zookeeper 断开连接后, 该节点被删除;
-- 临时顺序节点(Ephemeral_Sequential)
-    客户端与 Zookeeper 断开连接后, 该节点被删除, 只是Zookeeper 给该节点名称进行顺序编号;
+- 持久节点(Persistent):
+    - 客户端与 Zookeeper 断开连接后, 该节点依旧存在;
+- 持久节点顺序节点(Persistent_Sequential): 
+    - 客户端与 Zookeeper 断开连接后, 该节点依旧存在, 只是Zookeeper 给该节点名称进行顺序编号;
+- 临时节点(Ephemeral):
+    - 客户端与 Zookeeper 断开连接后, 该节点被删除;
+- 临时顺序节点(Ephemeral_Sequential): 
+    - 客户端与 Zookeeper 断开连接后, 该节点被删除, 只是Zookeeper 给该节点名称进行顺序编号;
 
 说明: 创建 ZNode 时设置顺序表示, ZNode 名称后会附加一个值, 顺序号是一个单调递增的计数器, 由父节点维护。
 
