@@ -7,8 +7,15 @@
 ## 大数据
 
 <details>
+<summary>Zookeeper</summary>
+
+* [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
+</details>
+
+<details>
 <summary>Hadoop</summary>
 
+* [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
 * [Hadoop数据迁移](note/hadoop/Hadoop数据迁移.md)
 </details>
 
