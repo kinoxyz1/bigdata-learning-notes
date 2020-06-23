@@ -1,7 +1,5 @@
 # bigdata-learning-notes
 
-
-
 # 大数据学习笔记
 
 ## 大数据
@@ -12,12 +10,16 @@
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
 </details>
 
+<!--分界线-->
+
 <details>
 <summary>Hadoop</summary>
 
 * [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
 * [Hadoop数据迁移](note/hadoop/Hadoop数据迁移.md)
 </details>
+
+<!--分界线-->
 
 <details>
 <summary>Hive</summary>
@@ -30,12 +32,15 @@
 * [Hive 查询](note/hive/Hive查询.md)
 </details>
 
+<!--分界线-->
+
 <details>
 <summary>Kafka</summary>
 
 * [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
 </details>
 
+<!--分界线-->
 
 <details>
 <summary>Sentry</summary>
@@ -44,6 +49,7 @@
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
 </details>
 
+<!--分界线-->
 
 <details>
 <summary>Phoenix</summary>
@@ -51,7 +57,7 @@
 * [CDH 平台安装 Apache Phoenix](note/phoenix/CDH平台安装Apache-Phoenix.md)
 </details>
 
-
+<!--分界线-->
 
 <details>
 <summary>CDH</summary>
@@ -62,6 +68,7 @@
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
 </details>
 
+<!--分界线-->
 
 <details>
 <summary>Scala</summary>
@@ -84,24 +91,31 @@
 * [scala 部分应用函数与偏函数](note/scala/scala部分应用函数与偏函数.md)
 </details>
 
+<!--分界线-->
+
 <details>
 <summary>Spark</summary>
 
-* [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
 * [Spark 常用 API](note/spark/Spark常用API.md)
+* [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
 * [Spark Streaming 的 reduceByKeyAndWindow 窗口函数](note/spark/SparkStreaming的reduceByKeyAndWindow窗口函数.md)
-* [Spark源码分析(一)：Master 启动](note/spark/Spark源码分析(一)：Master启动.md)
 * [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
+* [Spark 内核]
+  * [Spark 内核概述]
+  * [Spark Shuffle解析]
+  * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
 </details>
 
-
+<!--分界线-->
 
 <details>
 <summary>Canal</summary>
 
 * [使用 canal 实时监控 mysql 并读取到 Kafka(scala 版)](note/canal/使用canal实时监控mysql并读取到Kafka-scala版.md)
 </details>
+
+<!--分界线-->
 
 ---
 
@@ -122,8 +136,7 @@
 * [CentOS7安装 docker](note/docker/CentOS7安装docker.md)
   </details>
 
-
-
+<!--分界线-->
 
 ---
 
@@ -145,7 +158,8 @@
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
   </details>  
 
-  
+<!--分界线-->
+
 ---
 
 ## Centos 相关

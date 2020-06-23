@@ -4,7 +4,7 @@
     <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/zabbix/Centos7.7编译源码安装使用Zabbix(zabbix-server).md" beforeDir="false" afterPath="$PROJECT_DIR$/note/zabbix/Centos7.7编译源码安装使用Zabbix(zabbix-server).md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/zookeeper/gh-md-toc.exe" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -90,11 +90,11 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="87" />
-    <option name="y" value="45" />
-    <option name="width" value="1938" />
-    <option name="height" value="1058" />
+  <component name="ProjectFrameBounds" extendedState="7">
+    <option name="x" value="580" />
+    <option name="y" value="70" />
+    <option name="width" value="1940" />
+    <option name="height" value="1050" />
   </component>
   <component name="ProjectView">
     <navigator proportions="" version="1">
@@ -125,7 +125,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="E:/project-file/hp-vehicle-algorithm-buck" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -165,6 +165,9 @@
       <updated>1591897318951</updated>
       <workItem from="1591897320263" duration="7297000" />
       <workItem from="1592460393310" duration="615000" />
+      <workItem from="1592894954427" duration="1223000" />
+      <workItem from="1592910045624" duration="27000" />
+      <workItem from="1592910168547" duration="597000" />
     </task>
     <task id="LOCAL-00001" summary="README.md">
       <created>1591897462767</created>
@@ -317,12 +320,13 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7912000" />
+    <option name="totallyTimeSpent" value="9759000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="-7" width="1550" height="838" extended-state="6" />
+    <frame x="-7" y="-7" width="1550" height="838" extended-state="7" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20950468" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2175368" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Designer" order="2" />
       <window_info id="Image Layers" order="3" />
@@ -345,7 +349,7 @@
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info active="true" anchor="right" id="Maven" order="3" visible="true" weight="0.3299866" />
+      <window_info active="true" anchor="right" id="Maven" order="3" visible="true" weight="0.32931727" />
       <window_info anchor="right" id="Palette" order="4" />
       <window_info anchor="right" id="Capture Analysis" order="5" />
       <window_info anchor="right" id="SciView" order="6" />
