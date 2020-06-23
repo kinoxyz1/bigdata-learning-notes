@@ -1,5 +1,16 @@
 
-
+* [一、Shuffle 的核心要点](#%E4%B8%80shuffle-%E7%9A%84%E6%A0%B8%E5%BF%83%E8%A6%81%E7%82%B9)
+  * [1\.1 Shuffle 流程源码分析](#11-shuffle-%E6%B5%81%E7%A8%8B%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+    * [ShuffleMapTask源码分析](#shufflemaptask%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+      * [ShuffleManager](#shufflemanager)
+* [二、HashShuffle 解析](#%E4%BA%8Chashshuffle-%E8%A7%A3%E6%9E%90)
+  * [2\.1 未优化的HashShuffle](#21-%E6%9C%AA%E4%BC%98%E5%8C%96%E7%9A%84hashshuffle)
+  * [2\.2 优化的HashShuffle](#22-%E4%BC%98%E5%8C%96%E7%9A%84hashshuffle)
+* [三、SortShuffle 解析](#%E4%B8%89sortshuffle-%E8%A7%A3%E6%9E%90)
+  * [3\.1 普通 SortShuffle](#31-%E6%99%AE%E9%80%9A-sortshuffle)
+  * [3\.2 bypass SortShuffle](#32-bypass-sortshuffle)
+  * [3\.3 普通 SortShuffle 源码解析](#33-%E6%99%AE%E9%80%9A-sortshuffle-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90)
+  * [3\.4 bypass SortShuffle 源码解析](#34-bypass-sortshuffle-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90)
 
 --- 
 在所有的 MapReduce 框架中, Shuffle 是连接 map 任务和 reduce 任务的桥梁. map 任务的中间输出要作为 reduce 任务的输入, 就必须经过 Shuffle, 所以 Shuffle 的性能的优劣直接决定了整个计算引擎的性能和吞吐量.
