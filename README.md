@@ -101,10 +101,14 @@
 * [Spark Streaming 的 reduceByKeyAndWindow 窗口函数](note/spark/SparkStreaming的reduceByKeyAndWindow窗口函数.md)
 * [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
-* [Spark 内核]
+* Spark 内核
   * [Spark 内核概述]
   * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
   * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
+
+* Spark 性能优化和故障处理
+  * [Spark 性能优化](note/spark/spark-performance/Spark性能优化.md)
+
 </details>
 
 <!--分界线-->
