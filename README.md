@@ -102,7 +102,7 @@
 * [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
 * Spark 内核
-  * [Spark 内核概述]
+  * [Spark 内核概述(待补充)]
   * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
   * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
 
