@@ -177,5 +177,9 @@
 
 
 ---
-欢迎加我微信一起交流
+## 欢迎加我微信一起交流
+<details>
+<summary>我的微信</summary>
+  
 ![我的微信](img/wechat/MyWechat.jpg)
+  </details>  
