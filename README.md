@@ -107,7 +107,8 @@
   * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
 
 * Spark 性能优化和故障处理
-  * [Spark 性能优化](note/spark/spark-performance/Spark性能优化.md)
+  * [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
+  * [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
 
 </details>
 
