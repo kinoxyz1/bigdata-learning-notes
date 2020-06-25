@@ -109,7 +109,7 @@
 * Spark 性能优化和故障处理
   * [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
   * [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
-
+  * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
 </details>
 
 <!--分界线-->
