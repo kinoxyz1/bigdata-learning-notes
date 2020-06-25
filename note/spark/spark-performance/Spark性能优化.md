@@ -1,4 +1,31 @@
-
+* [一、常规性能调优](#%E4%B8%80%E5%B8%B8%E8%A7%84%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98)
+  * [1\.1 最优资源配置](#11-%E6%9C%80%E4%BC%98%E8%B5%84%E6%BA%90%E9%85%8D%E7%BD%AE)
+  * [1\.2 RDD 优化](#12-rdd-%E4%BC%98%E5%8C%96)
+    * [① RDD 复用](#-rdd-%E5%A4%8D%E7%94%A8)
+    * [② RDD 持久化](#-rdd-%E6%8C%81%E4%B9%85%E5%8C%96)
+    * [③ RDD 尽可能早的 filter 操作](#-rdd-%E5%B0%BD%E5%8F%AF%E8%83%BD%E6%97%A9%E7%9A%84-filter-%E6%93%8D%E4%BD%9C)
+  * [1\.3 并行度调节](#13-%E5%B9%B6%E8%A1%8C%E5%BA%A6%E8%B0%83%E8%8A%82)
+  * [1\.4 广播大变量](#14-%E5%B9%BF%E6%92%AD%E5%A4%A7%E5%8F%98%E9%87%8F)
+  * [1\.5 Kryo 序列化](#15-kryo-%E5%BA%8F%E5%88%97%E5%8C%96)
+  * [1\.6 调节本地化等待时间](#16-%E8%B0%83%E8%8A%82%E6%9C%AC%E5%9C%B0%E5%8C%96%E7%AD%89%E5%BE%85%E6%97%B6%E9%97%B4)
+* [2\. 算子调优](#2-%E7%AE%97%E5%AD%90%E8%B0%83%E4%BC%98)
+  * [2\.1 mapPartitions](#21-mappartitions)
+  * [2\.2 foreachPartition 优化数据库操作](#22-foreachpartition-%E4%BC%98%E5%8C%96%E6%95%B0%E6%8D%AE%E5%BA%93%E6%93%8D%E4%BD%9C)
+  * [2\.3 filter 与 coalesce 的配合使用](#23-filter-%E4%B8%8E-coalesce-%E7%9A%84%E9%85%8D%E5%90%88%E4%BD%BF%E7%94%A8)
+  * [2\.4 repartition 解决 SparkSQL 低并行度问题](#24-repartition-%E8%A7%A3%E5%86%B3-sparksql-%E4%BD%8E%E5%B9%B6%E8%A1%8C%E5%BA%A6%E9%97%AE%E9%A2%98)
+  * [2\.5 reduceByKey 预聚合](#25-reducebykey-%E9%A2%84%E8%81%9A%E5%90%88)
+* [3\. Shuffle 调优](#3-shuffle-%E8%B0%83%E4%BC%98)
+  * [3\.1 调节map端缓冲区大小](#31-%E8%B0%83%E8%8A%82map%E7%AB%AF%E7%BC%93%E5%86%B2%E5%8C%BA%E5%A4%A7%E5%B0%8F)
+  * [3\.2 调节reduce端拉取数据缓冲区大小](#32-%E8%B0%83%E8%8A%82reduce%E7%AB%AF%E6%8B%89%E5%8F%96%E6%95%B0%E6%8D%AE%E7%BC%93%E5%86%B2%E5%8C%BA%E5%A4%A7%E5%B0%8F)
+  * [3\.3 调节reduce端拉取数据重试次数](#33-%E8%B0%83%E8%8A%82reduce%E7%AB%AF%E6%8B%89%E5%8F%96%E6%95%B0%E6%8D%AE%E9%87%8D%E8%AF%95%E6%AC%A1%E6%95%B0)
+  * [3\.4 调节reduce端拉取数据等待间隔](#34-%E8%B0%83%E8%8A%82reduce%E7%AB%AF%E6%8B%89%E5%8F%96%E6%95%B0%E6%8D%AE%E7%AD%89%E5%BE%85%E9%97%B4%E9%9A%94)
+  * [3\.5 调节SortShuffle排序操作阈值](#35-%E8%B0%83%E8%8A%82sortshuffle%E6%8E%92%E5%BA%8F%E6%93%8D%E4%BD%9C%E9%98%88%E5%80%BC)
+* [4\. JVM 调优](#4-jvm-%E8%B0%83%E4%BC%98)
+  * [4\.1 降低cache操作的内存占比](#41-%E9%99%8D%E4%BD%8Ecache%E6%93%8D%E4%BD%9C%E7%9A%84%E5%86%85%E5%AD%98%E5%8D%A0%E6%AF%94)
+    * [静态内存管理机制](#%E9%9D%99%E6%80%81%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6)
+    * [统一内存管理机制](#%E7%BB%9F%E4%B8%80%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6)
+  * [4\.2 调节Executor堆外内存](#42-%E8%B0%83%E8%8A%82executor%E5%A0%86%E5%A4%96%E5%86%85%E5%AD%98)
+  * [4\.3 调节连接等待时长](#43-%E8%B0%83%E8%8A%82%E8%BF%9E%E6%8E%A5%E7%AD%89%E5%BE%85%E6%97%B6%E9%95%BF)
 
 
 
@@ -9,11 +36,11 @@ Spark 性能调优的第一步, 就是为任务分配更多的资源, 在一定�
 
 资源的分配, 在使用脚本提交任务时进行指定, 标准的 Spark 任务提交脚本代码如下:
 ```bash
-spark-submit --class com.kino.spark.Analysis \
---num-executors 80 \ 
---driver-memory 6g \ 
---executor-momery 6g \ 
---executor-core 3 \ 
+spark-submit --class com.kino.spark.Analysis /
+--num-executors 80 / 
+--driver-memory 6g / 
+--executor-momery 6g / 
+--executor-core 3 / 
 /usr/opt/modules/spark/jar/spark.jar
 ```
 说明:
@@ -36,17 +63,17 @@ spark-submit --class com.kino.spark.Analysis \
 
 生产环境 spark-submit 脚本配置:
 ```bash
-spark-submit \
---class com.kino.spark.WordCount \
---num-executors 80 \
---driver-memory 6g \
---executor-memory 6g \
---executor-cores 3 \
---master yarn \
---deploy-mode cluster \
---queue root.default \
---conf spark.yarn.executor.memoryOverhead=2048 \
---conf spark.core.connection.ack.wait.timeout=300 \
+spark-submit /
+--class com.kino.spark.WordCount /
+--num-executors 80 /
+--driver-memory 6g /
+--executor-memory 6g /
+--executor-cores 3 /
+--master yarn /
+--deploy-mode cluster /
+--queue root.default /
+--conf spark.yarn.executor.memoryOverhead=2048 /
+--conf spark.core.connection.ack.wait.timeout=300 /
 /usr/local/spark/spark.jar
 ```
 - --num-executors：50~100
@@ -60,11 +87,11 @@ spark-submit \
 ## 1.2 RDD 优化
 ### ① RDD 复用
 在对RDD进行算子时，要避免相同的算子和计算逻辑之下对 RDD 进行重复的计算:
-![RDD复用1](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\RDD复用1.png)
+![RDD复用1](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/RDD复用1.png)
 
 对上图中的RDD计算架构进行修改:
 
-![RDD复用2](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\RDD复用2.png)
+![RDD复用2](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/RDD复用2.png)
 
 ### ② RDD 持久化
 在Spark中，当多次对同一个 RDD 执行算子操作时，每一次都会对这个 RDD 的祖先 RDD 重新计算一次，这种情况是必须要避免的，对同一个RDD的重复计算是对资源的极大浪费，因此，必须对多次使用的RDD进行持久化，通过持久化将公共RDD的数据缓存到内存/磁盘中，之后对于公共RDD的计算都会从内存/磁盘中直接获取RDD数据。 对于RDD的持久化，有两点需要说明：
@@ -152,11 +179,11 @@ val conf = new SparkConf()
 
 如果是普通的map算子，假设一个 partition 有 1 万条数据，那么 map 算子中的 function 要执行1万次，也就是对每个元素进行操作。
 
-![mapPartitions1](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\mapPartitions1.png)
+![mapPartitions1](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/mapPartitions1.png)
 
 如果是 mapPartition 算子，由于一个 task 处理一个 RDD 的partition，那么一个task只会执行一次function，function一次接收所有的partition数据，效率比较高。
 
-![mapPartitions2](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\mapPartitions2.png)
+![mapPartitions2](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/mapPartitions2.png)
 
 比如，当要把 RDD 中的所有数据通过 JDBC 写入数据，如果使用 map 算子，那么需要对 RDD 中的每一个元素都创建一个数据库连接，这样对资源的消耗很大，如果使用mapPartitions算子，那么针对一个分区的数据，只需要建立一个数据库连接。
 
@@ -170,7 +197,7 @@ mapPartitions算子也存在一些缺点：对于普通的map操作，一次处�
 
 如果使用foreach算子完成数据库的操作，由于foreach算子是遍历RDD的每条数据，因此，每条数据都会建立一个数据库连接，这是对资源的极大浪费，因此，对于写数据库操作，我们应当使用foreachPartition算子。 与mapPartitions算子非常相似，foreachPartition是将RDD的每个分区作为遍历对象，一次处理一个分区的数据，也就是说，如果涉及数据库的相关操作，一个分区的数据只需要创建一次数据库连接:
 
-![foreachPartition](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\foreachPartition.png)
+![foreachPartition](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/foreachPartition.png)
 
 使用了foreachPartition算子后，可以获得以下的性能提升：
 1.	对于我们写的function函数，一次处理一整个分区的数据；
@@ -182,7 +209,7 @@ mapPartitions算子也存在一些缺点：对于普通的map操作，一次处�
 ## 2.3 filter 与 coalesce 的配合使用
 在Spark任务中我们经常会使用filter算子完成RDD中数据的过滤，在任务初始阶段，从各个分区中加载到的数据量是相近的，但是一旦进过filter过滤后，每个分区的数据量有可能会存在较大差异
 
-![filter](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\filter.png)
+![filter](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/filter.png)
 
 根据上图我们可以发现两个问题：
 1.	每个partition的数据量变小了，如果还按照之前与partition相等的task个数去处理当前数据，有点浪费task的计算资源；
@@ -229,14 +256,14 @@ Spark SQL的并行度不允许用户自己指定，Spark SQL自己会默认根�
 
 为了解决Spark SQL无法设置并行度和 task 数量的问题，我们可以使用repartition算子。
 
-![repartition](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\repartition.png)
+![repartition](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/repartition.png)
 
 Spark SQL这一步的并行度和task数量肯定是没有办法去改变了，但是，对于Spark SQL查询出来的RDD，立即使用repartition算子，去重新进行分区，这样可以重新分区为多个partition，从repartition之后的RDD操作，由于不再涉及 Spark SQL，因此 stage 的并行度就会等于你手动设置的值，这样就避免了 Spark SQL 所在的 stage 只能用少量的 task 去处理大量数据并执行复杂的算法逻辑。
 
 ## 2.5 reduceByKey 预聚合
 reduceByKey相较于普通的shuffle操作一个显著的特点就是会进行map端的本地聚合，map端会先对本地的数据进行combine操作，然后将数据写入给下个stage的每个task创建的文件中，也就是在map端，对每一个key对应的value，执行reduceByKey算子函数。
 
-![reduceByKey](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\reduceByKey.png)
+![reduceByKey](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/reduceByKey.png)
 
 使用reduceByKey对性能的提升如下： 1. 本地聚合后，在map端的数据量变少，减少了磁盘IO，也减少了对磁盘空间的占用； 2. 本地聚合后，下一个stage拉取的数据量变少，减少了网络传输的数据量； 3. 本地聚合后，在reduce端进行数据缓存的内存占用减少； 4. 本地聚合后，在reduce端进行聚合的数据量减少。
 
@@ -244,9 +271,9 @@ reduceByKey相较于普通的shuffle操作一个显著的特点就是会进行ma
 
 reduceByKey 与 groupByKey 的运行原理如图:
 
-![groupByKey](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\groupByKey.png)
+![groupByKey](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/groupByKey.png)
 
-![reduceByKey1](../../../img\spark\Spark内核\Spark性能优化\Spark常规性能调优\reduceByKey1.png)
+![reduceByKey1](../../../img/spark/Spark内核/Spark性能优化/Spark常规性能调优/reduceByKey1.png)
 
 根据上图可知，groupByKey不会进行map端的聚合，而是将所有map端的数据shuffle到reduce端，然后在reduce端进行数据的聚合操作。由于reduceByKey有map端聚合的特性，使得网络传输的数据量减小，因此效率要明显高于groupByKey。
 
