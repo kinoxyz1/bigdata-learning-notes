@@ -1,4 +1,23 @@
-
+* [数据倾斜的表现：](#%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C%E7%9A%84%E8%A1%A8%E7%8E%B0)
+* [定位数据倾斜问题：·](#%E5%AE%9A%E4%BD%8D%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C%E9%97%AE%E9%A2%98)
+* [一、聚合原数据](#%E4%B8%80%E8%81%9A%E5%90%88%E5%8E%9F%E6%95%B0%E6%8D%AE)
+  * [1\.1 避免shuffle过程](#11-%E9%81%BF%E5%85%8Dshuffle%E8%BF%87%E7%A8%8B)
+  * [1\.2 缩小key粒度（增大数据倾斜可能性，降低每个task的数据量）](#12-%E7%BC%A9%E5%B0%8Fkey%E7%B2%92%E5%BA%A6%E5%A2%9E%E5%A4%A7%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C%E5%8F%AF%E8%83%BD%E6%80%A7%E9%99%8D%E4%BD%8E%E6%AF%8F%E4%B8%AAtask%E7%9A%84%E6%95%B0%E6%8D%AE%E9%87%8F)
+  * [1\.3 增大key粒度（减小数据倾斜可能性，增大每个task的数据量）](#13-%E5%A2%9E%E5%A4%A7key%E7%B2%92%E5%BA%A6%E5%87%8F%E5%B0%8F%E6%95%B0%E6%8D%AE%E5%80%BE%E6%96%9C%E5%8F%AF%E8%83%BD%E6%80%A7%E5%A2%9E%E5%A4%A7%E6%AF%8F%E4%B8%AAtask%E7%9A%84%E6%95%B0%E6%8D%AE%E9%87%8F)
+* [二、过滤导致倾斜的key](#%E4%BA%8C%E8%BF%87%E6%BB%A4%E5%AF%BC%E8%87%B4%E5%80%BE%E6%96%9C%E7%9A%84key)
+* [三、提高shuffle操作中的reduce并行度](#%E4%B8%89%E6%8F%90%E9%AB%98shuffle%E6%93%8D%E4%BD%9C%E4%B8%AD%E7%9A%84reduce%E5%B9%B6%E8%A1%8C%E5%BA%A6)
+  * [3\.1 reduce端并行度的设置](#31-reduce%E7%AB%AF%E5%B9%B6%E8%A1%8C%E5%BA%A6%E7%9A%84%E8%AE%BE%E7%BD%AE)
+  * [3\.2 reduce端并行度设置存在的缺陷](#32-reduce%E7%AB%AF%E5%B9%B6%E8%A1%8C%E5%BA%A6%E8%AE%BE%E7%BD%AE%E5%AD%98%E5%9C%A8%E7%9A%84%E7%BC%BA%E9%99%B7)
+  * [四、使用随机key实现双重聚合](#%E5%9B%9B%E4%BD%BF%E7%94%A8%E9%9A%8F%E6%9C%BAkey%E5%AE%9E%E7%8E%B0%E5%8F%8C%E9%87%8D%E8%81%9A%E5%90%88)
+* [五、将reduce join转换为map join](#%E4%BA%94%E5%B0%86reduce-join%E8%BD%AC%E6%8D%A2%E4%B8%BAmap-join)
+  * [注意](#%E6%B3%A8%E6%84%8F)
+  * [不适用场景分析](#%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90)
+* [六、sample采样对倾斜key单独进行join](#%E5%85%ADsample%E9%87%87%E6%A0%B7%E5%AF%B9%E5%80%BE%E6%96%9Ckey%E5%8D%95%E7%8B%AC%E8%BF%9B%E8%A1%8Cjoin)
+  * [适用场景分析](#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90)
+  * [不适用场景分析](#%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E5%88%86%E6%9E%90-1)
+* [七、使用随机数以及扩容进行join](#%E4%B8%83%E4%BD%BF%E7%94%A8%E9%9A%8F%E6%9C%BA%E6%95%B0%E4%BB%A5%E5%8F%8A%E6%89%A9%E5%AE%B9%E8%BF%9B%E8%A1%8Cjoin)
+  * [核心思想](#%E6%A0%B8%E5%BF%83%E6%80%9D%E6%83%B3)
+  * [局限性](#%E5%B1%80%E9%99%90%E6%80%A7)
 
 
 ----
@@ -9,11 +28,11 @@ Spark 中的数据倾斜问题主要指shuffle过程中出现的数据倾斜问�
 
 注意，要区分开数据倾斜与数据量过量这两种情况，数据倾斜是指少数task被分配了绝大多数的数据，因此少数task运行缓慢；数据过量是指所有task被分配的数据量都很大，相差不多，所有task都运行缓慢。
 
-数据倾斜的表现：
+# 数据倾斜的表现：
 1. Spark 作业的大部分 task 都执行迅速，只有有限的几个task执行的非常慢，此时可能出现了数据倾斜，作业可以运行，但是运行得非常慢；
 2. Spark 作业的大部分task都执行迅速，但是有的task在运行过程中会突然报出OOM，反复执行几次都在某一个task报出OOM错误，此时可能出现了数据倾斜，作业无法正常运行。
 
-定位数据倾斜问题：
+# 定位数据倾斜问题：·
 1. 查阅代码中的shuffle算子，例如reduceByKey、countByKey、groupByKey、join等算子，根据代码逻辑判断此处是否会出现数据倾斜；
 2. 查看 Spark 作业的 log 文件，log 文件对于错误的记录会精确到代码的某一行，可以根据异常定位到的代码位置来明确错误发生在第几个stage，对应的 shuffle 算子是哪一个；
 
