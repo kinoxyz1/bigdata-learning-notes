@@ -104,8 +104,7 @@ exec "${CMD[@]}"
 最终启动类:
 ```bash
 /opt/module/jdk1.8.0_172/bin/java \ 
--cp /opt/module/spark-yarn/conf/:/opt/module/spark-yarn/jars/*:/opt/module/hadoop-2.7.2/etc/hadoop/ \
-rg.apache.spark.deploy.SparkSubmit \ 
+-cp /opt/module/spark-yarn/conf/:/opt/module/spark-yarn/jars/*:/opt/module/hadoop-2.7.2/etc/hadoop/org.apache.spark.deploy.SparkSubmit \ 
 --master yarn \ 
 --deploy-mode cluster \ 
 --class org.apache.spark.xamples.SparkPi \ 
