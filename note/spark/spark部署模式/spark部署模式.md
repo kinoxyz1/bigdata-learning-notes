@@ -61,10 +61,9 @@ Spark支持3种集群管理器（Cluster Manager），分别为：
 5. Yarn框架收到指令后会在指定的NM中启动ExecutorLauncher（实际上还是调用ApplicationMaster的main方法）；
     ```scala
     object ExecutorLauncher {
-
-    def main(args: Array[String]): Unit = {
-        ApplicationMaster.main(args)
-    }
+        def main(args: Array[String]): Unit = {
+            ApplicationMaster.main(args)
+        }
     }
     ```
 6. AM向RM注册，申请资源；
@@ -801,7 +800,6 @@ val amClass =
   * 
   */
 object ExecutorLauncher {
-
     def main(args: Array[String]): Unit = {
         ApplicationMaster.main(args)
     }
