@@ -103,6 +103,8 @@
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
 * Spark 内核
   * [Spark 内核概述(待补充)]
+  * [Spark 部署模式](note/spark/spark部署模式/spark部署模式.md)
+  * [Spark 任务调度机制](note/spark/spark任务调度机制/spark任务调度机制.md)
   * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
   * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
 
