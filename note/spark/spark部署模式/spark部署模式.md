@@ -622,7 +622,9 @@ override def receive: PartialFunction[Any, Unit] = {
 }
 ```
 至此, Executor 创建完毕
+
 总结
+
 ![总结](../../../img/spark/Spark内核/Spark部署模式/总结.png)
  
  
@@ -841,6 +843,7 @@ private def runExecutorLauncher(securityMgr: SecurityManager): Unit = {
 在以后的执行流程就和yarn-cluster模式一样了. 不再赘述
 
 总结
+
 ![yarnClient总结](../../../img/spark/Spark内核/Spark部署模式/yarnClient总结.png)
 
 
