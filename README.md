@@ -2,7 +2,7 @@
 
 # 大数据学习笔记
 
-## 大数据
+## 大数据相关技术
 
 <details>
 <summary>Zookeeper</summary>
@@ -10,16 +10,18 @@
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Hadoop</summary>
 
 * [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
-* [Hadoop数据迁移](note/hadoop/Hadoop数据迁移.md)
+* [Hadoop 数据迁移](note/hadoop/Hadoop数据迁移.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Hive</summary>
@@ -32,7 +34,8 @@
 * [Hive 查询](note/hive/Hive查询.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Kafka</summary>
@@ -40,7 +43,8 @@
 * [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Sentry</summary>
@@ -49,7 +53,8 @@
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Phoenix</summary>
@@ -57,7 +62,8 @@
 * [CDH 平台安装 Apache Phoenix](note/phoenix/CDH平台安装Apache-Phoenix.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>CDH</summary>
@@ -68,7 +74,8 @@
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Scala</summary>
@@ -91,7 +98,8 @@
 * [scala 部分应用函数与偏函数](note/scala/scala部分应用函数与偏函数.md)
 </details>
 
-<!--分界线-->
+
+
 
 <details>
 <summary>Spark</summary>
@@ -114,7 +122,18 @@
   * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
 </details>
 
-<!--分界线-->
+
+
+
+<details>
+<summary>Flink</summary>
+
+* [Flink 简介](note/flink/flink简介.md)
+* [Flink HelloWorld](note/flink/flink-HelloWorld.md)
+</details>
+
+
+
 
 <details>
 <summary>Canal</summary>
@@ -122,9 +141,8 @@
 * [使用 canal 实时监控 mysql 并读取到 Kafka(scala 版)](note/canal/使用canal实时监控mysql并读取到Kafka-scala版.md)
 </details>
 
-<!--分界线-->
 
----
+
 
 ## 大数据运维
 <details>
@@ -142,10 +160,9 @@
 * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
 * [CentOS7安装 docker](note/docker/CentOS7安装docker.md)
   </details>
+  
 
-<!--分界线-->
 
----
 
 ## Linux 相关
 <details>
@@ -165,9 +182,8 @@
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
   </details>  
 
-<!--分界线-->
 
----
+
 
 ## Centos 相关
 <details>
@@ -175,7 +191,7 @@
   
 * [Centos7系统更换yum源镜像为国内镜像](note/centos/Centos7系统更换yum源镜像为国内镜像.md)
   </details>  
-
+  
 
 
 ---
