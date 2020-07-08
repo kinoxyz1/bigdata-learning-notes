@@ -4,7 +4,7 @@
 
 ---
 
-# 一、搭建maven工程 FlinkTutorial
+# 一、搭建maven工程 flink
 ## 1.1  pom文件
 
 ```xml
@@ -14,7 +14,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.kino.flink</groupId>
-    <artifactId>FlinkTutorial</artifactId>
+    <artifactId>flink</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencies>
@@ -31,43 +31,43 @@
         </dependency>
     </dependencies>
 
-<build>
-    <plugins>
-    <!-- 该插件用于将Scala代码编译成class文件 -->
-    <plugin>
-        <groupId>net.alchim31.maven</groupId>
-        <artifactId>scala-maven-plugin</artifactId>
-        <version>3.4.6</version>
-        <executions>
-            <execution>
-                <!-- 声明绑定到maven的compile阶段 -->
-                <goals>
-                    <goal>testCompile</goal>
-                </goals>
-            </execution>
-        </executions>
-    </plugin>
+    <build>
+        <plugins>
+        <!-- 该插件用于将Scala代码编译成class文件 -->
         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.0.0</version>
-            <configuration>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-            </configuration>
+            <groupId>net.alchim31.maven</groupId>
+            <artifactId>scala-maven-plugin</artifactId>
+            <version>3.4.6</version>
             <executions>
                 <execution>
-                    <id>make-assembly</id>
-                    <phase>package</phase>
+                    <!-- 声明绑定到maven的compile阶段 -->
                     <goals>
-                        <goal>single</goal>
+                        <goal>testCompile</goal>
                     </goals>
                 </execution>
             </executions>
         </plugin>
-    </plugins>
-</build>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.0.0</version>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
 ```
 
@@ -78,49 +78,67 @@
 # 二、批处理wordcount
 src/main/scala/com.kino.wc/WordCount.scala
 ```scala
+package com.kino.wc
+
+import org.apache.flink.api.java.ExecutionEnvironment
+import org.apache.flink.api.scala._
+
 object WordCount {
   def main(args: Array[String]): Unit = {
-    // 创建执行环境
+    // 1. 创建执行环境
     val env = ExecutionEnvironment.getExecutionEnvironment
-    // 从文件中读取数据
-    val inputPath = "D:\\Projects\\BigData\\TestWC1\\src\\main\\resources\\hello.txt"
-    val inputDS: DataSet[String] = env.readTextFile(inputPath)
-    // 分词之后，对单词进行groupby分组，然后用sum进行聚合
-    val wordCountDS: AggregateDataSet[(String, Int)] = inputDS.flatMap(_.split(" ")).map((_, 1)).groupBy(0).sum(1)
 
-    // 打印输出
+    // 2. 从 文件 中读取数据
+    val inputFilePath = "D:\\work\\flink\\src\\main\\resources\\hello.txt"
+    val inputDs = env.readTextFile(inputFilePath)
+
+    // 3. 分词之后, 对单词进行 groupBy 分组, 然后使用 sum 进行聚合
+    val wordCountDS: AggregateDataSet[(String, Int)] = inputDs.flatMap(_.split(" ")).map((_, 1)).groupBy(0).sum(1)
+
+    // 4. 打印输出
     wordCountDS.print()
   }
 }
+
 ```
 
 注意：Flink程序支持java和scala两种语言，本课程中以scala语言为主。在引入包中，有java和scala两种包时注意要使用scala的包。
 
 # 三、流处理 wordcount
-src/main/scala/com.atguigu.wc/StreamWordCount.scala
+src/main/scala/com.kino.wc/StreamWordCount.scala
 ```scala
-object StreamWordCount {
-  def main(args: Array[String]): Unit = {
-    // 从外部命令中获取参数
-    val params: ParameterTool =  ParameterTool.fromArgs(args)
-    val host: String = params.get("host")
-    val port: Int = params.getInt("port")
-
-    // 创建流处理环境
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
-    // 接收socket文本流
-    val textDstream: DataStream[String] = env.socketTextStream(host, port)
-
-    // flatMap和Map需要引用的隐式转换
-    import org.apache.flink.api.scala._
-    val dataStream: DataStream[(String, Int)] = textDstream.flatMap(_.split("\\s")).filter(_.nonEmpty).map((_, 1)).keyBy(0).sum(1)
-
-    dataStream.print().setParallelism(1)
-
-    // 启动executor，执行任务
-    env.execute("Socket stream word count")
-  }
-}
+opackage com.kino.wc
+ 
+ import org.apache.flink.api.java.utils.ParameterTool
+ import org.apache.flink.streaming.api.scala._
+ 
+ 
+ object StreamWordCount {
+   def main(args: Array[String]): Unit = {
+     // 1. 从外部命令中获取参数
+     val params: ParameterTool =  ParameterTool.fromArgs(args)
+     val host: String = params.get("host")
+     val port: Int = params.getInt("port")
+ 
+     // 2. 创建流处理环境
+     val env = StreamExecutionEnvironment.getExecutionEnvironment
+     // 接收socket文本流
+     val textDstream: DataStream[String] = env.socketTextStream(host, port)
+ 
+     // 3. flatMap和Map需要引用的隐式转换
+     import org.apache.flink.api.scala._
+     val dataStream: DataStream[(String, Int)] = textDstream.flatMap(_.split("\\s"))
+                                                             .filter(_.nonEmpty)
+                                                             .map((_, 1))
+                                                             .keyBy(0)
+                                                             .sum(1)
+     // 4. 设置并行度
+     dataStream.print().setParallelism(1)
+ 
+     // 5. 启动executor，执行任务
+     env.execute("Socket stream word count")
+   }
+ }
 ```
 
 测试——在 window 子 ubuntu 系统中用 netcat 命令进行发送测试。
