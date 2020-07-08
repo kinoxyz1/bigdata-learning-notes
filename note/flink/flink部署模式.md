@@ -5,7 +5,7 @@
 # 一、Flink部署 
 ## 1.1 Standalone模式
 ### 1.1.1 安装
-解压缩  flink-1.7.2-bin-hadoop27-scala_2.11.tgz，进入conf目录中。
+解压缩  flink-1.11.0-bin-scala_2.11.tgz, 进入conf目录中。
 
 ① 修改 flink/conf/flink-conf.yaml 文件:
 
@@ -13,17 +13,21 @@
  
 ② 修改 /conf/slave文件：
 
+如果有多台节点则执行
 ![fink-slave](../../img/flink/fink-slave.png)
  
 ③ 分发给另外两台机子：
 
-![分发flink](../../img/flink/分发flink.png)
+如果有多台节点则执行
+```bash
+scp -r fflink-1.11.0 root@hadoop2:/opt/software
+```
  
 ④ 启动：
 
 ![启动flink](../../img/flink/启动flink.png)
  
-访问http://localhost:8081可以对flink集群和任务进行监控管理。
+访问 http://localhost:8081 可以对flink集群和任务进行监控管理。
 
 ![监控管理](../../img/flink/监控管理.png)
 
@@ -37,14 +41,17 @@
 
  
 ② 把含数据文件的文件夹，分发到taskmanage 机器中
- 
+
+```bash
+scp -r /applog/flink/input.txt root@hadoop2:/applog/flink/input.txt
+```
 ![分发到taskmanage](../../img/flink/分发到taskmanage.png)
 
 由于读取数据是从本地磁盘读取，实际任务会被分发到taskmanage的机器中，所以要把目标文件分发。
 
 ③ 执行程序 
 ```bash
-./flink run -c com.atguigu.flink.app.BatchWcApp  /ext/flinkTest-1.0-SNAPSHOT.jar  --input /applog/flink/input.txt --output /applog/flink/output.csv
+./flink run -c com.kino.flink.app.BatchWcApp  /ext/flinkTest-1.0-SNAPSHOT.jar  --input /applog/flink/input.txt --output /applog/flink/output.csv
 ```
 
 ![fink-run](../../img/flink/fink-run.png)
