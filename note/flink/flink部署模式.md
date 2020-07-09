@@ -45,7 +45,6 @@ scp -r fflink-1.11.0 root@hadoop2:/opt/software
 ```bash
 scp -r /applog/flink/input.txt root@hadoop2:/applog/flink/input.txt
 ```
-![分发到taskmanage](../../img/flink/分发到taskmanage.png)
 
 由于读取数据是从本地磁盘读取，实际任务会被分发到taskmanage的机器中，所以要把目标文件分发。
 

@@ -67,7 +67,13 @@
 <details>
 <summary>ClickHouse</summary>
 
-* [ClickHouse ](note/ClickHouse/ClickHouse.md)
+* [ClickHouse入门](note/ClickHouse/ClickHouse.md)
+</details>
+
+<details>
+<summary>WaterDrop</summary>
+
+* [WaterDrop入门](note/WaterDrop/WaterDrop基本概述.md)
 </details>
 
 
