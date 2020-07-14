@@ -74,6 +74,7 @@
 <summary>WaterDrop</summary>
 
 * [WaterDrop入门](note/WaterDrop/WaterDrop基本概述.md)
+* [Hive to Hdfs](note/WaterDrop/Hive2Hdfs.md)
 </details>
 
 
