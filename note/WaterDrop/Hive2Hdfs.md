@@ -50,6 +50,7 @@ insert into default.s_vehicle_gps_taxi("粤B0Q2S0",1572590496);
 ```
 
 ```xml
+vim hive2hdfs.conf
 spark {
   # Waterdrop defined streaming batch duration in seconds
   spark.streaming.batchDuration = 5
@@ -78,6 +79,10 @@ output {
     path_time_format = "yyyy.MM.dd"
   }
 }
+```
+执行:
+```bash
+/opt/software/waterdrop/waterdrop/bin/start-waterdrop.sh --master local[4] --deploy-mode client --config /opt/software/waterdrop/waterdrop/config/hive2hdfs.conf
 ```
 
 # 三、验证结果
