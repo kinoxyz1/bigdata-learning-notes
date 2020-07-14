@@ -67,7 +67,11 @@
 <details>
 <summary>ClickHouse</summary>
 
-* [ClickHouse入门](note/ClickHouse/ClickHouse.md)
+* [ClickHouse 入门概述](note/ClickHouse/ClickHouseSummary.md)
+* [ClickHouse 安装](note/ClickHouse/ClickHouseInstall.md)
+* [ClickHouse 数据类型](note/ClickHouse/ClickHouseDataType.md)
+* [ClickHouse 表引擎](note/ClickHouse/ClickHouseTableEngine.md)
+* [ClickHouse 表操作](note/ClickHouse/ClickHouseTableOpt.md)
 </details>
 
 <details>
