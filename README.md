@@ -87,7 +87,6 @@
 
 * [Centos7.7 CDH6.2.1 安装教程](note/cdh/Centos7.7-CDH6.2.1安装教程.md)
 * [CDH 安装 Hue 连接不上MySQL](note/cdh/CDH安装Hue连接不上MySQL.md)
-* [centos 克隆后要做的操作](note/cdh/centos克隆后要做的操作.md)
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
 </details>
 
@@ -207,7 +206,7 @@
 <details>
 <summary>Centos</summary>
 
-* [Centos7.7 安装及配置](note/centos/Centos7-7安装后的配置.md)
+* [Centos 安装or克隆后要做的操作](note/centos/Centos安装or克隆后要做的操作.md)
 * [Centos7系统更换yum源镜像为国内镜像](note/centos/Centos7系统更换yum源镜像为国内镜像.md)
   </details>  
   
