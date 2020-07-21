@@ -161,7 +161,7 @@
 
 
 
-## 大数据运维
+## 运维
 <details>
 <summary>Zabbix</summary>
   
@@ -181,8 +181,15 @@
 <details>
 <summary>Docker</summary>
 
-* [CentOS7 安装 docker](note/docker/CentOS7安装docker.md)
-* [CentOS7 常用命令](note/docker/CentOS7常用命令.md)
+* [CentOS7 安装 docker](note/docker/CentOS7安装Docker.md)
+* [Docker 常用命令](note/docker/Docker常用命令.md)
+</details>
+
+
+<details>
+<summary>Kubernetes</summary>
+
+* [Kubernetes 入门](note/Kubernetes/Kubernetes入门.md)
 </details>
 
 

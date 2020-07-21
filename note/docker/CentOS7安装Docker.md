@@ -88,3 +88,24 @@ $ sudo yum remove docker docker-client docker-client-latest docker-common docker
 	```
 	此命令下载测试图像并在容器中运行它。容器运行时，它会打印参考消息并退出。
 
+# 四、配置加速
+1. 注册阿里云账户
+
+2. 获取加速器地址
+
+    ![阿里云镜像加速](../../img/docker/docker安装/aliyun加速.png)
+
+3. 配置本机 Docker 运行镜像加速器
+
+    贴上图代码即可
+
+4. 重新启动 Docker 后台服务
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart docker
+   ```
+
+5. 检查 Linux 系统下配置完加速器是否生效
+    ```bash
+   ps -ef | grep docker
+   ```
