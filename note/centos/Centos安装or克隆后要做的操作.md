@@ -2,10 +2,15 @@
 * [二、修改 ip](#%E4%BA%8C%E4%BF%AE%E6%94%B9-ip)
 
 ---
-# 一、修改主机名
+# 一、设置主机名称
 
 ```bash
-hostnamectl set-hostname 主机名
+hostname "newhostname"		# 临时设置主机名
+vim /etc/sysconfig/network	# 编辑配置文件 6.x
+vim /etc/hostname			# 编辑配置文件 7.x
+newhostname					# 新的主机名称
+vim /etc/hosts   			# 编辑配置文件
+127.0.0.1 www.server.com localhost  # 修改localhost.localdomaim
 ```
 
 ---
