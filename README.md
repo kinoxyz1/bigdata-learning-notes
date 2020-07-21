@@ -206,7 +206,8 @@
 ## Centos 相关
 <details>
 <summary>Centos</summary>
-  
+
+* [Centos7.7 安装及配置](note/centos/Centos7-7安装后的配置.md)
 * [Centos7系统更换yum源镜像为国内镜像](note/centos/Centos7系统更换yum源镜像为国内镜像.md)
   </details>  
   
