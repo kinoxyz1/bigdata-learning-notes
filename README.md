@@ -2,7 +2,7 @@
 
 # 大数据学习笔记
 
-## 大数据相关技术
+## 大数据
 
 <details>
 <summary>Zookeeper</summary>
@@ -183,6 +183,7 @@
 
 * [CentOS7 安装 docker](note/docker/CentOS7安装Docker.md)
 * [Docker 常用命令](note/docker/Docker常用命令.md)
+* [Docker 镜像](note/docker/Docker镜像.md)
 </details>
 
 
@@ -209,6 +210,7 @@
 * [Linux扩展/删除swap分区](note/linux/Linux扩展-删除swap分区.md)
 * [kill pid 和 kill -9 pid 的区别](note/linux/kill-pid.md)
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
+* [CentOS top命令详解](note/linux/CentOS-top命令详解.md)
   </details>  
 
 

@@ -12,7 +12,7 @@ docker --help
 ```
 
 # 二、镜像命令
-1. `docker images`: 列出本地镜像。
+## 2.1 `docker images`: 列出本地镜像。
     ```bash
     [root@docker1 ~]# docker images
     REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
@@ -24,7 +24,7 @@ docker --help
     - `--digests`: 显示镜像的摘要信息
     - `--no-trunc`: 显示完整的镜像信息
     
-2. `docker search`: 从Docker Hub查找镜像
+## 2.2 `docker search`: 从Docker Hub查找镜像
     ```bash
     [root@docker1 ~]# docker search -s 11 java
     Flag --stars has been deprecated, use --filter=stars=3 instead
@@ -49,7 +49,7 @@ docker --help
    - `-s`: 列出收藏数不小于指定值的镜像
    - `--automated`: 只列出 automated build 类型的镜像
    
-3. docker pull: 从镜像仓库中拉取或者更新指定镜像
+## 2.3 `docker pull`: 从镜像仓库中拉取或者更新指定镜像
    ```bash
    [root@docker1 ~]# docker pull java
    Using default tag: latest
@@ -75,7 +75,7 @@ docker --help
    - `-a`: 拉取所有 tagged 镜像
    - `--disable-content-trust`: 忽略镜像的校验, 默认开启
    
-4. docker rmi: 删除本地一个或多少镜像。
+## 2.4 `docker rmi`: 删除本地一个或多少镜像。
     ```bash
     [root@docker1 ~]# docker rmi -f java
     Untagged: java:latest
@@ -98,12 +98,12 @@ docker --help
    - `-f`: 强制删除；
    - `--no-prune`: 不移除该镜像的过程镜像，默认移除；
    
-# 二、容器命令
+# 三、容器命令
 有镜像才能创建容器, 这是根本前提(下载一个 CentOS 镜像演示)
 ```bash
 docker pull centos
 ```
-1. docker run: 创建一个新的容器并运行一个命令
+## 3.1 `docker run`: 创建一个新的容器并运行一个命令
     ```bash
     [root@docker1 ~]# docker images
     REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
@@ -129,7 +129,7 @@ docker pull centos
         - hostPort:containerPort
         - containerPort
         
-2. docker ps: 列出当前所有 正在运行 的容器
+## 3.2 `docker ps`: 列出当前所有 正在运行 的容器
     ```bash
     [root@docker1 ~]# 
     [root@docker1 ~]# docker ps -a
@@ -145,32 +145,32 @@ docker pull centos
    - `-q`: 静默模式, 只显示容器编号
    - `--no-trunc`: 不截断输出
    
-3. 退出容器
+## 3.3 退出容器
     exit: 容器停止退出
 
     ctrl+P+Q: 容器不停止退出
 
-4. docker start: 启动容器
+## 3.4 `docker start`: 启动容器
    ```bash
     docker start 容器ID/容器名
    ```
    
-5. docker restart: 重启容器
+## 3.5 `docker restart`: 重启容器
     ```bash
     docker restart 容器ID/容器名
     ```
    
-6. docker stop: 停止容器
+## 3.6 `docker stop`: 停止容器
    ```bash
    docker stop 容器ID/容器名 
    ```
    
-7. docker kill: 强制停止容器
+## 3.7 `docker kill`: 强制停止容器
    ```bash
    docker kill 容器ID/容器名 
    ```
    
-8. docker rm: 删除已经停止的容器
+## 3.8 `docker rm`: 删除已经停止的容器
    ```bash
    [root@docker1 ~]# docker rm -f $(docker ps -a -q) 
    或者
@@ -190,7 +190,7 @@ docker pull centos
    CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
    ```
    
-9. docker run -d: 启动守护式容器(重要)
+## 3.9 `docker run -d`: 启动守护式容器(重要)
    ```bash
    [root@docker1 ~]# docker run -d centos
    5a2464425cee999e9d13bf422795671b6744890f78bf15222eba482881c82dbc
@@ -218,7 +218,7 @@ docker pull centos
    
    所以，最佳的解决方案是,将你要运行的程序以前台进程的形式运行
    
-10. docker logs -ft --tail: 查看容器日志
+## 3.10 `docker logs -ft --tail`: 查看容器日志
     ```bash
     [root@docker1 ~]# docker run -d centos /bin/bash -c "while true;do echo hello zzyy;sleep 2;done"
     510b350fe6cefee4a742ec97d13e56f0ef3e2b61adda28efeda9b969ccdd70c9
@@ -238,7 +238,7 @@ docker pull centos
     - `-f`: 跟随最新的日志打印
     - `--tail 数字`: 显示最后多少条
 
-11. docker top: 查看容器内运行的进程
+## 3.11 `docker top`: 查看容器内运行的进程
     ```bash
     [root@docker1 ~]# docker top 510b350fe6cefee4a742ec97d13e56f0ef3e2b61adda28efeda9b969ccdd70c9
     UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
@@ -246,7 +246,7 @@ docker pull centos
     root                72878               72708               0                   20:43               ?                   00:00:00            /usr/bin/coreutils --coreutils-prog-shebang=sleep /usr/bin/sleep 2
     ```
     
-12. docker inspect: 查看容器内部细节
+## 3.12 `docker inspect`: 查看容器内部细节
     ```bash
     [root@docker1 ~]# docker inspect 510b350fe6cefee4a742ec97d13e56f0ef3e2b61adda28efeda9b969ccdd70c9
     [
@@ -260,7 +260,7 @@ docker pull centos
             ........
     ```
     
-13. `docker exec -it 容器ID bashShell`: 进入正在运行的容器并以命令交互
+## 3.13 `docker exec -it 容器ID bashShell`: 进入正在运行的容器并以命令交互
     ```bash
     [root@docker1 ~]# docker exec -it 510b350fe6ce /bin/bash
     
@@ -276,11 +276,11 @@ docker pull centos
     
     `attach`: 直接进入容器启动命令的终端, 不会启动新的进程
     
-14. `docker cp 容器ID:容器内路径 主机路径`: 从容器内拷贝文件到主机上
+## 3.14 `docker cp 容器ID:容器内路径 主机路径`: 从容器内拷贝文件到主机上
     ```bash
     [root@docker1 tmp]# docker cp 510b350fe6ce:/opt/docker-test.txt /tmp/test.txt
     ```
     
-# 三、常用命令小结:
+# 四、常用命令小结:
 ![docker常用命令.png](../../img/docker/docker常用命令/docker常用命令.png)
 
