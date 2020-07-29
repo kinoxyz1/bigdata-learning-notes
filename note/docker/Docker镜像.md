@@ -94,10 +94,7 @@ tomcat              8.5.31              df50c9d355cf        2 years ago         
 
 [root@docker1 ~]# docker ps
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                    NAMES
-0949dc263fee        tomcat:8.0          "catalina.sh run"   41 seconds ago      Up 40 seconds       0.0.0.0:8080->8080/tcp   optimistic_jang
-
-[root@docker1 ~]# docker run -d -p 8080:8080 tomcat:8.0
-0949dc263feec6363a060accb9f80562152ee533cb1ffda560cc1b8da8f70aea
+0949dc263fee        tomcat:8.5.31          "catalina.sh run"   41 seconds ago      Up 40 seconds       0.0.0.0:8080->8080/tcp   optimistic_jang
 ```
 
 ② 打开浏览器输入: ip:8080
@@ -107,7 +104,7 @@ CONTAINER ID        IMAGE               COMMAND             CREATED             
 ```bash
 [root@docker1 ~]# docker ps
 CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS                    NAMES
-0949dc263fee        tomcat:8.0          "catalina.sh run"   4 minutes ago       Up 3 minutes        0.0.0.0:8080->8080/tcp   optimistic_jang
+0949dc263fee        tomcat:8.5.31          "catalina.sh run"   4 minutes ago       Up 3 minutes        0.0.0.0:8080->8080/tcp   optimistic_jang
 
 root@2a85b2af20d6:/usr/local/tomcat# ls -l
 total 92
