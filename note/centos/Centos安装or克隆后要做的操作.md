@@ -6,11 +6,18 @@
 
 ```bash
 hostname "newhostname"		# 临时设置主机名
-vim /etc/sysconfig/network	# 编辑配置文件 6.x
-vim /etc/hostname			# 编辑配置文件 7.x
-newhostname					# 新的主机名称
+
+# CentOS6.x 编辑此配置文件 
+vim /etc/sysconfig/network	
+
+# CentOS7.x 编辑此配置文件 
+vim /etc/hostname
+		
+# 输入新的主机名称	
+newhostname	
+				
 vim /etc/hosts   			# 编辑配置文件
-127.0.0.1 www.server.com localhost  # 修改localhost.localdomaim
+127.0.0.1 newhostname localhost  # 修改localhost.localdomaim
 ```
 
 ---
@@ -32,6 +39,7 @@ IPV6_ADDR_GEN_MODE=stable-privacy
 NAME=ens33
 UUID=0a20f443-9c23-4274-a20f-c3f26d04f559
 DEVICE=ens33
+NM_CONTROLLED=no
 ONBOOT=yes  #开启自动启用网络连接
 BOOTPROTO=static  #启用静态IP地址
 IPADDR=192.168.161.160 #设置IP地址

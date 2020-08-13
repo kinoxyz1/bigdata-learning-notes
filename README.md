@@ -205,6 +205,8 @@
   * [开机、重启和用户登录注销](note/linux/Linux用户管理/开机、重启和用户登录注销.md)
   * [用户管理](note/linux/Linux用户管理/用户管理.md)
 
+* Shell
+  * [shell 基础入门](note/linux/shell/shell入门.md)
 
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
 * [Linux下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
