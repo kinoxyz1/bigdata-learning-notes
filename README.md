@@ -223,12 +223,12 @@
 
 
 
-## Centos 相关
+## CentOS 相关
 <details>
-<summary>Centos</summary>
+<summary>CentOS</summary>
 
-* [Centos 安装or克隆后要做的操作](note/centos/Centos安装or克隆后要做的操作.md)
-* [Centos7系统更换yum源镜像为国内镜像](note/centos/Centos7系统更换yum源镜像为国内镜像.md)
+* [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
+* [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
   </details>  
   
 
