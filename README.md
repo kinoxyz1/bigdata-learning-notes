@@ -208,6 +208,7 @@
 * Shell
   * [shell 基础入门](note/linux/shell/shell入门.md)
   * [shell 变量](note/linux/shell/shell变量.md)
+  * [shell 运算符](note/linux/shell/shell运算符.md)
 
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
 * [Linux下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
