@@ -216,10 +216,9 @@
 <details>
 <summary>Shell</summary>
 
-* Shell
-  * [shell 基础入门](note/linux/shell/shell入门.md)
-  * [shell 变量](note/linux/shell/shell变量.md)
-  * [shell 运算符](note/linux/shell/shell运算符.md)
+* [shell 基础入门](note/linux/shell/shell入门.md)
+* [shell 变量](note/linux/shell/shell变量.md)
+* [shell 运算符](note/linux/shell/shell运算符.md)
 </details>  
 
 
