@@ -225,6 +225,7 @@
 * [shell 变量](note/linux/shell/shell变量.md)
 * [shell 运算符](note/linux/shell/shell运算符.md)
 * [shell 流程控制](note/linux/shell/shell流程控制.md)
+* [shell 读取控制台输入数据](note/linux/shell/shell读取控制台输入数据.md)
 </details>  
 
 
