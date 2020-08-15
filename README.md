@@ -1,6 +1,6 @@
 # bigdata-learning-notes
 
-# 大数据学习笔记-test
+# 大数据学习笔记
 
 ## 大数据
 
@@ -74,12 +74,17 @@
 * [ClickHouse 表操作](note/ClickHouse/ClickHouseTableOpt.md)
 </details>
 
+
+
+
 <details>
 <summary>WaterDrop</summary>
 
 * [WaterDrop入门](note/WaterDrop/WaterDrop基本概述.md)
 * [Hive to Hdfs](note/WaterDrop/Hive2Hdfs.md)
 </details>
+
+
 
 
 <details>
@@ -219,6 +224,7 @@
 * [shell 基础入门](note/linux/shell/shell入门.md)
 * [shell 变量](note/linux/shell/shell变量.md)
 * [shell 运算符](note/linux/shell/shell运算符.md)
+* [shell 流程控制](note/linux/shell/shell流程控制.md)
 </details>  
 
 
