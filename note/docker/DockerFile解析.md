@@ -9,9 +9,9 @@
 DickerFile 是用来构建 Docker 镜像的构建文件, 是由一系列命令和参数构成的脚本.
 
 ## 1.2 构建 DockerFile 的步骤
-- 编写 DockerFile 文件
-- `docker build`
-- `docker run`
+1. 编写 DockerFile 文件
+2. `docker build`
+3. `docker run`
 
 ## 1.3 DockerFile 文件构成
 [参考 CentOS 的 DockerFile 文件](https://github.com/CentOS/sig-cloud-instance-images/blob/b521221b5c8ac3ac88698e77941a2414ce6e778d/docker/Dockerfile
@@ -78,25 +78,335 @@ Docker Hub 中 99% 的镜像都是通过在 base 镜像中安装和配置需要�
 # https://github.com/CentOS/sig-cloud-instance-images/blob/b521221b5c8ac3ac88698e77941a2414ce6e778d/docker/Dockerfile
 FROM scratch <-----
 ADD centos-7-x86_64-docker.tar.xz /
-
 LABEL \
+org.label-schema.schema-version="1.0" \
+org.label-schema.name="CentOS Base Image" \
 ```
 
 ## 4.2 自定义 mycentos 镜像
 目的: 最终让我们的 mycentos 镜像登录默认在 /tmp 目录下, 具备 vim、ifconfig支持
 ### 4.2.1 编写
+① Docker Hub 中默认的 CentOS 镜像
+```bash
+[root@docker1 ~]# docker images centos     # 查看 centos 镜像
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+centos              latest              831691599b88        2 months ago        215MB
+[root@docker1 ~]# docker run -it centos    # 运行该 centos 镜像, 默认路径是 / 根目录
+[root@8462c199bb5b /]# vim test.txt        # 不支持 vim 命令
+bash: vim: command not found
+[root@8462c199bb5b /]# ifconfig            # 不支持 ifconfig 命令
+bash: ifconfig: command not found
+```
+
+② 构建我们自己的 centos 镜像
+
+1. 准备 DockerFile 文件
+```bash
+[root@docker1 mydockerfile]# vim Dockerfile
+FROM centos
+MAINTAINER kino<rmkino@163.com>
+
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+
+RUN yum -y install vim
+RUN yum -y install net-tools
+
+EXPOSE 80
+
+CMD echo $MYPATH
+CMD echo "success -------------------"
+CMD /bin/bash
+```
 
 ### 4.2.2 构建 
+```bash
+[root@docker1 mydockerfile]# docker build -t mycentos:1.0 .
+Sending build context to Docker daemon  2.048kB
+Step 1/10 : FROM centos
+ ---> 831691599b88
+Step 2/10 : MAINTAINER kino<rmkino@163.com>
+ ---> Running in e533d2a61e9f
+Removing intermediate container e533d2a61e9f
+ ---> d5cb61601813
+Step 3/10 : ENV MYPATH /usr/local
+ ---> Running in 8361a107da82
+Removing intermediate container 8361a107da82
+ ---> 73a52e0b7fd7
+Step 4/10 : WORKDIR $MYPATH
+ ---> Running in ba47fcf087e3
+Removing intermediate container ba47fcf087e3
+ ---> fdb88d50c8fd
+Step 5/10 : RUN yum -y install vim
+ ---> Running in 57607efaf602
+CentOS-8 - AppStream                            645 kB/s | 5.8 MB     00:09    
+CentOS-8 - Base                                  99 kB/s | 2.2 MB     00:23    
+CentOS-8 - Extras                               405  B/s | 7.3 kB     00:18    
+Dependencies resolved.
+================================================================================
+ Package             Arch        Version                   Repository      Size
+================================================================================
+Installing:
+ vim-enhanced        x86_64      2:8.0.1763-13.el8         AppStream      1.4 M
+Installing dependencies:
+ gpm-libs            x86_64      1.20.7-15.el8             AppStream       39 k
+ vim-common          x86_64      2:8.0.1763-13.el8         AppStream      6.3 M
+ vim-filesystem      noarch      2:8.0.1763-13.el8         AppStream       48 k
+ which               x86_64      2.21-12.el8               BaseOS          49 k
+
+Transaction Summary
+================================================================================
+Install  5 Packages
+
+Total download size: 7.8 M
+Installed size: 31 M
+Downloading Packages:
+(1/5): gpm-libs-1.20.7-15.el8.x86_64.rpm         17 kB/s |  39 kB     00:02    
+(2/5): vim-filesystem-8.0.1763-13.el8.noarch.rp 334 kB/s |  48 kB     00:00    
+(3/5): vim-enhanced-8.0.1763-13.el8.x86_64.rpm  542 kB/s | 1.4 MB     00:02    
+(4/5): vim-common-8.0.1763-13.el8.x86_64.rpm    1.8 MB/s | 6.3 MB     00:03    
+(5/5): which-2.21-12.el8.x86_64.rpm              18 kB/s |  49 kB     00:02    
+--------------------------------------------------------------------------------
+Total                                           688 kB/s | 7.8 MB     00:11     
+warning: /var/cache/dnf/AppStream-02e86d1c976ab532/packages/gpm-libs-1.20.7-15.el8.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID 8483c65d: NOKEY
+CentOS-8 - AppStream                             52 kB/s | 1.6 kB     00:00    
+Importing GPG key 0x8483C65D:
+ Userid     : "CentOS (CentOS Official Signing Key) <security@centos.org>"
+ Fingerprint: 99DB 70FA E1D7 CE22 7FB6 4882 05B5 55B3 8483 C65D
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : which-2.21-12.el8.x86_64                               1/5 
+  Installing       : vim-filesystem-2:8.0.1763-13.el8.noarch                2/5 
+  Installing       : vim-common-2:8.0.1763-13.el8.x86_64                    3/5 
+  Installing       : gpm-libs-1.20.7-15.el8.x86_64                          4/5 
+  Running scriptlet: gpm-libs-1.20.7-15.el8.x86_64                          4/5 
+  Installing       : vim-enhanced-2:8.0.1763-13.el8.x86_64                  5/5 
+  Running scriptlet: vim-enhanced-2:8.0.1763-13.el8.x86_64                  5/5 
+  Running scriptlet: vim-common-2:8.0.1763-13.el8.x86_64                    5/5 
+  Verifying        : gpm-libs-1.20.7-15.el8.x86_64                          1/5 
+  Verifying        : vim-common-2:8.0.1763-13.el8.x86_64                    2/5 
+  Verifying        : vim-enhanced-2:8.0.1763-13.el8.x86_64                  3/5 
+  Verifying        : vim-filesystem-2:8.0.1763-13.el8.noarch                4/5 
+  Verifying        : which-2.21-12.el8.x86_64                               5/5 
+
+Installed:
+  gpm-libs-1.20.7-15.el8.x86_64         vim-common-2:8.0.1763-13.el8.x86_64    
+  vim-enhanced-2:8.0.1763-13.el8.x86_64 vim-filesystem-2:8.0.1763-13.el8.noarch
+  which-2.21-12.el8.x86_64             
+
+Complete!
+Removing intermediate container 57607efaf602
+ ---> 7d2341d0a730
+Step 6/10 : RUN yum -y install net-tools
+ ---> Running in 9651e150aa41
+Last metadata expiration check: 0:00:30 ago on Thu Aug 20 13:00:15 2020.
+Dependencies resolved.
+================================================================================
+ Package         Architecture Version                        Repository    Size
+================================================================================
+Installing:
+ net-tools       x86_64       2.0-0.51.20160912git.el8       BaseOS       323 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 323 k
+Installed size: 1.0 M
+Downloading Packages:
+net-tools-2.0-0.51.20160912git.el8.x86_64.rpm    78 kB/s | 323 kB     00:04    
+--------------------------------------------------------------------------------
+Total                                            48 kB/s | 323 kB     00:06     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : net-tools-2.0-0.51.20160912git.el8.x86_64              1/1 
+  Running scriptlet: net-tools-2.0-0.51.20160912git.el8.x86_64              1/1 
+  Verifying        : net-tools-2.0-0.51.20160912git.el8.x86_64              1/1 
+
+Installed:
+  net-tools-2.0-0.51.20160912git.el8.x86_64                                     
+
+Complete!
+Removing intermediate container 9651e150aa41
+ ---> da64f253768f
+Step 7/10 : EXPOSE 80
+ ---> Running in edf29f26ef29
+Removing intermediate container edf29f26ef29
+ ---> 90c7d20383d7
+Step 8/10 : CMD echo $MYPATH
+ ---> Running in d6d6ed7b9e00
+Removing intermediate container d6d6ed7b9e00
+ ---> 6c0f60e6f12c
+Step 9/10 : CMD echo "success -------------------"
+ ---> Running in 9f27f10f41a8
+Removing intermediate container 9f27f10f41a8
+ ---> c958155372f9
+Step 10/10 : CMD /bin/bash
+ ---> Running in ed74d9942c44
+Removing intermediate container ed74d9942c44
+ ---> df3ce2fbcd2d
+Successfully built df3ce2fbcd2d
+Successfully tagged mycentos:1.0
+[root@docker1 mydockerfile]# 
+```
 
 ### 4.2.3 运行
+```bash
+[root@docker1 mydockerfile]# docker ps     # 查看运行的 docker 容器
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+[root@docker1 mydockerfile]# docker run -it mycentos:1.0     # 运行 mycentos 镜像
+[root@4a36745df179 local]# pwd    # 查看进入mycentos容器的落脚点
+/usr/local
+[root@4a36745df179 local]# ifconfig   # 有了ifconfig命令
+eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+        inet 172.17.0.2  netmask 255.255.0.0  broadcast 172.17.255.255
+        ether 02:42:ac:11:00:02  txqueuelen 0  (Ethernet)
+        RX packets 8  bytes 656 (656.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
+        inet 127.0.0.1  netmask 255.0.0.0
+        loop  txqueuelen 1000  (Local Loopback)
+        RX packets 0  bytes 0 (0.0 B)
+        RX errors 0  dropped 0  overruns 0  frame 0
+        TX packets 0  bytes 0 (0.0 B)
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+
+[root@4a36745df179 local]# vim test.txt  # 有了 vim 领命
+[root@4a36745df179 local]# 
+```
 
 ### 4.2.4 列出镜像的变更历史
+```bash
+[root@docker1 mydockerfile]# docker history mycentos:1.0
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+df3ce2fbcd2d        3 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "/bin…   0B                  
+c958155372f9        3 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "echo…   0B                  
+6c0f60e6f12c        3 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "echo…   0B                  
+90c7d20383d7        3 minutes ago       /bin/sh -c #(nop)  EXPOSE 80                    0B                  
+da64f253768f        3 minutes ago       /bin/sh -c yum -y install net-tools             22.7MB              
+7d2341d0a730        3 minutes ago       /bin/sh -c yum -y install vim                   57.2MB              
+fdb88d50c8fd        5 minutes ago       /bin/sh -c #(nop) WORKDIR /usr/local            0B                  
+73a52e0b7fd7        5 minutes ago       /bin/sh -c #(nop)  ENV MYPATH=/usr/local        0B                  
+d5cb61601813        5 minutes ago       /bin/sh -c #(nop)  MAINTAINER kino<rmkino@16…   0B                  
+831691599b88        2 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
+<missing>           2 months ago        /bin/sh -c #(nop)  LABEL org.label-schema.sc…   0B                  
+<missing>           2 months ago        /bin/sh -c #(nop) ADD file:84700c11fcc969ac0…   215MB
+```
 
 
 
+## 4.3 `CMD/ENTRYPOINT` 指令的镜像案例
+说明: 这两个命令都是 指定一个容器启动时要运行的命令.
 
-## 4.3 CMD/ENTRYPOINT 镜像案例
+### 4.3.1 `CMD` 命令
+Dockerfile 中可以有多个 CMD 指令, 但只有最后一个生效, CMD 会被 docker run 之后的参数替换
+```bash
+[root@docker1 mydockerfile]# docker run -it mycentos:1.0 ls -l
+total 0
+drwxr-xr-x. 2 root root  6 May 11  2019 bin
+drwxr-xr-x. 2 root root  6 May 11  2019 etc
+drwxr-xr-x. 2 root root  6 May 11  2019 games
+drwxr-xr-x. 2 root root  6 May 11  2019 include
+drwxr-xr-x. 2 root root  6 May 11  2019 lib
+drwxr-xr-x. 2 root root  6 May 11  2019 lib64
+drwxr-xr-x. 2 root root  6 May 11  2019 libexec
+drwxr-xr-x. 2 root root  6 May 11  2019 sbin
+drwxr-xr-x. 5 root root 49 Jun 11 02:35 share
+drwxr-xr-x. 2 root root  6 May 11  2019 src
+[root@docker1 mydockerfile]# 
+```
 
+### 4.3.2 `ENTRYPOINT` 命令
+docker run 之后的参数会被当做参数传递给 ENTRYPOINT, 之后形成新的命令组合
+ 
+案例:
+
+1. 制作 CMD 版可以查询 IP 信息的容器
+```bash
+[root@docker1 mydockerfile]# vim cmd-docker-file
+FROM centos
+RUN yum -y install curl
+CMD ["curl", "-s", "http://ip.cn"]
+
+[root@docker1 mydockerfile]# docker build -f cmd-docker-file -t myip .
+Sending build context to Docker daemon  3.072kB
+Step 1/3 : FROM centos
+ ---> 831691599b88
+Step 2/3 : RUN yum -y install curl
+ ---> Running in 6599ae71cb81
+CentOS-8 - AppStream                            3.5 MB/s | 5.8 MB     00:01    
+CentOS-8 - Base                                 424 kB/s | 2.2 MB     00:05    
+CentOS-8 - Extras                               2.0 kB/s | 7.3 kB     00:03    
+Package curl-7.61.1-12.el8.x86_64 is already installed.
+Dependencies resolved.
+Nothing to do.
+Complete!
+Removing intermediate container 6599ae71cb81
+ ---> ea7dc0f87961
+Step 3/3 : CMD [ "curl", "-s", "http://ip.cn" ]
+ ---> Running in c12ebb27deeb
+Removing intermediate container c12ebb27deeb
+ ---> 2e374efb99b6
+Successfully built 2e374efb99b6
+Successfully tagged myip:latest
+
+[root@docker1 mydockerfile]# docker run myip
+当前 IP: 106.23.64.10 来自: 深圳市 电信
+
+[root@docker1 mydockerfile]# docker run myip -l
+ERROR ....
+```
+
+2. 制作 ENTRYPOINT 版可以查询 IP 信息的容器
+我们可以看到可执行文件找不到的报错，executable file not found。
+
+之前我们说过，跟在镜像名后面的是 command，运行时会替换 CMD 的默认值。
+
+因此这里的 -i 替换了原来的 CMD，而不是添加在原来的 curl -s http://ip.cn 后面。而 -i 根本不是命令，所以自然找不到。
+ 
+那么如果我们希望加入 -i 这参数，我们就必须重新完整的输入这个命令: 
+```bash
+$ docker run myip curl -s http://ip.cn -i
+``` 
+
+```bash
+FROM centos
+RUN yum install -y curl
+ENTRYPOINT [ "curl", "-s", "http://ip.cn" ]
+
+[root@docker1 mydockerfile]# docker run myip 
+当前 IP: 106.23.64.10 来自: 深圳市 电信
+
+[root@docker1 mydockerfile]# docker run myip -i
+HTTP/1.1 403 Forbidden
+Date: Thu, 20 Aug 2020 13:23:56 GMT
+Content-Type: text/plain; charset=UTF-8
+Content-Length: 16
+Connection: keep-alive
+X-Frame-Options: SAMEORIGIN
+Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+Expires: Thu, 01 Jan 1970 00:00:01 GMT
+Set-Cookie: __cfduid=d142a502609d3d52cd0a2c7bdb4b4eb1d1597929836; expires=Sat, 19-Sep-20 13:23:56 GMT; path=/; domain=.ip.cn; HttpOnly; SameSite=Lax
+cf-request-id: 04ada368710000e7e926a93200000001
+Server: cloudflare
+CF-RAY: 5c5c6e871cb2e7e9-LAX
+alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+
+当前 IP: 106.23.64.10 来自: 深圳市 电信
+```
 
 ## 4.4 自定义 tomcat 镜像
 
