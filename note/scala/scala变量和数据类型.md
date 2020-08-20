@@ -13,13 +13,14 @@
 # 一、注释
 和 Java 的三种注释一样
 ```java
-// ①  
+第一种: // 
+第二种:
 /*
-②
+ *
  */
-
+第三种:
 /**
-  * ③
+  * 
   */
 ```
 ---
@@ -48,25 +49,23 @@ $a		 // ok , 但不要让scala的标识符出现$,因为scala编译器会使用$
 ```
 ---
 # 三、 Scala关键字（39个）
-•	package, import, class, <font color='red'>object, trait</font>, extends, <font color='red'>with</font>, type, for
-•	private, protected, abstract, <font color='red'>sealed</font>, final,<font color='red'> implicit</font>, lazy, override
-•	try, catch, finally, throw 
-•	if, else,<font color='red'> match</font>, case, do, while, for, return, <font color='red'>yield</font>
-•	<font color='red'>def, val, var </font>
-•	this, super
-•	new
-•	true, false, null
+- package, import, class, <font color='red'>object, trait</font>, extends, <font color='red'>with</font>, type, for
+- private, protected, abstract, <font color='red'>sealed</font>, final,<font color='red'> implicit</font>, lazy, override
+- try, catch, finally, throw 
+- if, else,<font color='red'> match</font>, case, do, while, for, return, <font color='red'>yield</font>
+- <font color='red'>def, val, var </font>
+- this, super
+- new
+- true, false, null
 
 ---
 # 四、变量
-基本语法：
-`var | val 变量名 [: 变量类型] = 变量值`
-
+基本语法: `var | val 变量名 [: 变量类型] = 变量值`
 - var: 变量, val: 常量, 初始化后不可更改
-- 说明：在Scala中声明一个变量时，可以不指定类型，编译器根据值确定
-- 声明变量时，类型可以省略（编译器自动推导，即类型推导）
-- 类型确定后，就不能修改，说明Scala是强数据类型语言。
-- 变量声明时，需要初始值
+- 说明: 在Scala中声明一个变量时, 可以不指定类型, 编译器根据值确定
+- 声明变量时, 类型可以省略（编译器自动推导, 即类型推导）
+- 类型确定后, 就不能修改, 说明Scala是强数据类型语言.
+- 变量声明时, 需要初始值
 ```java
 package com.kino.chapter03
 
