@@ -101,7 +101,7 @@
 <details>
 <summary>Scala</summary>
 
-* [scala 模式匹配](note/scala/scala模式匹配match.md)
+* [scala 模式匹配](note/scala/scala模式匹配match-1.md)
 * [scala 隐式转换](note/scala/scala隐式转换.md)
 * [scala 的排序](note/scala/scala的排序.md)
 * [scala 集合的 map 映射、高阶函数使用、集合的压平、 集合的过滤、集合的简化、集合的折叠、集合的扫描、集合的拉链、集合的迭代器、集合的分组](note/scala/scala集合的map映射等.md)
