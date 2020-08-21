@@ -191,6 +191,7 @@
 * [Docker 镜像](note/docker/Docker镜像.md)
 * [Docker 容器数据卷](note/docker/Docker容器数据卷.md)
 * [DockerFile 解析](note/docker/DockerFile解析.md)
+* [Docker 常用安装](note/docker/Docker常用安装.md)
 </details>
 
 
