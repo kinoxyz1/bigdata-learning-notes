@@ -19,7 +19,7 @@
     <select />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="">
+    <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="提交笔记">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/note/docker/DockerFile解析.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/docker/DockerFile解析.md" afterDir="false" />
     </list>
@@ -27,6 +27,9 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CodeStyleSettingsInfer">
+    <option name="done" value="true" />
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="testRunner" value="GRADLE" />
@@ -63,6 +66,9 @@
     <option name="jreName" value="1.8" />
     <option name="vmOptions" value="-DarchetypeCatalog=internal" />
   </component>
+  <component name="ProjectCodeStyleSettingsMigration">
+    <option name="version" value="1" />
+  </component>
   <component name="ProjectConfigurationFiles">
     <option name="files">
       <list>
@@ -74,11 +80,18 @@
       </list>
     </option>
   </component>
+  <component name="ProjectId" id="1fO7t0d1XledYpD1cutXIPWsf7x" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
   <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="E:/project-file/hp-vehicle-algorithm-buck" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -257,7 +270,77 @@
       <option name="project" value="LOCAL" />
       <updated>1591905751432</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="提交笔记">
+      <created>1596028250964</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1596028250964</updated>
+    </task>
+    <task id="LOCAL-00023" summary="提交笔记">
+      <created>1596028256931</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1596028256931</updated>
+    </task>
+    <task id="LOCAL-00024" summary="提交笔记">
+      <created>1597323981582</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1597323981582</updated>
+    </task>
+    <task id="LOCAL-00025" summary="提交笔记">
+      <created>1597384240541</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1597384240541</updated>
+    </task>
+    <task id="LOCAL-00026" summary="提交笔记">
+      <created>1597384744270</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1597384744270</updated>
+    </task>
+    <task id="LOCAL-00027" summary="提交笔记">
+      <created>1597384852617</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1597384852617</updated>
+    </task>
+    <task id="LOCAL-00028" summary="提交笔记">
+      <created>1597384904578</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1597384904578</updated>
+    </task>
+    <task id="LOCAL-00029" summary="提交笔记">
+      <created>1597385162820</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1597385162820</updated>
+    </task>
+    <task id="LOCAL-00030" summary="提交笔记">
+      <created>1597479443477</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1597479443477</updated>
+    </task>
+    <task id="LOCAL-00031" summary="提交笔记">
+      <created>1597483503501</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1597483503501</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
@@ -267,6 +350,15 @@
     <option name="version" value="1" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
@@ -277,14 +369,31 @@
     <option name="LAST_COMMIT_MESSAGE" value="提交笔记" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2" timestamp="1596014231349">
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1598005811416">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824/-1920.0.1536.824@0.0.1536.824" timestamp="1596014231349" />
-    <state x="1155" y="82" width="670" height="676" key="search.everywhere.popup" timestamp="1596027472532">
+    <state x="549" y="167" key="FileChooserDialogImpl/1920.0.1536.824/0.0.1536.824@0.0.1536.824" timestamp="1598005811416" />
+    <state x="528" y="132" key="RollbackChangesDialog" timestamp="1597991568174">
       <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="528" y="132" key="RollbackChangesDialog/1920.0.1536.824/0.0.1536.824@0.0.1536.824" timestamp="1597991568174" />
+    <state x="2281" y="145" key="Vcs.Push.Dialog.v2" timestamp="1597483510878">
+      <screen x="1920" y="0" width="1536" height="824" />
+    </state>
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824/-1920.0.1536.824@0.0.1536.824" timestamp="1596077516472" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/0.0.1536.824@0.0.1536.824" timestamp="1597385168863" />
+    <state x="361" y="145" key="Vcs.Push.Dialog.v2/1920.0.1536.824/0.0.1536.824@0.0.1536.824" timestamp="1597323989960" />
+    <state x="2281" y="145" key="Vcs.Push.Dialog.v2/1920.0.1536.824/0.0.1536.824@1920.0.1536.824" timestamp="1597483510878" />
+    <state x="443" y="199" key="git4idea.merge.GitPullDialog" timestamp="1597991614713">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="443" y="199" key="git4idea.merge.GitPullDialog/1920.0.1536.824/0.0.1536.824@0.0.1536.824" timestamp="1597991614713" />
+    <state x="3074" y="82" width="672" height="676" key="search.everywhere.popup" timestamp="1597477597199">
+      <screen x="1920" y="0" width="1536" height="824" />
     </state>
     <state x="1155" y="82" width="670" height="676" key="search.everywhere.popup/0.0.1536.824/-1920.0.1536.824@0.0.1536.824" timestamp="1596027472532" />
+    <state x="1154" y="82" width="672" height="676" key="search.everywhere.popup/0.0.1536.824@0.0.1536.824" timestamp="1597384416025" />
+    <state x="3074" y="82" width="672" height="676" key="search.everywhere.popup/1920.0.1536.824/0.0.1536.824@1920.0.1536.824" timestamp="1597477597199" />
   </component>
   <component name="masterDetails">
     <states>

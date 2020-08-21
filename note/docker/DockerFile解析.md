@@ -335,80 +335,241 @@ docker run 之后的参数会被当做参数传递给 ENTRYPOINT, 之后形成�
 案例:
 
 1. 制作 CMD 版可以查询 IP 信息的容器
-```bash
-[root@docker1 mydockerfile]# vim cmd-docker-file
-FROM centos
-RUN yum -y install curl
-CMD ["curl", "-s", "http://ip.cn"]
-
-[root@docker1 mydockerfile]# docker build -f cmd-docker-file -t myip .
-Sending build context to Docker daemon  3.072kB
-Step 1/3 : FROM centos
- ---> 831691599b88
-Step 2/3 : RUN yum -y install curl
- ---> Running in 6599ae71cb81
-CentOS-8 - AppStream                            3.5 MB/s | 5.8 MB     00:01    
-CentOS-8 - Base                                 424 kB/s | 2.2 MB     00:05    
-CentOS-8 - Extras                               2.0 kB/s | 7.3 kB     00:03    
-Package curl-7.61.1-12.el8.x86_64 is already installed.
-Dependencies resolved.
-Nothing to do.
-Complete!
-Removing intermediate container 6599ae71cb81
- ---> ea7dc0f87961
-Step 3/3 : CMD [ "curl", "-s", "http://ip.cn" ]
- ---> Running in c12ebb27deeb
-Removing intermediate container c12ebb27deeb
- ---> 2e374efb99b6
-Successfully built 2e374efb99b6
-Successfully tagged myip:latest
-
-[root@docker1 mydockerfile]# docker run myip
-当前 IP: 106.23.64.10 来自: 深圳市 电信
-
-[root@docker1 mydockerfile]# docker run myip -l
-ERROR ....
-```
+    ```bash
+    [root@docker1 mydockerfile]# vim cmd-docker-file
+    FROM centos
+    RUN yum -y install curl
+    CMD ["curl", "-s", "http://ip.cn"]
+    
+    [root@docker1 mydockerfile]# docker build -f cmd-docker-file -t myip .
+    Sending build context to Docker daemon  3.072kB
+    Step 1/3 : FROM centos
+     ---> 831691599b88
+    Step 2/3 : RUN yum -y install curl
+     ---> Running in 6599ae71cb81
+    CentOS-8 - AppStream                            3.5 MB/s | 5.8 MB     00:01    
+    CentOS-8 - Base                                 424 kB/s | 2.2 MB     00:05    
+    CentOS-8 - Extras                               2.0 kB/s | 7.3 kB     00:03    
+    Package curl-7.61.1-12.el8.x86_64 is already installed.
+    Dependencies resolved.
+    Nothing to do.
+    Complete!
+    Removing intermediate container 6599ae71cb81
+     ---> ea7dc0f87961
+    Step 3/3 : CMD [ "curl", "-s", "http://ip.cn" ]
+     ---> Running in c12ebb27deeb
+    Removing intermediate container c12ebb27deeb
+     ---> 2e374efb99b6
+    Successfully built 2e374efb99b6
+    Successfully tagged myip:latest
+    
+    [root@docker1 mydockerfile]# docker run myip
+    当前IP: 116.24.66.207 广东省深圳市 电信
+    
+    [root@docker1 mydockerfile]# docker run myip -l
+    ERROR ....
+    ```
 
 2. 制作 ENTRYPOINT 版可以查询 IP 信息的容器
-我们可以看到可执行文件找不到的报错，executable file not found。
 
-之前我们说过，跟在镜像名后面的是 command，运行时会替换 CMD 的默认值。
+    我们可以看到可执行文件找不到的报错，executable file not found。
 
-因此这里的 -i 替换了原来的 CMD，而不是添加在原来的 curl -s http://ip.cn 后面。而 -i 根本不是命令，所以自然找不到。
+    之前我们说过，跟在镜像名后面的是 command，运行时会替换 CMD 的默认值。
+
+    因此这里的 -i 替换了原来的 CMD，而不是添加在原来的 curl -s http://ip.cn 后面。而 -i 根本不是命令，所以自然找不到。
  
-那么如果我们希望加入 -i 这参数，我们就必须重新完整的输入这个命令: 
-```bash
-$ docker run myip curl -s http://ip.cn -i
-``` 
-
-```bash
-FROM centos
-RUN yum install -y curl
-ENTRYPOINT [ "curl", "-s", "http://ip.cn" ]
-
-[root@docker1 mydockerfile]# docker run myip 
-当前 IP: 106.23.64.10 来自: 深圳市 电信
-
-[root@docker1 mydockerfile]# docker run myip -i
-HTTP/1.1 403 Forbidden
-Date: Thu, 20 Aug 2020 13:23:56 GMT
-Content-Type: text/plain; charset=UTF-8
-Content-Length: 16
-Connection: keep-alive
-X-Frame-Options: SAMEORIGIN
-Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
-Expires: Thu, 01 Jan 1970 00:00:01 GMT
-Set-Cookie: __cfduid=d142a502609d3d52cd0a2c7bdb4b4eb1d1597929836; expires=Sat, 19-Sep-20 13:23:56 GMT; path=/; domain=.ip.cn; HttpOnly; SameSite=Lax
-cf-request-id: 04ada368710000e7e926a93200000001
-Server: cloudflare
-CF-RAY: 5c5c6e871cb2e7e9-LAX
-alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
-
-当前 IP: 106.23.64.10 来自: 深圳市 电信
-```
+    那么如果我们希望加入 -i 这参数，我们就必须重新完整的输入这个命令: 
+    ```bash
+    $ docker run myip curl -s http://ip.cn -i
+    ``` 
+    
+    ```bash
+    FROM centos
+    RUN yum install -y curl
+    ENTRYPOINT [ "curl", "-s", "http://ip.cn" ]
+    
+    [root@docker1 mydockerfile]# docker run myip 
+    当前IP: 116.24.66.207 广东省深圳市 电信
+    
+    [root@docker1 mydockerfile]# docker run myip -i
+    HTTP/1.1 403 Forbidden
+    Date: Thu, 20 Aug 2020 13:23:56 GMT
+    Content-Type: text/plain; charset=UTF-8
+    Content-Length: 16
+    Connection: keep-alive
+    X-Frame-Options: SAMEORIGIN
+    Cache-Control: private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+    Expires: Thu, 01 Jan 1970 00:00:01 GMT
+    Set-Cookie: __cfduid=d142a502609d3d52cd0a2c7bdb4b4eb1d1597929836; expires=Sat, 19-Sep-20 13:23:56 GMT; path=/; domain=.ip.cn; HttpOnly; SameSite=Lax
+    cf-request-id: 04ada368710000e7e926a93200000001
+    Server: cloudflare
+    CF-RAY: 5c5c6e871cb2e7e9-LAX
+    alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+    
+    当前IP: 116.24.66.207 广东省深圳市 电信
+    ```
 
 ## 4.4 自定义 tomcat 镜像
+① 
+```bash
+[root@docker1 /]# mkdir -p /root/mydocker/tomcat9
+[root@docker1 /]# cd /root/mydocker/tomcat9
+[root@docker1 tomcat9]# pwd
+/root/mydocker/tomcat9
+```
+② 将 tomcat 和 jdk 上传到 `/root/mydocker/tomcat9`
+③ 编辑Dockerfile
+```bash
+[root@docker1 tomcat9]# vim Dockerfile
+FROM centos
+MAINTAINER kino<rmkino@163.com>
+
+#把宿主机当前上下文的 a.txt 拷贝到容器 /usr/local 目录下
+COPY a.txt /usr/local/container.txt
+
+#把 Java 与 tomcat 添加到容器中
+ADD jdk-8u131-linux-x64.tar.gz /usr/local
+ADD apache-tomcat-9.0.37.tar.gz /usr/local
+
+#安装 vim 编辑器
+RUN yun -y install vim
+
+#设置工作访问时候的 WORKDIR 路径
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+
+#配置Java与tomcat环境变量
+ENV JAVA_HOME /usr/local/jdk_1.8.0_131
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.37
+ENV CATALINA_BASE /usr/local/apache-tomcat-9.0.37
+ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+
+#容器运行时监听的端口
+EXPOSE 8080
+
+#启动时运行 tomcat
+# ENTRYPOINT ["/usr/local/apache-tomcat-9.0.37/bin/startup.sh" ]
+# CMD ["/usr/local/apache-tomcat-9.0.37/bin/catalina.sh","run"]
+CMD /usr/local/apache-tomcat-9.0.8/bin/startup.sh && tail -F /usr/local/apache-tomcat-9.0.8/bin/logs/catalina.out
 
 
+
+[root@docker1 tomcat9]# ll
+总用量 192148
+-rw-r--r--. 1 root root  11211292 8月  21 19:51 apache-tomcat-9.0.37.tar.gz
+-rw-r--r--. 1 root root         0 8月  21 19:49 a.txt
+-rw-r--r--. 1 root root      1027 8月  21 19:59 Dockerfile
+-rw-r--r--. 1 root root 185540433 8月   6 14:00 jdk-8u131-linux-x64.tar.gz
+```
+④ 构建
+```bash
+[root@docker1 tomcat9]# docker build -t mytoncat9 .
+Sending build context to Docker daemon  196.8MB
+Step 1/14 : FROM         centos
+ ---> 0d120b6ccaa8
+Step 2/14 : MAINTAINER    kino<kinomin@136.com>
+ ---> Using cache
+ ---> a2bb8a5a0e09
+Step 3/14 : COPY a.txt /usr/local/container.txt
+ ---> Using cache
+ ---> 6c713a1ba244
+Step 4/14 : ADD jdk-8u131-linux-x64.tar.gz /usr/local
+ ---> Using cache
+ ---> 7df7b6b7a599
+Step 5/14 : ADD apache-tomcat-9.0.37.tar.gz /usr/local
+ ---> Using cache
+ ---> aa279706232f
+Step 6/14 : ENV MYPATH /usr/local
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 8955477dfd1c
+Removing intermediate container 8955477dfd1c
+ ---> 2c17a2cacae6
+Step 7/14 : WORKDIR $MYPATH
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 12519286549c
+Removing intermediate container 12519286549c
+ ---> f08854fc0b12
+Step 8/14 : ENV JAVA_HOME /usr/local/jdk_1.8.0_131
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 9a9993a16e82
+Removing intermediate container 9a9993a16e82
+ ---> 17a52e728bcf
+Step 9/14 : ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in fe0cdec1822e
+Removing intermediate container fe0cdec1822e
+ ---> 011b1387d0c1
+Step 10/14 : ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.37
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 27971279a69a
+Removing intermediate container 27971279a69a
+ ---> 18237e66338c
+Step 11/14 : ENV CATALINA_BASE /usr/local/apache-tomcat-9.0.37
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 3277c511bf8f
+Removing intermediate container 3277c511bf8f
+ ---> 5c974bcde2b7
+Step 12/14 : ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 94d981f3f551
+Removing intermediate container 94d981f3f551
+ ---> 8b16d898b7c1
+Step 13/14 : EXPOSE 8080
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 7b36eb8045c8
+Removing intermediate container 7b36eb8045c8
+ ---> b009a3d4e4ae
+Step 14/14 : CMD /usr/local/apache-tomcat-9.0.37/bin/startup.sh && tail -F /usr/local/apache-tomcat-9.0.37/bin/logs/catalina.out
+ ---> [Warning] IPv4 forwarding is disabled. Networking will not work.
+ ---> Running in 7fe5440b2497
+Removing intermediate container 7fe5440b2497
+ ---> c27957e5edec
+Successfully built c27957e5edec
+Successfully tagged mytoncat9:latest
+```
+
+⑤ 运行
+```bash
+[root@docker1 tomcat9]# docker run -d -p 9080:8080 --name tomcat9 -v /root/mydocker/tomcat9/mydockerfile/tomcat9/test:/usr/local/apache-tomcat-9.0.8/webapps/test -v /root/mydocker/tomcat9/mydockerfile/tomcat9/tomcat9logs/:/usr/local/apache-tomcat-9.0.8/logs --privileged=true kinotomcat9
+455a90b66d8843c34beb3130ef656954baf5e42745566527bcc4004e69115a50
+```
+
+⑥ 校验
+![mytomcat9](../../img/docker/dockerfile/mytomcat9.png)
+
+⑦ 发布web服务
+```bash
+[root@d8924379fd1a test]# vim a.jsp
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Insert title here</title>
+  </head>
+  <body>
+     -----------welcome------------
+     <%="i am in docker tomcat self "%>
+     <br>
+     <br>
+     <% System.out.println("=============docker tomcat self");%>
+   </body>
+</html>
+
+[root@d8924379fd1a test]# mkdir WEB-INF
+[root@d8924379fd1a test]# cd WEB-INF
+[root@d8924379fd1a test]# vim web.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://java.sun.com/xml/ns/javaee"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+  id="WebApp_ID" version="2.5">
+  
+  <display-name>test</display-name>
+ 
+</web-app>
+```
+![web](../../img/docker/dockerfile/web.png)
 # 五、总结
+![dockerfile总结](../../img/docker/dockerfile/dockerfile总结.png)
