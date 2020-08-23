@@ -103,8 +103,9 @@
 
 * [1. scala 变量和数据类型](note/scala/scala变量和数据类型.md)
 * [2. scala 流程控制](note/scala/scala流程控制.md)
-* [3. scala 高阶函数(高阶算子)](note/scala/scala高阶函数(高阶算子).md)
-* [4. scala 闭包和柯里化](note/scala/scala闭包和柯里化.md)
+* [3. scala 函数之-语法](note/scala/scala函数之-语法.md)
+* [3. scala 函数之-高阶函数(高阶算子)](note/scala/scala函数之-高阶函数(高阶算子).md)
+* [4. scala 函数之-闭包和柯里化](note/scala/scala函数之-闭包和柯里化.md)
 * [5. scala 包声明和包导入](note/scala/scala包声明和包导入.md)
 * [6. scala 类和对象](note/scala/scala类和对象.md)
 * [7. scala 给类取别名](note/scala/scala给类取别名.md)
