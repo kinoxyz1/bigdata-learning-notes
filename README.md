@@ -193,6 +193,7 @@
 * [Docker 容器数据卷](note/docker/Docker容器数据卷.md)
 * [DockerFile 解析](note/docker/DockerFile解析.md)
 * [Docker 常用安装](note/docker/Docker常用安装.md)
+* [Docker 本地镜像发布到阿里云](note/docker/Docker本地镜像发布到阿里云.md)
 </details>
 
 
