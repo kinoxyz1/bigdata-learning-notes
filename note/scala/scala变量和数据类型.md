@@ -11,17 +11,23 @@
 
 
 # 一、注释
-和 Java 的三种注释一样
-```java
-第一种: // 
-第二种:
-/*
- *
+单行注释: 
+```scala
+  // 单行注释
+```
+
+多行注释: 
+```scala
+/* 
+   多行注释 
  */
-第三种:
-/**
-  * 
-  */
+```
+
+文本注释: 
+```scala
+/*
+ * 文本注释
+ */ 
 ```
 ---
 # 二、标识符的命令规范
@@ -33,8 +39,8 @@ Scala中的标识符声明，基本和Java是一致的，但是细节上会有�
 
 ```java
 hello    // ok
-hello12 // ok
-1hello  // error
+hello12  // ok
+1hello   // error
 h-b      // error
 x h      // error
 h_4      // ok
@@ -128,17 +134,18 @@ object TestVar {
 # 六、数据类型关系
 ![数据类型关系](../../img/scala/scala变量和数据类型/20190904181727405.png)
 - 特殊说明
-① AnyVal 下的 Unit ：表示没有返回值，和java中的 void 类似
-	```java
+
+  ① `AnyVal` 下的 `Unit`: 表示没有返回值, 和java中的 void 类似
+	```scala
 	def say(): Unit = {
 		println("你好")
 	}
 	```
 
-	② AnyRef 下的 Null： 是一个类型，该类型是引用类型的子类，所有的引用类型都可以声明为 null，值类型则不可以声明为null
+	② `AnyRef` 下的 `Null`: 是一个类型, 该类型是引用类型的子类, 所有的引用类型都可以声明为 null, 值类型则不可以声明为null
 	![AnyRef](../../img/scala/scala变量和数据类型/20190904183249329.png)
 	③ Nothing： 是所有类型的子类，作用是帮助 scala 做**类型推导**
-	```JAVA
+	```scala
 	object TestSpecialType {
 	
 	    def main(args: Array[String]): Unit = {
