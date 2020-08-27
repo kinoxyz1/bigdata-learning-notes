@@ -243,7 +243,12 @@
 * [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
   </details>  
   
+## 科学上网
+<details>
+<summary>科学上网</summary>
 
+* [科学上网指南](note/科学上网/科学上网指南.md)
+  </details>  
 
 ---
 ## 欢迎加我微信一起交流
