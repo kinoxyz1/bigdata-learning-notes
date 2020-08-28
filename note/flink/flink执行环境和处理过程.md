@@ -10,7 +10,7 @@ Flink 流处理过程
 
 # 一、Flink 执行环境
 ## 1.1 `Environment`
-###1.1.1 `getExecutionEnvironment`
+### 1.1.1 `getExecutionEnvironment`
   创建一个执行环境, 表示当前执行程序的上下文. 如果程序是独立调用的, 则此方法返回本地执行环境; 如果从命令行客户端调用程序提交到集群, 则此方法返回此集群的执行环境, 也就是说, `getExecutionEnvironment` 会根据查询运行的方式决定返回什么样的运行环境, 是最常用的一种创建执行环境的方式.
   
 ```scala
