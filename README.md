@@ -152,7 +152,7 @@
 
 * [Flink 简介](note/flink/flink简介.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
-* [Flink 部署模式](note/flink/flink部署模式.md)
+* [Flink 部署模式](note/flink/flink部署和运行.md)
 </details>
 
 
