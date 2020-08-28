@@ -152,7 +152,16 @@
 
 * [Flink 简介](note/flink/flink简介.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
-* [Flink 部署模式](note/flink/flink部署和运行.md)
+* [Flink 部署和运行](note/flink/flink部署和运行.md)
+* [Flink 运行时架构之运行时组件](note/flink/flink运行时架构之运行时组件.md)
+* [Flink 运行时架构之作业提交流程](note/flink/flink运行时架构之作业提交流程.md)
+* [Flink 运行时架构之任务调度原理(一)](note/flink/flink运行时架构之任务调度原理(一).md)
+* [Flink 运行时架构之任务调度原理(二)](note/flink/flink运行时架构之任务调度原理(二).md)
+* [Flink 运行时架构之任务调度原理(三)](note/flink/flink运行时架构之任务调度原理(三).md)
+* [Flink 运行时架构之任务调度原理(四)](note/flink/flink运行时架构之任务调度原理(四).md)
+* [Flink 运行时架构之任务调度原理(五)](note/flink/flink运行时架构之任务调度原理(五).md)
+* [Flink 执行环境和处理过程](note/flink/flink执行环境和处理过程.md)
+* [Flink Source(一)-从集合和文件读取数据](note/flink/flinkSource(一)-从集合和文件读取数据.md)
 </details>
 
 
