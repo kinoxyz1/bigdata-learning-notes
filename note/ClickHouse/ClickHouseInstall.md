@@ -1,5 +1,24 @@
 
 
+* [一、安装](#%E4%B8%80%E5%AE%89%E8%A3%85)
+  * [1\.1 网址](#11-%E7%BD%91%E5%9D%80)
+  * [1\.2 本地 RPM 包安装](#12-%E6%9C%AC%E5%9C%B0-rpm-%E5%8C%85%E5%AE%89%E8%A3%85)
+    * [1\.2\.1 上传5个文件(在 \.\./package/ClickHouse/安装包/\* 下)到 /opt/software/](#121-%E4%B8%8A%E4%BC%A05%E4%B8%AA%E6%96%87%E4%BB%B6%E5%9C%A8-packageclickhouse%E5%AE%89%E8%A3%85%E5%8C%85-%E4%B8%8B%E5%88%B0-optsoftware)
+    * [1\.2\.2 分别安装这 5个 rpm文件](#122-%E5%88%86%E5%88%AB%E5%AE%89%E8%A3%85%E8%BF%99-5%E4%B8%AA-rpm%E6%96%87%E4%BB%B6)
+    * [1\.2\.3 启动ClickServer](#123-%E5%90%AF%E5%8A%A8clickserver)
+    * [1\.2\.4 使用 client 连接 server](#124-%E4%BD%BF%E7%94%A8-client-%E8%BF%9E%E6%8E%A5-server)
+  * [1\.3 Yum 安装](#13-yum-%E5%AE%89%E8%A3%85)
+  * [1\.4 启动](#14-%E5%90%AF%E5%8A%A8)
+    * [1\.4\.1 服务端启动](#141-%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%90%AF%E5%8A%A8)
+    * [1\.4\.2 客户端启动](#142-%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%AF%E5%8A%A8)
+  * [1\.5 分布式集群安装](#15-%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4%E5%AE%89%E8%A3%85)
+    * [1\.5\.1 在 kino101, kino102 上面执行之前的所有步骤](#151-%E5%9C%A8-kino101-kino102-%E4%B8%8A%E9%9D%A2%E6%89%A7%E8%A1%8C%E4%B9%8B%E5%89%8D%E7%9A%84%E6%89%80%E6%9C%89%E6%AD%A5%E9%AA%A4)
+    * [1\.5\.2 三台机器修改配置文件config\.xml](#152-%E4%B8%89%E5%8F%B0%E6%9C%BA%E5%99%A8%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6configxml)
+    * [1\.5\.3 在三台机器的 etc 目录下新建 metrika\.xml 文件](#153-%E5%9C%A8%E4%B8%89%E5%8F%B0%E6%9C%BA%E5%99%A8%E7%9A%84-etc-%E7%9B%AE%E5%BD%95%E4%B8%8B%E6%96%B0%E5%BB%BA-metrikaxml-%E6%96%87%E4%BB%B6)
+    * [1\.5\.4 三台机器启动ClickServer](#154-%E4%B8%89%E5%8F%B0%E6%9C%BA%E5%99%A8%E5%90%AF%E5%8A%A8clickserver)
+    
+---
+
 # 一、安装
 ## 1.1 网址
 

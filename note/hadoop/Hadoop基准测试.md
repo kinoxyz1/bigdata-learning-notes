@@ -1,4 +1,12 @@
 
+
+
+* [测试 HDFS 写性能](#%E6%B5%8B%E8%AF%95-hdfs-%E5%86%99%E6%80%A7%E8%83%BD)
+* [测试 HDFS 读性能](#%E6%B5%8B%E8%AF%95-hdfs-%E8%AF%BB%E6%80%A7%E8%83%BD)
+* [删除测试生成数据](#%E5%88%A0%E9%99%A4%E6%B5%8B%E8%AF%95%E7%94%9F%E6%88%90%E6%95%B0%E6%8D%AE)
+* [使用 Sort 程序测评 MapReduce](#%E4%BD%BF%E7%94%A8-sort-%E7%A8%8B%E5%BA%8F%E6%B5%8B%E8%AF%84-mapreduce)
+
+
 ---
 # 测试 HDFS 写性能
 测试内容：向HDFS集群写10个128M的文件

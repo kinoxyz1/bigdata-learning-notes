@@ -1,3 +1,5 @@
+
+
 ```sql
 hive -e "set hive.cli.print.header=true; SELECT * FROM default.s_transit_people_ic_cache " | sed 's/[\t]/,/g'  > outputData.csv
 ```

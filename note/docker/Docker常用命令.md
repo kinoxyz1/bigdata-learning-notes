@@ -1,5 +1,26 @@
 
-
+* [一、帮助命令](#%E4%B8%80%E5%B8%AE%E5%8A%A9%E5%91%BD%E4%BB%A4)
+* [二、镜像命令](#%E4%BA%8C%E9%95%9C%E5%83%8F%E5%91%BD%E4%BB%A4)
+  * [2\.1 docker images: 列出本地镜像。](#21-docker-images-%E5%88%97%E5%87%BA%E6%9C%AC%E5%9C%B0%E9%95%9C%E5%83%8F)
+  * [2\.2 docker search: 从Docker Hub查找镜像](#22-docker-search-%E4%BB%8Edocker-hub%E6%9F%A5%E6%89%BE%E9%95%9C%E5%83%8F)
+  * [2\.3 docker pull: 从镜像仓库中拉取或者更新指定镜像](#23-docker-pull-%E4%BB%8E%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93%E4%B8%AD%E6%8B%89%E5%8F%96%E6%88%96%E8%80%85%E6%9B%B4%E6%96%B0%E6%8C%87%E5%AE%9A%E9%95%9C%E5%83%8F)
+  * [2\.4 docker rmi: 删除本地一个或多少镜像。](#24-docker-rmi-%E5%88%A0%E9%99%A4%E6%9C%AC%E5%9C%B0%E4%B8%80%E4%B8%AA%E6%88%96%E5%A4%9A%E5%B0%91%E9%95%9C%E5%83%8F)
+* [三、容器命令](#%E4%B8%89%E5%AE%B9%E5%99%A8%E5%91%BD%E4%BB%A4)
+  * [3\.1 docker run: 创建一个新的容器并运行一个命令](#31-docker-run-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E6%96%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%B9%B6%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%AA%E5%91%BD%E4%BB%A4)
+  * [3\.2 docker ps: 列出当前所有 正在运行 的容器](#32-docker-ps-%E5%88%97%E5%87%BA%E5%BD%93%E5%89%8D%E6%89%80%E6%9C%89-%E6%AD%A3%E5%9C%A8%E8%BF%90%E8%A1%8C-%E7%9A%84%E5%AE%B9%E5%99%A8)
+  * [3\.3 退出容器](#33-%E9%80%80%E5%87%BA%E5%AE%B9%E5%99%A8)
+  * [3\.4 docker start: 启动容器](#34-docker-start-%E5%90%AF%E5%8A%A8%E5%AE%B9%E5%99%A8)
+  * [3\.5 docker restart: 重启容器](#35-docker-restart-%E9%87%8D%E5%90%AF%E5%AE%B9%E5%99%A8)
+  * [3\.6 docker stop: 停止容器](#36-docker-stop-%E5%81%9C%E6%AD%A2%E5%AE%B9%E5%99%A8)
+  * [3\.7 docker kill: 强制停止容器](#37-docker-kill-%E5%BC%BA%E5%88%B6%E5%81%9C%E6%AD%A2%E5%AE%B9%E5%99%A8)
+  * [3\.8 docker rm: 删除已经停止的容器](#38-docker-rm-%E5%88%A0%E9%99%A4%E5%B7%B2%E7%BB%8F%E5%81%9C%E6%AD%A2%E7%9A%84%E5%AE%B9%E5%99%A8)
+  * [3\.9 docker run \-d: 启动守护式容器(重要)](#39-docker-run--d-%E5%90%AF%E5%8A%A8%E5%AE%88%E6%8A%A4%E5%BC%8F%E5%AE%B9%E5%99%A8%E9%87%8D%E8%A6%81)
+  * [3\.10 docker logs \-ft \-\-tail: 查看容器日志](#310-docker-logs--ft---tail-%E6%9F%A5%E7%9C%8B%E5%AE%B9%E5%99%A8%E6%97%A5%E5%BF%97)
+  * [3\.11 docker top: 查看容器内运行的进程](#311-docker-top-%E6%9F%A5%E7%9C%8B%E5%AE%B9%E5%99%A8%E5%86%85%E8%BF%90%E8%A1%8C%E7%9A%84%E8%BF%9B%E7%A8%8B)
+  * [3\.12 docker inspect: 查看容器内部细节](#312-docker-inspect-%E6%9F%A5%E7%9C%8B%E5%AE%B9%E5%99%A8%E5%86%85%E9%83%A8%E7%BB%86%E8%8A%82)
+  * [3\.13 docker exec \-it 容器ID bashShell: 进入正在运行的容器并以命令交互](#313-docker-exec--it-%E5%AE%B9%E5%99%A8id-bashshell-%E8%BF%9B%E5%85%A5%E6%AD%A3%E5%9C%A8%E8%BF%90%E8%A1%8C%E7%9A%84%E5%AE%B9%E5%99%A8%E5%B9%B6%E4%BB%A5%E5%91%BD%E4%BB%A4%E4%BA%A4%E4%BA%92)
+  * [3\.14 docker cp 容器ID:容器内路径 主机路径: 从容器内拷贝文件到主机上](#314-docker-cp-%E5%AE%B9%E5%99%A8id%E5%AE%B9%E5%99%A8%E5%86%85%E8%B7%AF%E5%BE%84-%E4%B8%BB%E6%9C%BA%E8%B7%AF%E5%BE%84-%E4%BB%8E%E5%AE%B9%E5%99%A8%E5%86%85%E6%8B%B7%E8%B4%9D%E6%96%87%E4%BB%B6%E5%88%B0%E4%B8%BB%E6%9C%BA%E4%B8%8A)
+* [四、常用命令小结:](#%E5%9B%9B%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4%E5%B0%8F%E7%BB%93)
 
 ---
 官方网址: https://www.docker.com/

@@ -1,4 +1,17 @@
 
+
+* [一、环境准备](#%E4%B8%80%E7%8E%AF%E5%A2%83%E5%87%86%E5%A4%87)
+  * [1\.1 准备 Spark 运行环境](#11-%E5%87%86%E5%A4%87-spark-%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83)
+  * [1\.2 准备 Hive 运行环境](#12-%E5%87%86%E5%A4%87-hive-%E8%BF%90%E8%A1%8C%E7%8E%AF%E5%A2%83)
+  * [1\.3 配置好 Spark On Hive 的环境](#13-%E9%85%8D%E7%BD%AE%E5%A5%BD-spark-on-hive-%E7%9A%84%E7%8E%AF%E5%A2%83)
+  * [1\.4 准备 WaterDrop](#14-%E5%87%86%E5%A4%87-waterdrop)
+* [二、配置文件](#%E4%BA%8C%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [2\.1 准备工作](#21-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C)
+* [三、验证结果](#%E4%B8%89%E9%AA%8C%E8%AF%81%E7%BB%93%E6%9E%9C)
+
+---
+
+
 # 一、环境准备
 ## 1.1 准备 Spark 运行环境
 请先[下载Spark](http://spark.apache.org/downloads.html "下载Spark"), Spark版本请选择 >= 2.x.x。下载解压后，不需要做任何配置即可提交Spark deploy-mode = local模式的任务。 如果你期望任务运行在Standalone集群或者Yarn、Mesos集群上，请参考Spark官网的 [Spark部署文档](http://spark.apache.org/docs/latest/cluster-overview.html "Spark部署文档")。

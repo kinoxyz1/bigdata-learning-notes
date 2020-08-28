@@ -1,3 +1,5 @@
+
+
 问题描述: 执行 `kafka-server-stop.sh` 命令后， kafka 进程不会被杀死
 ```bash
 [kino@hadoop103 kafka]$ bin/kafka-server-stop.sh 

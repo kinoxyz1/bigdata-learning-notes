@@ -1,6 +1,18 @@
 
 
 
+* [一、SQL语法](#%E4%B8%80sql%E8%AF%AD%E6%B3%95)
+  * [1\.1 CREATE](#11-create)
+    * [1\.1\.1 CREATE DATABASE](#111-create-database)
+    * [1\.1\.2 CREATE TABLE](#112-create-table)
+  * [1\.2 INSERT INTO](#12-insert-into)
+  * [1\.3 ALTER](#13-alter)
+  * [1\.4 DESCRIBE TABLE](#14-describe-table)
+  * [1\.5 CHECK TABLE](#15-check-table)
+  
+---
+
+
 # 一、SQL语法
 ## 1.1 CREATE
 ### 1.1.1 CREATE DATABASE
