@@ -10,116 +10,72 @@
 ---
 
 # 一、Flink部署 
-## 1.1 Standalone模式
-### 1.1.1 安装
-解压缩  flink-1.11.0-bin-scala_2.11.tgz, 进入conf目录中。
+本次使用单机 Flink 作为环境, 后续会详细介绍 Flink 的三种部署模式
 
-① 修改 flink/conf/flink-conf.yaml 文件:
+## 1.1 下载 Flink 安装包
+http://apache.mirrors.hoobly.com/flink/
 
-![flink-conf.yaml](../../img/flink/flink-conf.yaml.png)
- 
-② 修改 /conf/slave文件：
-
-如果有多台节点则执行
-![fink-slave](../../img/flink/fink-slave.png)
- 
-③ 分发给另外两台机子：
-
-如果有多台节点则执行
+## 解压, 启动 flink 
 ```bash
-scp -r fflink-1.11.0 root@hadoop2:/opt/software
+root@LAPTOP-7SSIH7L3:/opt/flink-1.10.1# bin/start-cluster.sh
+Starting cluster.
+Starting standalonesession daemon on host LAPTOP-7SSIH7L3.
+Starting taskexecutor daemon on host LAPTOP-7SSIH7L3.
+
+root@LAPTOP-7SSIH7L3:/opt/flink-1.10.1# jps
+1413 Jps
+966 StandaloneSessionClusterEntrypoint
+1304 TaskManagerRunner
 ```
- 
-④ 启动：
 
-![启动flink](../../img/flink/启动flink.png)
- 
-访问 http://localhost:8081 可以对flink集群和任务进行监控管理。
-
+在浏览器中输入: http://localhost:8081/
 ![监控管理](../../img/flink/监控管理.png)
 
- 
+## 1.2 提交任务
+![SubmitJob](../../img/flink/Flink部署模式/SubmitJob.png)
 
-### 1.1.2 提交任务
+## 1.3 运行任务
 
-① 准备数据文件
+![RunJob](../../img/flink/Flink部署模式/RunJob.png)
 
-![准备数据文件](../../img/flink/准备数据文件.png)
-
- 
-② 把含数据文件的文件夹，分发到taskmanage 机器中
+测试——在 window 子 ubuntu 系统中用 netcat 命令进行发送测试。
 
 ```bash
-scp -r /applog/flink/input.txt root@hadoop2:/applog/flink/input.txt
+kino@LAPTOP-7SSIH7L3:~$ nc -lk 8888
+
+hello spark
+hello flink
 ```
 
-由于读取数据是从本地磁盘读取，实际任务会被分发到taskmanage的机器中，所以要把目标文件分发。
+在 WebUI 中查看结果:
+![结果1](../../img/flink/Flink部署模式/结果1.png)
 
-③ 执行程序 
+![结果2](../../img/flink/Flink部署模式/结果2.png)
+
+## 1.4 停止任务
+![StopJob](../../img/flink/Flink部署模式/StopJob.png)
+
+## 1.5 将启动时设置的并行度设置为 2 再启动
+![并行度2RunJob](../../img/flink/Flink部署模式/并行度2RunJob.png)
+
+可以看见, show plan 已经不一样了, 而且我们能看见 下面 `status` 处于 `CREATED` 状态, 并且处于加载状态, 原因是因为 我们提交时设置的并行度为: 2, 而我们 `flink-conf.yaml` 配置文件中, `taskmanager.numberOfTaskSlots` 默认为: 1
+
+我们修改配置文件中的该参数为: 2 然后重启flink再提交任务
 ```bash
-./flink run -c com.kino.flink.app.BatchWcApp  /ext/flinkTest-1.0-SNAPSHOT.jar  --input /applog/flink/input.txt --output /applog/flink/output.csv
+root@LAPTOP-7SSIH7L3:/opt/flink-1.10.1# vim conf/flink-conf.yaml
+
+taskmanager.numberOfTaskSlots: 2
 ```
 
-![fink-run](../../img/flink/fink-run.png)
- 
-④ 到目标文件夹中查看计算结果
-注意：计算结果根据会保存到taskmanage的机器下，不会在jobmanage下。
- 
-![查看结果](../../img/flink/查看结果.png)
+再次提交任务
 
-⑤ 在webui控制台查看计算过程 
+![并行度2再次运行](../../img/flink/Flink部署模式/并行度2结果1.png)
 
-![在web看结果](../../img/flink/在web看结果.png)
- 
+可以看到此时任务正常运行起来了, 我们使用 nc 输入看一下效果
+```bash
+kino@LAPTOP-7SSIH7L3:~$ nc -lk 8888
 
-# 二、Yarn模式
-以Yarn模式部署Flink任务时，要求Flink是有Hadoop支持的版本，Hadoop环境需要保证版本在2.2以上，并且集群中安装有HDFS服务。
-1)	启动hadoop集群（略）
-2)	启动yarn-session
-    ```bash
-    ./yarn-session.sh -n 2 -s 2 -jm 1024 -tm 1024 -nm test -d
-    ```
-    其中：
-
-    -n(--container)：TaskManager的数量。
-
-    -s(--slots)：	每个TaskManager的slot数量，默认一个slot一个core，默认每个taskmanager的slot的个数为1，有时可以多一些taskmanager，做冗余。
-
-    -jm：JobManager的内存（单位MB)。
-
-    -tm：每个taskmanager的内存（单位MB)。
-
-    -nm：yarn 的appName(现在yarn的ui上的名字)。 
-
-    -d：后台执行。
-
- 
-3)	执行任务
-./flink run  -m yarn-cluster -c com.atguigu.flink.app.BatchWcApp  /ext/flink0503-1.0-SNAPSHOT.jar  --input /applog/flink/input.txt --output /applog/flink/output5.csv
-
- 
-4)	去yarn控制台查看任务状态
- 
-
-# 三、Kubernetes部署
-容器化部署时目前业界很流行的一项技术，基于Docker镜像运行能够让用户更加方便地对应用进行管理和运维。容器管理工具中最为流行的就是Kubernetes（k8s），而Flink也在最近的版本中支持了k8s部署模式。
-
-1. 搭建Kubernetes集群（略）
-
-2. 配置各组件的yaml文件
-
-    在k8s上构建Flink Session Cluster，需要将Flink集群的组件对应的docker镜像分别在k8s上启动，包括JobManager、TaskManager、JobManagerService三个镜像服务。每个镜像服务都可以从中央镜像仓库中获取。
-
-3. 启动Flink Session Cluster
-    ```bash
-    // 启动jobmanager-service 服务
-    kubectl create -f jobmanager-service.yaml
-    // 启动jobmanager-deployment服务
-    kubectl create -f jobmanager-deployment.yaml
-    // 启动taskmanager-deployment服务
-    kubectl create -f taskmanager-deployment.yaml
-    ```
-
-4. 访问Flink UI页面
-集群启动后，就可以通过JobManagerServicers中配置的WebUI端口，用浏览器输入以下url来访问Flink UI页面了：
-http://{JobManagerHost:Port}/api/v1/namespaces/default/services/flink-jobmanager:ui/proxy
+hello spark
+hello flink
+```
+![并行度2再次运行输出结果](../../img/flink/Flink部署模式/并行度2结果2.png)
