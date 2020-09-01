@@ -178,14 +178,14 @@
 <summary>Elasticsearch</summary>
 
 * [Docker 安装Elasticsearch](note/elasticsearch/Docker安装Elasticsearch.md)
-<details>
+</details>
 
 
 <details>
 <summary>Kibana</summary>
 
 * [Docker 安装Kibana](note/kibana/Docker安装Kibana.md)
-<details>
+</details>
 
 
 ## 运维
