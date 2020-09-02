@@ -1,5 +1,27 @@
 
-
+* [一、查看 ES 中的索引](#%E4%B8%80%E6%9F%A5%E7%9C%8B-es-%E4%B8%AD%E7%9A%84%E7%B4%A2%E5%BC%95)
+* [二、增加索引](#%E4%BA%8C%E5%A2%9E%E5%8A%A0%E7%B4%A2%E5%BC%95)
+* [三、删除索引](#%E4%B8%89%E5%88%A0%E9%99%A4%E7%B4%A2%E5%BC%95)
+* [四、新增文档](#%E5%9B%9B%E6%96%B0%E5%A2%9E%E6%96%87%E6%A1%A3)
+* [五、搜索 type 全部数据](#%E4%BA%94%E6%90%9C%E7%B4%A2-type-%E5%85%A8%E9%83%A8%E6%95%B0%E6%8D%AE)
+* [六、查找指定 id 的 document 数据](#%E5%85%AD%E6%9F%A5%E6%89%BE%E6%8C%87%E5%AE%9A-id-%E7%9A%84-document-%E6%95%B0%E6%8D%AE)
+* [七、修改 document](#%E4%B8%83%E4%BF%AE%E6%94%B9-document)
+  * [7\.1 整个 document 替换](#71-%E6%95%B4%E4%B8%AA-document-%E6%9B%BF%E6%8D%A2)
+  * [7\.2 只修改某个字段](#72-%E5%8F%AA%E4%BF%AE%E6%94%B9%E6%9F%90%E4%B8%AA%E5%AD%97%E6%AE%B5)
+* [八、删除 document](#%E5%85%AB%E5%88%A0%E9%99%A4-document)
+* [九、按条件查询(全部)](#%E4%B9%9D%E6%8C%89%E6%9D%A1%E4%BB%B6%E6%9F%A5%E8%AF%A2%E5%85%A8%E9%83%A8)
+* [十、按照字段的分词查询](#%E5%8D%81%E6%8C%89%E7%85%A7%E5%AD%97%E6%AE%B5%E7%9A%84%E5%88%86%E8%AF%8D%E6%9F%A5%E8%AF%A2)
+* [十一、按照字段的属性查询](#%E5%8D%81%E4%B8%80%E6%8C%89%E7%85%A7%E5%AD%97%E6%AE%B5%E7%9A%84%E5%B1%9E%E6%80%A7%E6%9F%A5%E8%AF%A2)
+* [十二、按照短语查询](#%E5%8D%81%E4%BA%8C%E6%8C%89%E7%85%A7%E7%9F%AD%E8%AF%AD%E6%9F%A5%E8%AF%A2)
+* [十三、模糊查询](#%E5%8D%81%E4%B8%89%E6%A8%A1%E7%B3%8A%E6%9F%A5%E8%AF%A2)
+* [十四、过滤(查询后过滤)](#%E5%8D%81%E5%9B%9B%E8%BF%87%E6%BB%A4%E6%9F%A5%E8%AF%A2%E5%90%8E%E8%BF%87%E6%BB%A4)
+* [十五、过滤(查询前过滤)](#%E5%8D%81%E4%BA%94%E8%BF%87%E6%BB%A4%E6%9F%A5%E8%AF%A2%E5%89%8D%E8%BF%87%E6%BB%A4)
+* [十六、按范围过滤](#%E5%8D%81%E5%85%AD%E6%8C%89%E8%8C%83%E5%9B%B4%E8%BF%87%E6%BB%A4)
+* [十七、排序](#%E5%8D%81%E4%B8%83%E6%8E%92%E5%BA%8F)
+* [十八、分页查询](#%E5%8D%81%E5%85%AB%E5%88%86%E9%A1%B5%E6%9F%A5%E8%AF%A2)
+* [十九、查询指定的字段](#%E5%8D%81%E4%B9%9D%E6%9F%A5%E8%AF%A2%E6%8C%87%E5%AE%9A%E7%9A%84%E5%AD%97%E6%AE%B5)
+* [二十、每个演员参演了多少部电影](#%E4%BA%8C%E5%8D%81%E6%AF%8F%E4%B8%AA%E6%BC%94%E5%91%98%E5%8F%82%E6%BC%94%E4%BA%86%E5%A4%9A%E5%B0%91%E9%83%A8%E7%94%B5%E5%BD%B1)
+* [二十一、每个演员参演电影的平均分是多少，并按评分排序](#%E4%BA%8C%E5%8D%81%E4%B8%80%E6%AF%8F%E4%B8%AA%E6%BC%94%E5%91%98%E5%8F%82%E6%BC%94%E7%94%B5%E5%BD%B1%E7%9A%84%E5%B9%B3%E5%9D%87%E5%88%86%E6%98%AF%E5%A4%9A%E5%B0%91%E5%B9%B6%E6%8C%89%E8%AF%84%E5%88%86%E6%8E%92%E5%BA%8F)
 
 ---
 
@@ -957,7 +979,7 @@ GET movie_index/_search
 ```
 
 
-# 二十、聚合
+# 二十、每个演员参演了多少部电影
 ```bash
 GET movie_index/_search
 {
@@ -1013,6 +1035,147 @@ GET movie_index/_search
         {
           "key" : "zhang yi",
           "doc_count" : 1
+        }
+      ]
+    }
+  }
+}
+```
+
+# 二十一、每个演员参演电影的平均分是多少，并按评分排序
+```bash
+GET movie_index/_search
+{ 
+  "aggs": {
+    "groupby_actor_id": {
+      "terms": {
+        "field": "actorList.name.keyword" ,
+        "order": {
+          "avg_score": "desc"
+          }
+      },
+      "aggs": {
+        "avg_score":{
+          "avg": {
+            "field": "doubanScore" 
+          }
+        }
+       }
+    } 
+  }
+}
+```
+查询到的结果如下:
+```json
+{
+  "took" : 7,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 3,
+      "relation" : "eq"
+    },
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "movie_index",
+        "_type" : "_doc",
+        "_id" : "NDTfTXQBR8s2ISKoox5W",
+        "_score" : 1.0,
+        "_source" : {
+          "id" : 1,
+          "name" : "operation red sea",
+          "doubanScore" : 8.5,
+          "actorList" : [
+            {
+              "id" : 1,
+              "name" : "zhang yi"
+            },
+            {
+              "id" : 2,
+              "name" : "hai qing"
+            },
+            {
+              "id" : 3,
+              "name" : "zhang han yu"
+            }
+          ]
+        }
+      },
+      {
+        "_index" : "movie_index",
+        "_type" : "_doc",
+        "_id" : "NTTfTXQBR8s2ISKoqh75",
+        "_score" : 1.0,
+        "_source" : {
+          "id" : 2,
+          "name" : "operation meigong river",
+          "doubanScore" : 8.0,
+          "actorList" : [
+            {
+              "id" : 3,
+              "name" : "zhang han yu"
+            }
+          ]
+        }
+      },
+      {
+        "_index" : "movie_index",
+        "_type" : "_doc",
+        "_id" : "NjTfTXQBR8s2ISKotR5J",
+        "_score" : 1.0,
+        "_source" : {
+          "id" : 3,
+          "name" : "incident red sea",
+          "doubanScore" : 5.0,
+          "actorList" : [
+            {
+              "id" : 4,
+              "name" : "zhang chen"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "aggregations" : {
+    "groupby_actor_id" : {
+      "doc_count_error_upper_bound" : 0,
+      "sum_other_doc_count" : 0,
+      "buckets" : [
+        {
+          "key" : "hai qing",
+          "doc_count" : 1,
+          "avg_score" : {
+            "value" : 8.5
+          }
+        },
+        {
+          "key" : "zhang yi",
+          "doc_count" : 1,
+          "avg_score" : {
+            "value" : 8.5
+          }
+        },
+        {
+          "key" : "zhang han yu",
+          "doc_count" : 2,
+          "avg_score" : {
+            "value" : 8.25
+          }
+        },
+        {
+          "key" : "zhang chen",
+          "doc_count" : 1,
+          "avg_score" : {
+            "value" : 5.0
+          }
         }
       ]
     }
