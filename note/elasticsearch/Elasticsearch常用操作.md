@@ -286,7 +286,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 0,
   "timed_out" : false,
@@ -380,7 +380,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 17,
   "timed_out" : false,
@@ -451,7 +451,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 2,
   "timed_out" : false,
@@ -532,7 +532,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 1,
   "timed_out" : false,
@@ -604,7 +604,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 0,
   "timed_out" : false,
@@ -670,7 +670,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 0,
   "timed_out" : false,
@@ -752,7 +752,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 0,
   "timed_out" : false,
@@ -854,7 +854,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 0,
   "timed_out" : false,
@@ -904,7 +904,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 1,
   "timed_out" : false,
@@ -975,7 +975,7 @@ GET movie_index/_search
 }
 ```
 查询到的结果如下:
-```bash
+```json
 {
   "took" : 4,
   "timed_out" : false,
