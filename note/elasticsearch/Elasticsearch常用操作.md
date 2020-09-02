@@ -3,7 +3,10 @@
 
 ---
 
-具体操作在 Kibana WebUI 中查询 ES 数据
+具体操作是在 Kibana WebUI 中查询 ES 数据
+
+启动 Kibana 和 ElasticSearch, 在浏览器输入: http://自己的IP地址:5601/app/kibana
+
 ![Kibana WebUI Search Es](../../img/elasticsearch/常用操作/Kibana%20WebUI.png)
 
 # 一、查看 ES 中的索引
