@@ -59,6 +59,25 @@ PUT /movie_index/_doc/1
     {"id": 3, "name": "zhang han yu"}
   ]
 }
+POST /movie_index/_doc/2
+{
+  "id":2,
+  "name":"operation meigong river",
+  "doubanScore":8.0,
+  "actorList":[  
+    {"id":3,"name":"zhang han yu"}
+  ]
+}
+
+POST /movie_index/_doc/3
+{
+  "id":3,
+  "name":"incident red sea",
+  "doubanScore":5.0,
+  "actorList":[  
+    {"id":4,"name":"zhang chen"}
+  ]
+}
 # 或者
 POST /movie_index/_doc/1
 {
@@ -66,9 +85,27 @@ POST /movie_index/_doc/1
   "name":"operation red sea",
   "doubanScore": 8.5,
   "actorList": [
-    {"id": 1, "name": "zhang yi"},
-    {"id": 2, "name": "hai qing"},
-    {"id": 3, "name": "zhang han yu"}
+    {"id": 1,"name": "zhang yi"},
+    {"id": 2,"name": "hai qing"},
+    {"id": 3,"name": "zhang han yu"}
+  ]
+}
+POST /movie_index/_doc/2
+{
+  "id":2,
+  "name":"operation meigong river",
+  "doubanScore":8.0,
+  "actorList":[  
+    {"id":3,"name":"zhang han yu"}
+  ]
+}
+POST /movie_index/_doc/3
+{
+  "id":3,
+  "name":"incident red sea",
+  "doubanScore":5.0,
+  "actorList":[  
+    {"id":4,"name":"zhang chen"}
   ]
 }
 ```
@@ -84,9 +121,27 @@ POST /movie_index/_doc
   "name":"operation red sea",
   "doubanScore": 8.5,
   "actorList": [
-    {"id": 1, "name": "zhang yi"},
-    {"id": 2, "name": "hai qing"},
-    {"id": 3, "name": "zhang han yu"}
+    {"id": 1,"name": "zhang yi"},
+    {"id": 2,"name": "hai qing"},
+    {"id": 3,"name": "zhang han yu"}
+  ]
+}
+POST /movie_index/_doc
+{
+  "id":2,
+  "name":"operation meigong river",
+  "doubanScore":8.0,
+  "actorList":[  
+    {"id":3,"name":"zhang han yu"}
+  ]
+}
+POST /movie_index/_doc
+{
+  "id":3,
+  "name":"incident red sea",
+  "doubanScore":5.0,
+  "actorList":[  
+    {"id":4,"name":"zhang chen"}
   ]
 }
 ```
