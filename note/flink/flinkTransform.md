@@ -301,11 +301,13 @@ all: > SensorReading(sensor_7,1547718202,6.7)
 ***Connect***:
 
 `DataStream,DataStream` → `ConnectedStreams`: 连接两个保持他们类型的数据流, 两个数据流被 Connect 之后, 只是被放在了一个同一个流中, 内部依然保持各自的数据和形式不发生任何变化, 两个流相互独立.
+
 ![connect](../../img/flink/Transform/connect.png)
 
 ***CoMap/CoFlatMap***:
 
 `ConnectedStreams` → `DataStream`: 作用于 ConnectedStreams 上, 功能与 map 和 flatMap 一样, 对 ConnectedStreams 中的每一个 Stream 分别进行 map 和 flatMap 处理.
+
 ![coMap](../../img/flink/Transform/coMap.png)
 
 # 十二、Union
