@@ -21,7 +21,7 @@ object readList {
     ))
     stream.print.setParallelism(1)
 
-    env.execute("reading List....")
+    env.execute(readList.getClass.getName)
   }
 }
 ```
@@ -45,7 +45,7 @@ object ReadSource {
     val filePathFilter = "D:\\work\\kino\\FlinkTutorial\\src\\main\\resources\\SensorReading"
     val stream = env.readTextFile(filePathFilter)
     stream.print.setParallelism(4)
-    env.execute
+    env.execute(ReadSource.getClass.getName)
   }
 }
 ```
@@ -76,7 +76,7 @@ object ReadKafka {
 
     stream.print()
 
-    env.execute()
+    env.execute(ReadKafka.getClass.getName)
   }
 }
 ```
@@ -106,7 +106,7 @@ object MySource1 {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     val value: DataStreamSource[SensorReading] = env.addSource(new MySensorSource())
     value.print()
-    env.execute("my source")
+    env.execute(MySource1.getClass.getName)
   }
 
   class MySensorSource extends SourceFunction[SensorReading]{
@@ -172,7 +172,7 @@ object MySource1 {
     ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COMMENT='人员定义';
     ```
    插入一些数据，作为数据源的内容：
-   ```sqlite-psql
+   ```sql
    insert into person values
       (null, 'Johngo12', 12, 1, 'Source01@flink.com'),
       (null, 'Johngo13', 13, 0, 'Source02@flink.com'),
@@ -205,7 +205,7 @@ object MySource1 {
         val env = StreamExecutionEnvironment.getExecutionEnvironment
         val mysqlStream = env.addSource(new MySqlSource)
         mysqlStream.print
-        env.execute("mysql source")
+        env.execute(MySource2.getClass.getName)
       }
     
       class MySqlSource extends RichSourceFunction[Person]{
