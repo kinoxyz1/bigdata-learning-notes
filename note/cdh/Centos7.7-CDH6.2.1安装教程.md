@@ -44,23 +44,11 @@
 ---
 
 # 一、CDH6.2.1 下载
-1. [CDH下载地址](https://www.cloudera.com/downloads/manager/6-3-1.html)
-2. 下载cdh
+## 1.1 下载cdh(下载需要的即可)
 https://archive.cloudera.com/cdh6/6.2.1/parcels/
-![在这里插入图片描述](../../img/cdh/CDH安装/20200514090016651.png)
 
-
-3. 下载cm
+## 1.2 下载cm(全下)
 https://archive.cloudera.com/cm6/6.2.1/redhat7/yum/RPMS/x86_64/
-![在这里插入图片描述](../../img/cdh/CDH安装/20200601112046396.png)
-
-https://archive.cloudera.com/cm6/6.2.1/
-![在这里插入图片描述](../../img/cdh/CDH安装/20200601112114233.png)
-
-4. 下载好后目录结构如下：
-![在这里插入图片描述](../../img/cdh/CDH安装/20200601112507647.png)
-
-
 
 ---
 
@@ -72,7 +60,10 @@ https://archive.cloudera.com/cm6/6.2.1/
 |192.168.161.161  |kino-cdh02  |从机  |
 |192.168.161.162  |kino-cdh03  |从机  |
 
+
 ## 2.2 配置 hosts
+(ps: 所有节点执行)
+
 在台机器上输入: `vim /etc/hosts`
 
 ```bash
@@ -82,6 +73,8 @@ https://archive.cloudera.com/cm6/6.2.1/
 ```
 
 ## 2.3 卸载自带的jdk
+(ps: 所有节点执行)
+
 ```bash
 [root@kino-cdh01 ~]# rpm -qa |grep jdk
 java-1.8.0-openjdk-headless-1.8.0.222.b03-1.el7.x86_64
@@ -98,6 +91,7 @@ java-1.7.0-openjdk-1.7.0.221-2.6.18.1.el7.x86_64
 
 ```
 ## 2.4 卸载自带的 mariadb
+(ps: 所有节点执行)
 
 ```bash
 [root@kino-cdh01 ~]# rpm -qa | grep -i mariadb | xargs rpm -e --nodeps
@@ -112,7 +106,7 @@ java-1.7.0-openjdk-1.7.0.221-2.6.18.1.el7.x86_64
 ```
 
 ## 2.5 关闭防火墙
-所有机器都要执行
+(ps: 所有节点执行)
 
 ```bash
 [root@kino-cdh01 ~]# systemctl stop firewalld.service
@@ -128,7 +122,8 @@ SELINUX=disabled
 ```
 
 ## 2.6 配置免密登录
-所有机器都要执行
+(ps: 所有节点执行)
+
 ```bash
 ssh-keygen -t rsa  # 直接回车
 
@@ -140,6 +135,8 @@ ssh-copy-id kino-cdh03   # 输入 yes, 输入密码
 
 
 ## 2.7 安装jdk
+(ps: 所有节点都要安装)
+
 ```bash
 [root@kino-cdh01 ~]# mkdir /usr/java
 ```
@@ -168,100 +165,85 @@ Java(TM) SE Runtime Environment (build 1.8.0_181-b13)
 Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
 ```
 
+## 2.8 时钟同步
+```bash
+1、所有机器安装ntp ：yum -y install ntp
+
+2、CM节点配置时钟与自己同步：vim /etc/ntp.conf，删除其他server，加入：
+server  127.127.1.0     # local clock
+fudge   127.127.1.0 stratum 10
+
+3、其他非CM节点，同步CM节点的时间，vim /etc/ntp.conf，加入：
+server xxx.xxx.xxx.xx
+
+4、重启所有机器的ntp服务
+systemctl restart ntpd或者service ntpd restart
+systemctl status ntpd或者service ntpd status
+
+5、验证同步
+所有节点执行ntpq –p，左边出现*号表示同步成功。
+
+6、若不成功;
+/usr/sbin/ntpdate stdtime.gov.hk 
+ntpdate xxx.xxx.xxx.xxx
+手动同步时间
+```
+
+## 2.9 http服务
+```bash
+yum -y install httpd
+systemctl start httpd 或service httpd start
+```
 ---
-# 三、安装 MySQL
-## 3.1 解压 mysql-5.7.26-1.el7.x86_64.rpm-bundle.tar
+# 三、在线安装 MariaDB
+(ps: 主节点执行)
+##3.1 安装 MariaDB
+[CentOS7安装MariaDB](../MariaDB/CentOS7安装MariaDB.md)
 
+## 3.2 查看 MariaDB 状态
 ```bash
-[root@kino-cdh01 ~]# tar -axvf /opt/software/mysql/mysql-5.7.26-1.el7.x86_64.rpm-bundle.tar
+[root@hadoop1 html]# systemctl status mariadb
+● mariadb.service - MariaDB database server
+   Loaded: loaded (/usr/lib/systemd/system/mariadb.service; enabled; vendor preset: disabled)
+   Active: active (running) since 五 2020-09-04 10:32:23 CST; 1h 19min ago
+ Main PID: 2069 (mysqld_safe)
+   CGroup: /system.slice/mariadb.service
+           ├─2069 /bin/sh /usr/bin/mysqld_safe --basedir=/usr
+           └─2243 /usr/libexec/mysqld --basedir=/usr --datadir=/var/lib/mysql --plugin-dir=/usr/lib64/mysql/plugin --log-error=/var/log/mariadb/mariadb.log --pid-file=/var/run/mariadb/mariadb.pid --socket=/var/lib/mysql/mysql.sock
+
+9月 04 10:32:21 hadoop1 systemd[1]: Starting MariaDB database server...
+9月 04 10:32:21 hadoop1 mariadb-prepare-db-dir[2034]: Database MariaDB is probably initialized in /var/lib/mysql already, nothing is done.
+9月 04 10:32:21 hadoop1 mariadb-prepare-db-dir[2034]: If this is not the case, make sure the /var/lib/mysql is empty before running mariadb-prepare-db-dir.
+9月 04 10:32:21 hadoop1 mysqld_safe[2069]: 200904 10:32:21 mysqld_safe Logging to '/var/log/mariadb/mariadb.log'.
+9月 04 10:32:21 hadoop1 mysqld_safe[2069]: 200904 10:32:21 mysqld_safe Starting mysqld daemon with databases from /var/lib/mysql
+9月 04 10:32:23 hadoop1 systemd[1]: Started MariaDB database server.
 ```
-## 3.2 安装 MySQL
+
+## 3.3 设置root可以远程登录
 
 ```bash
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-common-5.7.26-1.el7.x86_64.rpm
-
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-libs-5.7.26-1.el7.x86_64.rpm
-
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-devel-5.7.26-1.el7.x86_64.rpm
-
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-libs-compat-5.7.26-1.el7.x86_64.rpm
-
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-client-5.7.26-1.el7.x86_64.rpm
-
-[root@kino-cdh01 mysql]# rpm -ivh mysql-community-server-5.7.26-1.el7.x86_64.rpm
-```
-## 3.3 查看 MySQL 状态
-
-```bash
-[root@kino-cdh01 mysql]# service mysqld status
-Redirecting to /bin/systemctl status mysqld.service
-● mysqld.service - MySQL Server
-   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; enabled; vendor preset: disabled)
-   Active: inactive (dead)
-     Docs: man:mysqld(8)
-           http://dev.mysql.com/doc/refman/en/using-systemd.html
-```
-## 3.4 启动MySQL
-
-```bash
-[root@kino-cdh01 mysql]# systemctl start mysqld
-```
-## 3.5 查看 MySQL 状态
-
-```bash
-[root@kino-cdh01 mysql]# service mysqld status
-Redirecting to /bin/systemctl status mysqld.service
-● mysqld.service - MySQL Server
-   Loaded: loaded (/usr/lib/systemd/system/mysqld.service; enabled; vendor preset: disabled)
-   Active: active (running) since 六 2020-05-09 00:25:59 CST; 37s ago
-     Docs: man:mysqld(8)
-           http://dev.mysql.com/doc/refman/en/using-systemd.html
-  Process: 5386 ExecStart=/usr/sbin/mysqld --daemonize --pid-file=/var/run/mysqld/mysqld.pid $MYSQLD_OPTS (code=exited, status=0/SUCCESS)
-  Process: 5297 ExecStartPre=/usr/bin/mysqld_pre_systemd (code=exited, status=0/SUCCESS)
- Main PID: 5389 (mysqld)
-    Tasks: 27
-   CGroup: /system.slice/mysqld.service
-           └─5389 /usr/sbin/mysqld --daemonize --pid-file=/var/run/mysqld/mysqld.pid
-
-5月 09 00:25:49 kino-cdh01 systemd[1]: Starting MySQL Server...
-5月 09 00:25:59 kino-cdh01 systemd[1]: Started MySQL Server.
-```
-## 3.6 查看root随机密码（最后的是密码）
-
-```bash
-[root@kino-cdh01 mysql]# grep 'temporary password' /var/log/mysqld.log
-2020-05-08T16:25:54.253304Z 1 [Note] A temporary password is generated for root@localhost: .SdtPrX=L9TI
-```
-## 3.7 修改root登录密码
-
-```bash
-[root@kino-cdh01 mysql]# mysql -uroot -p
-Enter password: 输入上面的随机密码
-
-mysql> SET PASSWORD FOR 'root'@'localhost'= "Kino123.";
-```
-![在这里插入图片描述](../../img/cdh/CDH安装/20200508002859496.png)
-## 3.8 设置root可以远程登录
-
-```bash
-mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '上面设置的新密码' WITH GRANT OPTION;
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'MariaDB 密码' WITH GRANT OPTION;
 
 mysql> FLUSH PRIVILEGES;
 
 mysql> exit;
 ```
 ## 3.9 设置MySql忽略大小写： 
-用root登录，打开并修改 `/etc/my.cnf`；在 `[mysqld]` 节点下，加入一行： `lower_case_table_names=1`
+用root登录，打开并修改 `/etc/my.cnf`; 在 `[mysqld]` 节点下，加入一行： `lower_case_table_names=1`
 
-重启MySql服务：`systemctl restart mysqld`
+重启MySql服务：`systemctl restart mariadb`
 
-## 3.10 为CM安装mysql驱动
+## 3.10 为 CM 安装mysql驱动
+下载地址: https://dev.mysql.com/downloads/connector/j/
+
 将 `mysql-connector-java-5.1.27-bin.jar` 拷贝到 新创建的 `/usr/share/java` 路径下，并重命名为 `mysql-connector-java.jar`
 
 ```bash
 [root@kino-cdh01 mysql]# tar -zxvf mysql-connector-java-5.1.27.tar.gz
 
-[root@kino-cdh01 java]# cp mysql-connector-java-5.1.27-bin.jar /usr/share/java
+[root@kino-cdh01 mysql]# cp mysql-connector-java-5.1.27-bin.jar /usr/share/java
+
+[root@kino-cdh01 mysql]# cd /usr/share/java
 
 [root@kino-cdh01 java]# mv mysql-connector-java-5.1.27-bin.jar mysql-connector-java.jar
 
@@ -288,39 +270,47 @@ mysql-connector-java.jar     			100%  984KB  30.7MB/s   00:00
 
 ---
 # 四、安装 CM
-## 4.1 搭建本地 YUM 源
-将压缩包 `cloudera-repos.tar.gz` 解压到 `/var/www/html` 路径下
+## 4.1 制作 yum 源
+(ps: 主节点执行)
 
-```bash
-[root@kino-cdh01 ~]# mkdir -p /var/www/html
-[root@kino-cdh01 ~]# tar -zxvf /opt/software/cloudera-repos.tar.gz.tar.gz -C /var/www/html
+1. 开启 http 服务
 
-[root@kino-cdh01 html]# ll
-总用量 0
-drwxr-xr-x. 4 root root 29 5月   9 00:43 cloudera-repos
-[root@kino-cdh01 html]# python -m SimpleHTTPServer 8900
-Serving HTTP on 0.0.0.0 port 8900 ....
-```
-![在这里插入图片描述](../../img/cdh/CDH安装/2020050800462310.png)
-编辑本地yum源配置文件，第一次配置时里面为空
+2. 创建目录, 并上传本地下载好的 cdh 安装包 到指定文件夹
+    ```bash
+    [root@kino-cdh01 ~]# mkdir -p /var/www/html/cloudera-repos
+    
+    上传安装包进来
+    ```
+3. 制作本地yum源
+    ```bash
+    #下载yum源工具包
+    yum -y install yum-utils createrepo
+    # 在 cloudera-repos 目录下生成rpm元数据：
+    createrepo /var/www/html/cloudera-repos
+    #并对/var/www/html下的所有目录和文件赋权：
+    chmod  -R 755 /var/www/html
+    #创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
+    [myrepo]
+    name = myrepo
+    baseurl = http://kino-cdh01/cloudera-repos
+    enable = true
+    gpgcheck = false
+    ```
 
-```bash
-[root@kino-cdh01 html]# vim /etc/yum.repos.d/cloudera-manager.repo
+    在浏览器输入: http://kino-cdh01/cloudera-repos 即可看见对应的目录
 
-[cloudera-manager]
-name=cloudera-manager
-baseurl=http://kino-cdh01:8900/cloudera-repos/cm6/6.2.1/redhat7/yum/
-enabled=1
-gpgcheck=0
-```
-发给其他所有节点
+    (ps: 从节点执行)
+    ```bash
+    #创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
+    [myrepo]
+    name = myrepo
+    baseurl = http://kino-cdh01/cloudera-repos
+    enable = true
+    gpgcheck = false
+    ```
 
-```bash
-[root@kino-cdh01 html]# scp -r /etc/yum.repos.d/cloudera-manager.repo root@kino-cdh02:/etc/yum.repos.d
-[root@kino-cdh01 html]# scp -r /etc/yum.repos.d/cloudera-manager.repo root@kino-cdh03:/etc/yum.repos.d
-```
 
-安装CM server及agent
+## 4.2 安装CM server及agent
 主节点执行: 
 ```bash
 [root@kino-cdh01 yum.repos.d]# yum -y install cloudera-manager-daemons cloudera-manager-agent cloudera-manager-server
@@ -330,14 +320,14 @@ gpgcheck=0
 ```bash
 [root@kino-cdh02 yum.repos.d]# yum -y install cloudera-manager-agent cloudera-manager-daemons
 ```
-修改CM配置文件
+## 4.3 修改CM配置文件
 所有节点都要执行
 ```bash
 [root@kino-cdh01 yum.repos.d]# vim /etc/cloudera-scm-agent/config.ini
 
 server_host=kino-cdh01  # 改成主节点的ip或hosts
 ```
-进入mysql数据库，在MySQL中建库
+## 4.4 在MySQL中建库
 
 ```bash
 [root@kino-cdh01 yum.repos.d]# mysql -uroot -p
@@ -349,7 +339,7 @@ CREATE DATABASE hive DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE sentry DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 ```
-为CM配置数据库
+## 4.5 为CM配置数据库
 
 ```bash
 /opt/cloudera/cm/schema/scm_prepare_database.sh mysql scm root Kino123.

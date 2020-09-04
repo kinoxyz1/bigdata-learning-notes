@@ -188,6 +188,13 @@
 * [Docker 安装Kibana](note/kibana/Docker安装Kibana.md)
 </details>
 
+<details>
+<summary>MySQL</summary>
+
+* [CentOS7 安装 MariaDB](note/MariaDB/CentOS7安装MariaDB.md)
+</details>
+
+
 
 ## 运维
 <details>
