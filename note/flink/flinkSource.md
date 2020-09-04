@@ -152,103 +152,141 @@ object MySource1 {
 
 
 ## 4.2 自定义 MySQL Source
-```scala 3
-package day02
-
-import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet}
-
-import Mode.{Person, SensorReading}
-import org.apache.flink.configuration.Configuration
-import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
-import org.apache.flink.streaming.api.scala._
-
-object MySource2 {
-  def main(args: Array[String]): Unit = {
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
-    val mysqlStream = env.addSource(new MySqlSource)
-    mysqlStream.print
-    env.execute("mysql source")
-  }
-
-  class MySqlSource extends RichSourceFunction[Person]{
-
-    var running: Boolean = true
-    var ps: PreparedStatement = null
-    var conn: Connection = null
-
-    /**
-     * 与MySQL建立连接信息
-     * @return
-     */
-    def getConnection():Connection = {
-      var conn: Connection = null
-      val DB_URL: String = "jdbc:mysql://docker:12345/kinodb"
-      val USER: String = "root"
-      val PASS: String = "123456"
-
-      try{
-        Class.forName("com.mysql.cj.jdbc.Driver")
-        conn = DriverManager.getConnection(DB_URL, USER, PASS)
-      } catch {
-        case _: Throwable => println("due to the connect error then exit!")
+1. 添加 pom 依赖
+    ```xml
+    <dependency>
+        <groupId>mysql</groupId>
+        <artifactId>mysql-connector-java</artifactId>
+        <version>8.0.15</version>
+    </dependency>
+    ```
+2. 创建mysql表，作为读取的数据源
+    ```sql
+    CREATE TABLE `person` (
+      id int(10) unsigned NOT NULL AUTO_INCREMENT,
+      name varchar(260) NOT NULL DEFAULT '' COMMENT '姓名',
+      age int(11) unsigned NOT NULL DEFAULT '0' COMMENT '年龄',
+      sex tinyint(2) unsigned NOT NULL DEFAULT '2' COMMENT '0:女, 1男',
+      email text COMMENT '邮箱',
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8 COMMENT='人员定义';
+    ```
+   插入一些数据，作为数据源的内容：
+   ```sqlite-psql
+   insert into person values
+      (null, 'Johngo12', 12, 1, 'Source01@flink.com'),
+      (null, 'Johngo13', 13, 0, 'Source02@flink.com'),
+      (null, 'Johngo14', 14, 0, 'Source03@flink.com'),
+      (null, 'Johngo15', 15, 0, 'Source04@flink.com'),
+      (null, 'Johngo16', 16, 1, 'Source05@flink.com'),
+      (null, 'Johngo17', 17, 1, 'Source06@flink.com'),
+      (null, 'Johngo18', 18, 0, 'Source07@flink.com'),
+      (null, 'Johngo19', 19, 0, 'Source08@flink.com'),
+      (null, 'Johngo20', 20, 1, 'Source09@flink.com'),
+      (null, 'Johngo21', 21, 0, 'Source10@flink.com'); 
+   ```
+3. 创建样例类
+    ```scala 3
+    case class Person(id:Int,name:String,age:Int,sex:Int,email:String)
+    ```
+4. 创建自定义Source类，继承 RichSourceFunction
+    ```scala 3
+    package day02
+    
+    import java.sql.{Connection, DriverManager, PreparedStatement, ResultSet}
+    
+    import Mode.{Person, SensorReading}
+    import org.apache.flink.configuration.Configuration
+    import org.apache.flink.streaming.api.functions.source.{RichSourceFunction, SourceFunction}
+    import org.apache.flink.streaming.api.scala._
+    
+    object MySource2 {
+      def main(args: Array[String]): Unit = {
+        val env = StreamExecutionEnvironment.getExecutionEnvironment
+        val mysqlStream = env.addSource(new MySqlSource)
+        mysqlStream.print
+        env.execute("mysql source")
       }
-      conn
-    }
-
-    /**
-     * open()方法初始化连接信息
-     * @param parameters
-     */
-    override def open(parameters: Configuration): Unit = {
-      super.open(parameters)
-      conn = this.getConnection()
-      val sql = "select * from kinodb.person"
-      ps = this.conn.prepareStatement(sql)
-    }
-
-
-    override def run(ctx: SourceFunction.SourceContext[Person]): Unit = {
-      val resSet:ResultSet = ps.executeQuery()
-      while(running & resSet.next()) {
-        ctx.collect(Person(
-          resSet.getInt("id"),
-          resSet.getString("name"),
-          resSet.getInt("age"),
-          resSet.getInt("sex"),
-          resSet.getString("email")
-        ))
+    
+      class MySqlSource extends RichSourceFunction[Person]{
+    
+        var running: Boolean = true
+        var ps: PreparedStatement = null
+        var conn: Connection = null
+    
+        /**
+         * 与MySQL建立连接信息
+         * @return
+         */
+        def getConnection():Connection = {
+          var conn: Connection = null
+          val DB_URL: String = "jdbc:mysql://docker:12345/kinodb"
+          val USER: String = "root"
+          val PASS: String = "123456"
+    
+          try{
+            Class.forName("com.mysql.cj.jdbc.Driver")
+            conn = DriverManager.getConnection(DB_URL, USER, PASS)
+          } catch {
+            case _: Throwable => println("due to the connect error then exit!")
+          }
+          conn
+        }
+    
+        /**
+         * open()方法初始化连接信息
+         * @param parameters
+         */
+        override def open(parameters: Configuration): Unit = {
+          super.open(parameters)
+          conn = this.getConnection()
+          val sql = "select * from kinodb.person"
+          ps = this.conn.prepareStatement(sql)
+        }
+    
+    
+        override def run(ctx: SourceFunction.SourceContext[Person]): Unit = {
+          val resSet:ResultSet = ps.executeQuery()
+          while(running & resSet.next()) {
+            ctx.collect(Person(
+              resSet.getInt("id"),
+              resSet.getString("name"),
+              resSet.getInt("age"),
+              resSet.getInt("sex"),
+              resSet.getString("email")
+            ))
+          }
+        }
+    
+        override def cancel(): Unit = {
+          running = false
+        }
+    
+        /**
+         * 关闭连接信息
+         */
+        override def close(): Unit = {
+          if(conn != null) {
+            conn.close()
+    
+          }
+          if(ps != null) {
+            ps.close()
+          }
+        }
       }
     }
-
-    override def cancel(): Unit = {
-      running = false
-    }
-
-    /**
-     * 关闭连接信息
-     */
-    override def close(): Unit = {
-      if(conn != null) {
-        conn.close()
-
-      }
-      if(ps != null) {
-        ps.close()
-      }
-    }
-  }
-}
-```
-输出结果:
-```scala 3
-2> Person(17,Johngo19,19,0,Source08@flink.com)
-5> Person(12,Johngo14,14,0,Source03@flink.com)
-8> Person(15,Johngo17,17,1,Source06@flink.com)
-6> Person(13,Johngo15,15,0,Source04@flink.com)
-1> Person(16,Johngo18,18,0,Source07@flink.com)
-4> Person(11,Johngo13,13,0,Source02@flink.com)
-3> Person(10,Johngo12,12,1,Source01@flink.com)
-7> Person(14,Johngo16,16,1,Source05@flink.com)
-3> Person(18,Johngo20,20,1,Source09@flink.com)
-4> Person(19,Johngo21,21,0,Source10@flink.com)
-```
+    ```
+    输出结果:
+    ```scala 3
+    2> Person(17,Johngo19,19,0,Source08@flink.com)
+    5> Person(12,Johngo14,14,0,Source03@flink.com)
+    8> Person(15,Johngo17,17,1,Source06@flink.com)
+    6> Person(13,Johngo15,15,0,Source04@flink.com)
+    1> Person(16,Johngo18,18,0,Source07@flink.com)
+    4> Person(11,Johngo13,13,0,Source02@flink.com)
+    3> Person(10,Johngo12,12,1,Source01@flink.com)
+    7> Person(14,Johngo16,16,1,Source05@flink.com)
+    3> Person(18,Johngo20,20,1,Source09@flink.com)
+    4> Person(19,Johngo21,21,0,Source10@flink.com)
+    ```
