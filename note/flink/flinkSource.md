@@ -8,7 +8,7 @@ Fink的编程模型中，主要有三块
 - Transform: 业务逻辑也就是在 Source 和 Sink 中间的操作。
 - Sink: 写出结果
 
-该篇主要介绍 Source 的四种情况:
+本篇主要介绍 Source 的四种情况:
 - 从集合读取
 - 从文件读取
 - 从 Kafka 读取
