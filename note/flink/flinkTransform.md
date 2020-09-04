@@ -241,22 +241,74 @@ object Reduce {
 ```
 
 # 八、Split 和 Select 
+***Split***:
+
 `DataStream` → `SplitStream`: 根据某些特征把一个 DataStream 拆分成两个或者多个 DataStream
 ![split](../../img/flink/Transform/split.png)
+
+***Select***:
 
 `SplitStream` → `DataStream`: 从一个 SplitStream 中获取一个或者多个DataStream。
 ![select](../../img/flink/Transform/select.png)
 
 例子: 将 传感器 数据按温度高低(以30度为界), 拆分成两个流.
+```scala 3
+package day02.transform
 
+import Mode.SensorReading
+import org.apache.flink.streaming.api.scala._
 
-# 九、Select 
+object SplitAndSelect {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val stream = env.readTextFile("D:\\work\\kino\\FlinkTutorial\\src\\main\\resources\\SensorReading")
+    val splitStream = stream.map(x => {
+      val dataArray = x.split(",")
+      SensorReading(dataArray(0), dataArray(1).toInt, dataArray(2).toDouble)
+    })
+      .split(x => {
+        if (x.temperature > 30)
+          Seq("high")
+        else
+          Seq("low")
+      })
 
+    var high: DataStream[SensorReading] = splitStream.select("high")
+    var low: DataStream[SensorReading] = splitStream.select("low")
+    var all: DataStream[SensorReading] = splitStream.select("high", "low")
 
-# 十、Connect
+    high.print("high: ").setParallelism(1)
+    low.print("low: ").setParallelism(1)
+    all.print("all: ").setParallelism(1)
 
+    env.execute(this.getClass.getName)
+  }
+}
+```
+输出结果:
+```scala 3
+all: > SensorReading(sensor_6,1547718201,15.4)
+low: > SensorReading(sensor_7,1547718202,6.7)
+high: > SensorReading(sensor_10,1547718205,38.1)
+all: > SensorReading(sensor_1,1547718199,35.8)
+low: > SensorReading(sensor_6,1547718201,15.4)
+high: > SensorReading(sensor_1,1547718199,35.8)
+all: > SensorReading(sensor_10,1547718205,38.1)
+all: > SensorReading(sensor_7,1547718202,6.7)
+```
 
-# 十一、CoMap
+# 九、Connect 和 CoMap/CoFlatMap
+***Connect***:
 
+`DataStream,DataStream` → `ConnectedStreams`: 连接两个保持他们类型的数据流, 两个数据流被 Connect 之后, 只是被放在了一个同一个流中, 内部依然保持各自的数据和形式不发生任何变化, 两个流相互独立.
+![connect](../../img/flink/Transform/connect.png)
+
+***CoMap/CoFlatMap***:
+
+`ConnectedStreams` → `DataStream`: 作用于 ConnectedStreams 上, 功能与 map 和 flatMap 一样, 对 ConnectedStreams 中的每一个 Stream 分别进行 map 和 flatMap 处理.
+![coMap](../../img/flink/Transform/coMap.png)
 
 # 十二、Union
+
+
+
