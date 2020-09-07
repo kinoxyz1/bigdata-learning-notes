@@ -1,44 +1,48 @@
-* [一、CDH6\.2\.1 下载](#%E4%B8%80cdh621-%E4%B8%8B%E8%BD%BD)
-* [二、环境配置](#%E4%BA%8C%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE)
-  * [2\.1 机器配置](#21-%E6%9C%BA%E5%99%A8%E9%85%8D%E7%BD%AE)
-  * [2\.2 配置 hosts](#22-%E9%85%8D%E7%BD%AE-hosts)
-  * [2\.3 卸载自带的jdk](#23-%E5%8D%B8%E8%BD%BD%E8%87%AA%E5%B8%A6%E7%9A%84jdk)
-  * [2\.4 卸载自带的 mariadb](#24-%E5%8D%B8%E8%BD%BD%E8%87%AA%E5%B8%A6%E7%9A%84-mariadb)
-  * [2\.5 关闭防火墙](#25-%E5%85%B3%E9%97%AD%E9%98%B2%E7%81%AB%E5%A2%99)
-  * [2\.6 配置免密登录](#26-%E9%85%8D%E7%BD%AE%E5%85%8D%E5%AF%86%E7%99%BB%E5%BD%95)
-  * [2\.7 安装jdk](#27-%E5%AE%89%E8%A3%85jdk)
-* [三、安装 MySQL](#%E4%B8%89%E5%AE%89%E8%A3%85-mysql)
-  * [3\.1 解压 mysql\-5\.7\.26\-1\.el7\.x86\_64\.rpm\-bundle\.tar](#31-%E8%A7%A3%E5%8E%8B-mysql-5726-1el7x86_64rpm-bundletar)
-  * [3\.2 安装 MySQL](#32-%E5%AE%89%E8%A3%85-mysql)
-  * [3\.3 查看 MySQL 状态](#33-%E6%9F%A5%E7%9C%8B-mysql-%E7%8A%B6%E6%80%81)
-  * [3\.4 启动MySQL](#34-%E5%90%AF%E5%8A%A8mysql)
-  * [3\.5 查看 MySQL 状态](#35-%E6%9F%A5%E7%9C%8B-mysql-%E7%8A%B6%E6%80%81)
-  * [3\.6 查看root随机密码（最后的是密码）](#36-%E6%9F%A5%E7%9C%8Broot%E9%9A%8F%E6%9C%BA%E5%AF%86%E7%A0%81%E6%9C%80%E5%90%8E%E7%9A%84%E6%98%AF%E5%AF%86%E7%A0%81)
-  * [3\.7 修改root登录密码](#37-%E4%BF%AE%E6%94%B9root%E7%99%BB%E5%BD%95%E5%AF%86%E7%A0%81)
-  * [3\.8 设置root可以远程登录](#38-%E8%AE%BE%E7%BD%AEroot%E5%8F%AF%E4%BB%A5%E8%BF%9C%E7%A8%8B%E7%99%BB%E5%BD%95)
-  * [3\.9 设置MySql忽略大小写：](#39-%E8%AE%BE%E7%BD%AEmysql%E5%BF%BD%E7%95%A5%E5%A4%A7%E5%B0%8F%E5%86%99)
-  * [3\.10 为CM安装mysql驱动](#310-%E4%B8%BAcm%E5%AE%89%E8%A3%85mysql%E9%A9%B1%E5%8A%A8)
-* [四、安装 CM](#%E5%9B%9B%E5%AE%89%E8%A3%85-cm)
-  * [4\.1 搭建本地 YUM 源](#41-%E6%90%AD%E5%BB%BA%E6%9C%AC%E5%9C%B0-yum-%E6%BA%90)
-* [五、启动CM服务](#%E4%BA%94%E5%90%AF%E5%8A%A8cm%E6%9C%8D%E5%8A%A1)
-* [六、CDH 安装配置](#%E5%85%ADcdh-%E5%AE%89%E8%A3%85%E9%85%8D%E7%BD%AE)
-* [七、Hive On Spark 配置](#%E4%B8%83hive-on-spark-%E9%85%8D%E7%BD%AE)
-* [八、NameNode HA](#%E5%85%ABnamenode-ha)
-* [九、修改默认参数配置](#%E4%B9%9D%E4%BF%AE%E6%94%B9%E9%BB%98%E8%AE%A4%E5%8F%82%E6%95%B0%E9%85%8D%E7%BD%AE)
-* [十、Phoenix 安装(所有的节点都要执行)](#%E5%8D%81phoenix-%E5%AE%89%E8%A3%85%E6%89%80%E6%9C%89%E7%9A%84%E8%8A%82%E7%82%B9%E9%83%BD%E8%A6%81%E6%89%A7%E8%A1%8C)
-  * [10\.1 显示所有表](#101-%E6%98%BE%E7%A4%BA%E6%89%80%E6%9C%89%E8%A1%A8)
-  * [10\.2 创建表](#102-%E5%88%9B%E5%BB%BA%E8%A1%A8)
-  * [10\.3 查询所有表](#103-%E6%9F%A5%E8%AF%A2%E6%89%80%E6%9C%89%E8%A1%A8)
-  * [10\.4 新增记录](#104-%E6%96%B0%E5%A2%9E%E8%AE%B0%E5%BD%95)
-  * [10\.5 查询表](#105-%E6%9F%A5%E8%AF%A2%E8%A1%A8)
-  * [10\.6 删除表](#106-%E5%88%A0%E9%99%A4%E8%A1%A8)
-  * [10\.7 退出](#107-%E9%80%80%E5%87%BA)
-* [十一、hive测试](#%E5%8D%81%E4%B8%80hive%E6%B5%8B%E8%AF%95)
-* [十二、kafka测试](#%E5%8D%81%E4%BA%8Ckafka%E6%B5%8B%E8%AF%95)
-  * [12\.1 创建分区](#121-%E5%88%9B%E5%BB%BA%E5%88%86%E5%8C%BA)
-  * [12\.2 生产者往 上面创建的  topic  发送消息](#122-%E7%94%9F%E4%BA%A7%E8%80%85%E5%BE%80-%E4%B8%8A%E9%9D%A2%E5%88%9B%E5%BB%BA%E7%9A%84--topic--%E5%8F%91%E9%80%81%E6%B6%88%E6%81%AF)
-  * [12\.3 消费者消费 topic 消息](#123-%E6%B6%88%E8%B4%B9%E8%80%85%E6%B6%88%E8%B4%B9-topic-%E6%B6%88%E6%81%AF)
+# Table of Contents
 
+* [一、CDH6.2.1 下载](#一、cdh621-下载)
+  * [1.1 下载cdh(下载需要的即可)](#11-下载cdh下载需要的即可)
+  * [1.2 下载cm(全下)](#12-下载cm全下)
+* [二、环境配置](#二、环境配置)
+  * [2.1 机器配置](#21-机器配置)
+  * [2.2 配置 hosts](#22-配置-hosts)
+  * [2.3 卸载自带的jdk](#23-卸载自带的jdk)
+  * [2.4 卸载自带的 mariadb](#24-卸载自带的-mariadb)
+  * [2.5 关闭防火墙](#25-关闭防火墙)
+  * [2.6 配置免密登录](#26-配置免密登录)
+  * [2.7 安装jdk](#27-安装jdk)
+  * [2.8 时钟同步](#28-时钟同步)
+  * [2.9 http服务](#29-http服务)
+* [三、在线安装 MariaDB](#三、在线安装-mariadb)
+  * [3.1 安装 MariaDB](#31-安装-mariadb)
+  * [3.2 查看 MariaDB 状态](#32-查看-mariadb-状态)
+  * [3.3 设置root可以远程登录](#33-设置root可以远程登录)
+  * [3.9 设置MySql忽略大小写：](#39-设置mysql忽略大小写：)
+  * [3.10 为 CM 安装mysql驱动](#310-为-cm-安装mysql驱动)
+* [四、安装 CM](#四、安装-cm)
+  * [4.1 制作 yum 源](#41-制作-yum-源)
+  * [4.2 安装CM server及agent](#42-安装cm-server及agent)
+  * [4.3 修改CM配置文件](#43-修改cm配置文件)
+  * [4.4 在MySQL中建库](#44-在mysql中建库)
+  * [4.5 为CM配置数据库](#45-为cm配置数据库)
+* [五、启动CM服务](#五、启动cm服务)
+* [六、CDH 安装配置](#六、cdh-安装配置)
+* [七、Hive On Spark 配置](#七、hive-on-spark-配置)
+* [八、NameNode HA](#八、namenode-ha)
+* [九、修改默认参数配置](#九、修改默认参数配置)
+* [十、Phoenix 安装(所有的节点都要执行)](#十、phoenix-安装所有的节点都要执行)
+  * [10.1 显示所有表](#101-显示所有表)
+  * [10.2 创建表](#102-创建表)
+  * [10.3 查询所有表](#103-查询所有表)
+  * [10.4 新增记录](#104-新增记录)
+  * [10.5 查询表](#105-查询表)
+  * [10.6 删除表](#106-删除表)
+  * [10.7 退出](#107-退出)
+* [十一、hive测试](#十一、hive测试)
+* [十二、kafka测试](#十二、kafka测试)
+  * [12.1 创建分区](#121-创建分区)
+  * [12.2 生产者往 上面创建的  topic  发送消息](#122-生产者往-上面创建的--topic--发送消息)
+  * [12.3 消费者消费 topic 消息](#123-消费者消费-topic-消息)
 
 
 ---
@@ -197,7 +201,7 @@ systemctl start httpd 或service httpd start
 ---
 # 三、在线安装 MariaDB
 (ps: 主节点执行)
-##3.1 安装 MariaDB
+## 3.1 安装 MariaDB
 [CentOS7安装MariaDB](../MariaDB/CentOS7安装MariaDB.md)
 
 ## 3.2 查看 MariaDB 状态
@@ -283,13 +287,13 @@ mysql-connector-java.jar     			100%  984KB  30.7MB/s   00:00
     ```
 3. 制作本地yum源
     ```bash
-    #下载yum源工具包
+    - 下载yum源工具包
     yum -y install yum-utils createrepo
-    # 在 cloudera-repos 目录下生成rpm元数据：
+    - 在 cloudera-repos 目录下生成rpm元数据：
     createrepo /var/www/html/cloudera-repos
-    #并对/var/www/html下的所有目录和文件赋权：
+    - 并对/var/www/html下的所有目录和文件赋权：
     chmod  -R 755 /var/www/html
-    #创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
+    - 创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
     [myrepo]
     name = myrepo
     baseurl = http://kino-cdh01/cloudera-repos
@@ -301,7 +305,7 @@ mysql-connector-java.jar     			100%  984KB  30.7MB/s   00:00
 
     (ps: 从节点执行)
     ```bash
-    #创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
+    - 创建本地Cloudera Manager的repo源，创建/etc/yum.repos.d/myrepo.repo，加入一些配置项：
     [myrepo]
     name = myrepo
     baseurl = http://kino-cdh01/cloudera-repos
