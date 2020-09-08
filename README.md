@@ -24,6 +24,14 @@
 
 
 
+<details>
+<summary>Flume</summary>
+
+* [Flume 安装部署](note/flume/Flume安装部署.md)
+</details>
+
+
+
 
 <details>
 <summary>Hive</summary>
