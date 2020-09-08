@@ -50,6 +50,8 @@
 <details>
 <summary>Kafka</summary>
 
+* [kafka 安装部署](note/kafka/kafka安装部署.md)
+* [kafka 常用命令](note/kafka/kafka常用命令.md)
 * [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
 </details>
 
