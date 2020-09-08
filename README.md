@@ -18,6 +18,7 @@
 <summary>Hadoop</summary>
 
 * [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
+* [Hadoop3.0 完全分部署安装部署](note/hadoop/Hadoop3.0完全分部署安装部署.md)
 * [Hadoop 数据迁移](note/hadoop/Hadoop数据迁移.md)
 </details>
 
