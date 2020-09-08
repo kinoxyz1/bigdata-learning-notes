@@ -63,8 +63,6 @@ a1.sinks.k1.channel = c1
 
 ## 2.5 使用netcat工具向本机的44444端口发送内容
 ```bash
-[root@hadoop1 ~]# nc -lk 44444
-Ncat: bind to 0.0.0.0:44444: Address already in use. QUITTING.
 [root@hadoop1 ~]# nc localhost 44444
 1112222333444
 OK
