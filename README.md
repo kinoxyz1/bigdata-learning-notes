@@ -7,6 +7,7 @@
 <details>
 <summary>Zookeeper</summary>
 
+* [Zookeeper 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
 </details>
 
