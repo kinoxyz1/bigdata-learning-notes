@@ -17,8 +17,8 @@
 <details>
 <summary>Hadoop</summary>
 
-* [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
 * [Hadoop3.0 完全分部署安装部署](note/hadoop/Hadoop3.0完全分部署安装部署.md)
+* [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
 * [Hadoop 数据迁移](note/hadoop/Hadoop数据迁移.md)
 </details>
 
@@ -251,6 +251,7 @@
 * [kill pid 和 kill -9 pid 的区别](note/linux/kill-pid.md)
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
 * [CentOS top命令详解](note/linux/CentOS-top命令详解.md)
+* [CentOS 集群时间同步](note/linux/CentOS集群时间同步.md)
   </details>  
 
 <details>
