@@ -4,10 +4,10 @@
 
 ---
 ```bash
-[root@zabbix ~]# yum install -y mariadb-server mariadb
-[root@zabbix ~]# systemctl start mariadb
-[root@zabbix ~]# systemctl enable mariadb 
-[root@zabbix ~]# mysql_secure_installation
+[root@centos ~]# yum install -y mariadb-server mariadb
+[root@centos ~]# systemctl start mariadb
+[root@centos ~]# systemctl enable mariadb 
+[root@centos ~]# mysql_secure_installation
 
 首先是设置密码，会提示先输入密码
 
@@ -28,4 +28,7 @@ Disallow root login remotely? [Y/n] <–是否禁止root远程登录,回车,
 Remove test database and access to it? [Y/n] <– 是否删除test数据库，回车
 
 Reload privilege tables now? [Y/n] <– 是否重新加载权限表，回车
+
+[root@centos ~]# mysql -uroot -p
+输入密码.
 ```

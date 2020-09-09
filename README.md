@@ -36,6 +36,7 @@
 <details>
 <summary>Hive</summary>
 
+* [Hive 安装部署](note/hive/Hive安装部署.md)
 * [Hive beeline连接](note/hive/Hive-beeline连接.md)
 * [Hive 导出 csv 文件](note/hive/Hive导出csv文件.md)
 * [Hive drop database删除数据库](note/hive/Hive-Drop-Database删除数据库.md)
@@ -61,7 +62,7 @@
 <details>
 <summary>Sentry</summary>
 
-* [CDH安全之Sentry权限管理](note/sentry/CDH安全之Sentry权限管理.md)
+* [CDH 安装配置Sentry](note/sentry/CDH安全之Sentry权限管理.md)
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
 </details>
 
@@ -138,6 +139,7 @@
 <details>
 <summary>Spark</summary>
 
+* [Spark 安装部署](note/spark/Spark安装部署.md)
 * [Spark 常用 API](note/spark/Spark常用API.md)
 * [Hive on Spark 参数调优](note/spark/HiveOnSpark参数调优.md)
 * [Spark Streaming 的 reduceByKeyAndWindow 窗口函数](note/spark/SparkStreaming的reduceByKeyAndWindow窗口函数.md)

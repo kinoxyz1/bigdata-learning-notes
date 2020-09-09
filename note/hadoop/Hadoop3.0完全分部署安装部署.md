@@ -17,12 +17,12 @@ https://archive.apache.org/dist/hadoop/common/
 # 三、解压安装、配置
 ## 3.1 解压到指定目录
 ```bash
-[root@hadoop1 opt]# tar -zxvf hadoop-3.0.0.tar.gz -C /usr/bigdata/
+[root@hadoop1 opt]# tar -zxvf hadoop-3.1.1.tar.gz -C /usr/bigdata/
 ```
 ## 3.2 修改核心配置文件
 ① 配置 `core-site.xml`
 ```bash
-[root@hadoop1 hadoop-3.0.0]# cd /usr/bigdata/hadoop-3.0.0/etc/hadoop/
+[root@hadoop1 hadoop-3.1.1]# cd /usr/bigdata/hadoop-3.1.1/etc/hadoop/
 [root@hadoop1 hadoop]# vim core-site.xml
 <!-- 指定HDFS中NameNode的地址 -->
 <property>
@@ -33,7 +33,7 @@ https://archive.apache.org/dist/hadoop/common/
 <!-- 指定Hadoop运行时产生文件的存储目录 -->
 <property>
 	<name>hadoop.tmp.dir</name>
-	<value>/usr/bigdata/hadoop-3.0.0/data/tmp</value>
+	<value>/usr/bigdata/hadoop-3.1.1/data/tmp</value>
 </property>
 ```
 ② 配置 `hadoop-env.sh`
@@ -69,7 +69,7 @@ export JAVA_HOME=/usr/java/jdk1.8.0_131
 <!-- 指定YARN的ResourceManager的地址 -->
 <property>
     <name>yarn.resourcemanager.hostname</name>
-    <value>hadoop3</value>
+    <value>hadoop1</value>
 </property>
 ```
 ⑥ 配置 `mapred-env.sh`
@@ -88,7 +88,7 @@ export JAVA_HOME=/usr/java/jdk1.8.0_131
     <value>yarn</value>
 </property>
 ```
-⑧ 配置 `slaves` 
+⑧ 配置 `workers` 
 ```bash
 [root@hadoop1 hadoop]# vim slaves
 hadoop1
@@ -128,20 +128,20 @@ YARN_NODEMANAGER_USER=root
 
 # 四、分发 hadoop3.0
 ```bash
-[root@hadoop1 conf]$ scp -r /usr/bigdata/hadoop-3.0.0 root@hadoop2://usr/bigdata
-[root@hadoop1 conf]$ scp -r /usr/bigdata/hadoop-3.0.0 root@hadoop3://usr/bigdata
+[root@hadoop1 conf]$ scp -r /usr/bigdata/hadoop-3.1.1 root@hadoop2://usr/bigdata
+[root@hadoop1 conf]$ scp -r /usr/bigdata/hadoop-3.1.1 root@hadoop3://usr/bigdata
 ```
 
 # 五、启动 hadoop
 ##5.1 格式化NameNode
 如果集群是第一次启动, 需要格式化NameNode(注意格式化之前,一定要先停止上次启动的所有namenode和datanode进程,然后再删除data和log数据）
 ```bash
-[root@hadoop1 hadoop-3.0.0]$ bin/hdfs namenode -format
+[root@hadoop1 hadoop-3.1.1]$ bin/hdfs namenode -format
 ```
 
 ## 5.2 启动集群
 ```bash
-[root@hadoop1 hadoop-3.0.0]$ start-all.sh
+[root@hadoop1 hadoop-3.1.1]$ start-all.sh
 ```
 
 ## 5.3 在 WebUI 中查看
