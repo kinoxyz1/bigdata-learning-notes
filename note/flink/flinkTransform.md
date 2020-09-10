@@ -358,7 +358,9 @@ object SplitAndSelect {
 
 # 十二、Union
 ![union](../../img/flink/Transform/union.png)
+
 `DataStream` → `DataStream`: 对两个或者两个以上的 DataStream 进行 union 操作, 产生一个包含所有 DataStream 元素的新 DataStream。
+
 ```scala 3
 package day02.transform
 
