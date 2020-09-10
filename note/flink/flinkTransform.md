@@ -310,7 +310,105 @@ all: > SensorReading(sensor_7,1547718202,6.7)
 
 ![coMap](../../img/flink/Transform/coMap.png)
 
+```scala 3
+package day02.transform
+
+import Mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+
+object SplitAndSelect {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val stream = env.readTextFile("D:\\work\\kino\\FlinkTutorial\\src\\main\\resources\\SensorReading")
+    val splitStream = stream.map(x => {
+      val dataArray = x.split(",")
+      SensorReading(dataArray(0), dataArray(1).toInt, dataArray(2).toDouble)
+    })
+      .split(x => {
+        if (x.temperature > 30)
+          Seq("high")
+        else
+          Seq("low")
+      })
+
+    var high: DataStream[SensorReading] = splitStream.select("high")
+    var low: DataStream[SensorReading] = splitStream.select("low")
+    var all: DataStream[SensorReading] = splitStream.select("high", "low")
+
+    val warning = high.map(x => (x.id, x.temperature))
+    val connected: ConnectedStreams[(String, Double), SensorReading] = warning.connect(all)
+    val coMap = connected.map(
+      warningData => (warningData._1, warningData._2, "warning"),
+      lowData => (lowData.id, "healthy")
+    )
+    coMap.print()
+    env.execute(this.getClass.getName)
+  }
+}
+```
+输出结果:
+```scala 3
+2> (sensor_6,healthy)
+6> (sensor_10,38.1,warning)
+1> (sensor_1,35.8,warning)
+4> (sensor_7,healthy)
+6> (sensor_10,healthy)
+1> (sensor_1,healthy)
+```
+
 # 十二、Union
+![union](../../img/flink/Transform/union.png)
+`DataStream` → `DataStream`: 对两个或者两个以上的 DataStream 进行 union 操作, 产生一个包含所有 DataStream 元素的新 DataStream。
+```scala 3
+package day02.transform
+
+import Mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+
+object SplitAndSelect {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val stream = env.readTextFile("D:\\work\\kino\\FlinkTutorial\\src\\main\\resources\\SensorReading")
+    val splitStream = stream.map(x => {
+      val dataArray = x.split(",")
+      SensorReading(dataArray(0), dataArray(1).toInt, dataArray(2).toDouble)
+    })
+      .split(x => {
+        if (x.temperature > 30)
+          Seq("high")
+        else
+          Seq("low")
+      })
+
+    var high: DataStream[SensorReading] = splitStream.select("high")
+    var low: DataStream[SensorReading] = splitStream.select("low")
+    var all: DataStream[SensorReading] = splitStream.select("high", "low")
+
+    val warning = high.map(x => (x.id, x.temperature))
+    val connected: ConnectedStreams[(String, Double), SensorReading] = warning.connect(all)
+    val coMap = connected.map(
+      warningData => (warningData._1, warningData._2, "warning"),
+      lowData => (lowData.id, "healthy")
+    )
+    high.union(all).union(low).print()
+    env.execute(this.getClass.getName)
+  }
+}
+```
+输出结果:
+```scala 3
+5> SensorReading(sensor_7,1547718202,6.7)
+3> SensorReading(sensor_6,1547718201,15.4)
+5> SensorReading(sensor_7,1547718202,6.7)
+3> SensorReading(sensor_6,1547718201,15.4)
+7> SensorReading(sensor_10,1547718205,38.1)
+7> SensorReading(sensor_10,1547718205,38.1)
+2> SensorReading(sensor_1,1547718199,35.8)
+2> SensorReading(sensor_1,1547718199,35.8)
+```
 
 
+Connect 与 Union 区别:
+1. Union 之前两个流的类型必须是一样，Connect 可以不一样，在之后的 coMap 中再去调整成为一样的。
+2. Connect 只能操作两个流，Union 可以操作多个。
 
