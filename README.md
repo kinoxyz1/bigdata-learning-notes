@@ -167,6 +167,7 @@
 * [Flink 简介](note/flink/flink简介.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
 * [Flink 部署和运行](note/flink/flink部署和运行.md)
+* [CDH6.3.2 集成FLink](note/flink/CDH6.3.2集成FLink.md)
 * [Flink 运行时架构之运行时组件](note/flink/flink运行时架构之运行时组件.md)
 * [Flink 运行时架构之作业提交流程](note/flink/flink运行时架构之作业提交流程.md)
 * [Flink 运行时架构之任务调度原理(一)](note/flink/flink运行时架构之任务调度原理(一).md)
