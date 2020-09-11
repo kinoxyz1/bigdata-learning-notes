@@ -57,6 +57,11 @@ sensor_10,1547718205,38.1
 ```
 
 
+可以点进去 FilterFunction, FilterFunction 继承 Function, 按 ctrl+alt+b 查看 Function 的所有实现类
+
+![Function](../../img/flink/UDF/Function.png)
+
+
 # 二、匿名函数
 
 
