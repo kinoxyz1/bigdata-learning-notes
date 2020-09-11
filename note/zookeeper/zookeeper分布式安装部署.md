@@ -1,5 +1,15 @@
 
-
+* [一、集群规划](#%E4%B8%80%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92)
+* [二、下载安装包](#%E4%BA%8C%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85%E5%8C%85)
+* [三、解压安装](#%E4%B8%89%E8%A7%A3%E5%8E%8B%E5%AE%89%E8%A3%85)
+* [四、配置服务器编号](#%E5%9B%9B%E9%85%8D%E7%BD%AE%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E5%8F%B7)
+* [五、修改 zoo\.cfg 文件](#%E4%BA%94%E4%BF%AE%E6%94%B9-zoocfg-%E6%96%87%E4%BB%B6)
+* [六、分发 zookeeper](#%E5%85%AD%E5%88%86%E5%8F%91-zookeeper)
+* [七、修改 hadoop2、hadoop3 的 myid](#%E4%B8%83%E4%BF%AE%E6%94%B9-hadoop2hadoop3-%E7%9A%84-myid)
+* [八、进群操作](#%E5%85%AB%E8%BF%9B%E7%BE%A4%E6%93%8D%E4%BD%9C)
+  * [8\.1 分别启动Zookeeper](#81-%E5%88%86%E5%88%AB%E5%90%AF%E5%8A%A8zookeeper)
+  * [8\.2 查看状态](#82-%E6%9F%A5%E7%9C%8B%E7%8A%B6%E6%80%81)
+  * [8\.3 客户端连接](#83-%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%9E%E6%8E%A5)
 
 ---
 # 一、集群规划

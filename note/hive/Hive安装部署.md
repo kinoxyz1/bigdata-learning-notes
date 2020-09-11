@@ -1,6 +1,22 @@
 
 
-
+* [一、下载](#%E4%B8%80%E4%B8%8B%E8%BD%BD)
+* [二、解压](#%E4%BA%8C%E8%A7%A3%E5%8E%8B)
+* [三、修改配置文件名](#%E4%B8%89%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E5%90%8D)
+* [四、配置 hive\-env\.sh文件](#%E5%9B%9B%E9%85%8D%E7%BD%AE-hive-envsh%E6%96%87%E4%BB%B6)
+* [五、配置 Hadoop 集群](#%E4%BA%94%E9%85%8D%E7%BD%AE-hadoop-%E9%9B%86%E7%BE%A4)
+  * [5\.1 必须启动 hdfs 和 yarn](#51-%E5%BF%85%E9%A1%BB%E5%90%AF%E5%8A%A8-hdfs-%E5%92%8C-yarn)
+  * [5\.2 在 HDFS 上创建文件夹并赋予权限](#52-%E5%9C%A8-hdfs-%E4%B8%8A%E5%88%9B%E5%BB%BA%E6%96%87%E4%BB%B6%E5%A4%B9%E5%B9%B6%E8%B5%8B%E4%BA%88%E6%9D%83%E9%99%90)
+* [六、安装 MariaDB, 配置权限](#%E5%85%AD%E5%AE%89%E8%A3%85-mariadb-%E9%85%8D%E7%BD%AE%E6%9D%83%E9%99%90)
+  * [6\.1 安装](#61-%E5%AE%89%E8%A3%85)
+  * [6\.2 配置](#62-%E9%85%8D%E7%BD%AE)
+* [七、Hive 元数据配置到 MariaDB](#%E4%B8%83hive-%E5%85%83%E6%95%B0%E6%8D%AE%E9%85%8D%E7%BD%AE%E5%88%B0-mariadb)
+  * [7\.1 下载 MariaDB 驱动包](#71-%E4%B8%8B%E8%BD%BD-mariadb-%E9%A9%B1%E5%8A%A8%E5%8C%85)
+  * [7\.2 解压后 将 驱动包 拷贝到 $HIVE\_HOME/lib 目录下](#72-%E8%A7%A3%E5%8E%8B%E5%90%8E-%E5%B0%86-%E9%A9%B1%E5%8A%A8%E5%8C%85-%E6%8B%B7%E8%B4%9D%E5%88%B0-hive_homelib-%E7%9B%AE%E5%BD%95%E4%B8%8B)
+  * [7\.3 配置 Metastore 到 MariaDB](#73-%E9%85%8D%E7%BD%AE-metastore-%E5%88%B0-mariadb)
+* [八、连接到hive](#%E5%85%AB%E8%BF%9E%E6%8E%A5%E5%88%B0hive)
+* [九、HiveHDBC访问](#%E4%B9%9Dhivehdbc%E8%AE%BF%E9%97%AE)
+  * [9\.1 启动 hiveserver2](#91-%E5%90%AF%E5%8A%A8-hiveserver2)
 
 
 

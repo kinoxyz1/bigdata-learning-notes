@@ -1,5 +1,15 @@
 
-
+* [一、Shell 解析器](#%E4%B8%80shell-%E8%A7%A3%E6%9E%90%E5%99%A8)
+  * [1\.1 Linux 提供的 Shell 解析器有如下几种:](#11-linux-%E6%8F%90%E4%BE%9B%E7%9A%84-shell-%E8%A7%A3%E6%9E%90%E5%99%A8%E6%9C%89%E5%A6%82%E4%B8%8B%E5%87%A0%E7%A7%8D)
+  * [2\.2 bash 和 sh 的关系](#22-bash-%E5%92%8C-sh-%E7%9A%84%E5%85%B3%E7%B3%BB)
+  * [2\.3 CentOS 默认解析器](#23-centos-%E9%BB%98%E8%AE%A4%E8%A7%A3%E6%9E%90%E5%99%A8)
+* [二、Shell 入门](#%E4%BA%8Cshell-%E5%85%A5%E9%97%A8)
+  * [2\.1 Shell 脚本格式](#21-shell-%E8%84%9A%E6%9C%AC%E6%A0%BC%E5%BC%8F)
+  * [2\.2 Shell 脚本常用的执行方式](#22-shell-%E8%84%9A%E6%9C%AC%E5%B8%B8%E7%94%A8%E7%9A%84%E6%89%A7%E8%A1%8C%E6%96%B9%E5%BC%8F)
+    * [2\.2\.1 第一种](#221-%E7%AC%AC%E4%B8%80%E7%A7%8D)
+    * [2\.2\.2 第二种](#222-%E7%AC%AC%E4%BA%8C%E7%A7%8D)
+  * [2\.2 HelloWorld](#22-helloworld)
+  * [2\.3 多命令处理](#23-%E5%A4%9A%E5%91%BD%E4%BB%A4%E5%A4%84%E7%90%86)
 
 ---
 # 一、Shell 解析器

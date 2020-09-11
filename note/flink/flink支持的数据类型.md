@@ -1,5 +1,9 @@
 
-
+* [一、基础数据类型](#%E4%B8%80%E5%9F%BA%E7%A1%80%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B)
+* [二、 Java 和 Scala 元组](#%E4%BA%8C-java-%E5%92%8C-scala-%E5%85%83%E7%BB%84)
+* [三、Scala 样例类](#%E4%B8%89scala-%E6%A0%B7%E4%BE%8B%E7%B1%BB)
+* [四、Java简单对象](#%E5%9B%9Bjava%E7%AE%80%E5%8D%95%E5%AF%B9%E8%B1%A1)
+* [五、其他](#%E4%BA%94%E5%85%B6%E4%BB%96)
 
 ---
 

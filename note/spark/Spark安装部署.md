@@ -1,5 +1,24 @@
 
-
+* [一、Yarn 模式运行机制](#%E4%B8%80yarn-%E6%A8%A1%E5%BC%8F%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6)
+  * [1\.1 YARN Cluster 模式](#11-yarn-cluster-%E6%A8%A1%E5%BC%8F)
+  * [1\.2 Yarn Client 模式](#12-yarn-client-%E6%A8%A1%E5%BC%8F)
+  * [1\.3 Yarn cluster 模式运行机制源码分析](#13-yarn-cluster-%E6%A8%A1%E5%BC%8F%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+    * [1\.3\.1 bin/spark\-submit 启动脚本分析](#131-binspark-submit-%E5%90%AF%E5%8A%A8%E8%84%9A%E6%9C%AC%E5%88%86%E6%9E%90)
+      * [/bin/spark\-class](#binspark-class)
+    * [1\.3\.2 org\.apache\.spark\.deploy\.SparkSubmit 源码分析](#132-orgapachesparkdeploysparksubmit-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+      * [SparkSubmit伴生对象](#sparksubmit%E4%BC%B4%E7%94%9F%E5%AF%B9%E8%B1%A1)
+    * [1\.3\.3\. org\.apache\.spark\.deploy\.yarn\.Client 源码分析](#133-orgapachesparkdeployyarnclient-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+    * [1\.3\.4 org\.apache\.spark\.deploy\.yarn\.ApplicationMaster 源码分析](#134-orgapachesparkdeployyarnapplicationmaster-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+    * [1\.3\.5 org\.apache\.spark\.executor\.CoarseGrainedExecutorBackend 源码分析](#135-orgapachesparkexecutorcoarsegrainedexecutorbackend-%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+      * [CoarseGrainedExecutorBackend 伴生对象](#coarsegrainedexecutorbackend-%E4%BC%B4%E7%94%9F%E5%AF%B9%E8%B1%A1)
+      * [CoarseGrainedExecutorBackend 伴生类](#coarsegrainedexecutorbackend-%E4%BC%B4%E7%94%9F%E7%B1%BB)
+  * [1\.4 Yarn client 模式运行机制源码分析](#14-yarn-client-%E6%A8%A1%E5%BC%8F%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90)
+    * [1\.4\.1 client 模式下直接运行用户的主类:](#141-client-%E6%A8%A1%E5%BC%8F%E4%B8%8B%E7%9B%B4%E6%8E%A5%E8%BF%90%E8%A1%8C%E7%94%A8%E6%88%B7%E7%9A%84%E4%B8%BB%E7%B1%BB)
+    * [1\.4\.2 org\.apache\.spark\.deploy\.yarn\.Client 源码再分析](#142-orgapachesparkdeployyarnclient-%E6%BA%90%E7%A0%81%E5%86%8D%E5%88%86%E6%9E%90)
+    * [1\.4\.3 ApplicationMaster 源码再分析](#143-applicationmaster-%E6%BA%90%E7%A0%81%E5%86%8D%E5%88%86%E6%9E%90)
+* [二、Standalone 模式运行机制](#%E4%BA%8Cstandalone-%E6%A8%A1%E5%BC%8F%E8%BF%90%E8%A1%8C%E6%9C%BA%E5%88%B6)
+  * [2\.1 Standalone Cluster 模式](#21-standalone-cluster-%E6%A8%A1%E5%BC%8F)
+  * [2\.2 Standalone Client 模式](#22-standalone-client-%E6%A8%A1%E5%BC%8F)
 
 ---
 # 一、下载 Spark
