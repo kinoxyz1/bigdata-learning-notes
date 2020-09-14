@@ -12,7 +12,7 @@
 该篇介绍 Flink 实现 UDF函数 -- 更细粒度的控制流
 
 # 一、函数类(Function Classes)
-Flink 暴露了酥油的 udf 函数的接口(实现方式为接口或抽象类), 例如 MapFunction、FilterFunction、ProcessFunction等等.
+Flink 暴露了所有的 udf 函数的接口(实现方式为接口或抽象类), 例如 MapFunction、FilterFunction、ProcessFunction等等.
 
 下面列举一个 FilterFunction 接口的例子:
 
