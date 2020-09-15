@@ -23,9 +23,9 @@ stream.addSink(new MySink(abcd))
 https://mvnrepository.com/artifact/org.apache.flink/flink-connector-kafka-0.11
 -->
 <dependency>
-<groupId>org.apache.flink</groupId>
-<artifactId>flink-connector-kafka-0.11_2.12</artifactId>
-<version>1.10.1</version>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-kafka-0.11_2.12</artifactId>
+    <version>1.10.1</version>
 </dependency>
 ```
 Kafka Sink 代码如下:
@@ -103,9 +103,9 @@ sensor_1,1547718199,35.8
 ```xml
 <!-- https://mvnrepository.com/artifact/org.apache.bahir/flink-connector-redis-->
 <dependency>
-<groupId>org.apache.bahir</groupId>
-<artifactId>flink-connector-redis_2.11</artifactId>
-<version>1.0</version>
+    <groupId>org.apache.bahir</groupId>
+    <artifactId>flink-connector-redis_2.11</artifactId>
+    <version>1.0</version>
 </dependency>
 ```
 代码如下:
@@ -184,8 +184,32 @@ redis 查看结果:
 1) "sensor_1"
 2) "35.8"
 ```
+RedisCommand 可选项:
 
-# 三、ES Sink
+Data Type |	Redis Command [Sink]
+---- | ----
+HASH | HSET
+LIST | RPUSH, LPUSH
+SET | SADD
+PUBSUB | PUBLISH
+STRING | SET
+HYPER_LOG_LOG | PFADD
+SORTED_SET | ZADD
+SORTED_SET | ZREM
+
+# 三、Elasticsearch Sink
+[docker 部署 Elasticsearch](../../note/elasticsearch/Docker安装Elasticsearch.md)
+
+[docker 部署 Kibana](../../note/kibana/Docker安装Kibana.md)
+
+添加 pom 依赖
+```xml
+<dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-elasticsearch6_2.12</artifactId>
+    <version>1.10.1</version>
+</dependency>
+```
 
 
 # 四、自定义JDBC Sink
