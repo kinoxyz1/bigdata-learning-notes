@@ -236,7 +236,10 @@ mysql> exit;
 
 重启MySql服务：`systemctl restart mariadb`
 
-## 3.10 为 CM 安装mysql驱动
+## 3.10 修改MySQL中文乱码
+[修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
+
+## 3.11 为 CM 安装mysql驱动
 下载地址: https://dev.mysql.com/downloads/connector/j/
 
 将 `mysql-connector-java-5.1.27-bin.jar` 拷贝到 新创建的 `/usr/share/java` 路径下，并重命名为 `mysql-connector-java.jar`
