@@ -237,7 +237,7 @@ mysql> exit;
 重启MySql服务：`systemctl restart mariadb`
 
 ## 3.10 修改MySQL中文乱码
-[修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
+[修改MySQL中文乱码](../../note/MySQL/修改MySQL中文乱码.md)
 
 ## 3.11 为 CM 安装mysql驱动
 下载地址: https://dev.mysql.com/downloads/connector/j/
