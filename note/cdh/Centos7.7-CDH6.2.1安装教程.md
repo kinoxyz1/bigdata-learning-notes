@@ -733,3 +733,44 @@ select * from kino where name = "kino" and age = 20;
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200601111923612.png)
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200601111929776.png)
 
+
+
+---
+# 十三、CDH 邮件配置
+
+![邮件报警](../../img/cdh/CDH安装/邮件报警.png)
+
+![邮件报警设置参数](../../img/cdh/CDH安装/邮件报警设置参数.png)
+
+停掉 zookeeper 的两个节点
+
+![邮件报警1](../../img/cdh/CDH安装/邮件报警1.png)
+
+![报警](../../img/cdh/CDH安装/报警1.png)
+
+![报警](../../img/cdh/CDH安装/报警2.png)
+
+![报警](../../img/cdh/CDH安装/报警3.png)
+
+![报警](../../img/cdh/CDH安装/报警4.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
