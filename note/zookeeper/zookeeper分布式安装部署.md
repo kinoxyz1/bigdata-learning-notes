@@ -85,8 +85,7 @@ server.3=hadoop3:2888:3888
 
 # 六、分发 zookeeper
 ```bash
-[root@hadoop1 conf]$ scp -r /usr/bigdata/zookeeper-3.4.5 root@hadoop2://usr/bigdata
-[root@hadoop1 conf]$ scp -r /usr/bigdata/zookeeper-3.4.5 root@hadoop3://usr/bigdata
+[root@hadoop1 usr]# xsync.sh /usr/bigdata
 ```
 
 # 七、修改 hadoop2、hadoop3 的 myid
