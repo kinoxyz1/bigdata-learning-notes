@@ -424,7 +424,7 @@ echo 'echo never > /sys/kernel/mm/transparent_hugepage/enabled' >> /etc/rc.local
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200509014154502.png)
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200509014333171.png)
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200509014427426.png)
-![在这里插入图片描述](../../img/cdh/CDH安装/20200509014442680.png)
+
 ![在这里插入图片描述](../../img/cdh/CDH安装/20200509012549354.png)
 
 ---
@@ -443,6 +443,12 @@ https://docs.cloudera.com/documentation/enterprise/6/6.1/topics/cm_ig_reqs_space
 
 软硬件环境要求：
 各节点：内存推荐16GB及以上，硬盘推荐200GB及以上，网络通畅
+
+## 7.1 关闭Spark动态分配资源参数
+spark和hive中, 把勾挑了:
+```bash
+spark.dynamicAllocation.enabled
+```
 
 ---
 

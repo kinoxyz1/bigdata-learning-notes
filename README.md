@@ -9,6 +9,7 @@
 
 * [Zookeeper 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
+* [Zookeeper 3.6.2安装部署](note/zookeeper/zookeeper3.6.2安装部署.md)
 </details>
 
 
@@ -156,6 +157,7 @@
   * [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
   * [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
   * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
+* [Spark 读取HDFS失败](note/spark/Spark读取HDFS失败.md)
 </details>
 
 
@@ -269,6 +271,11 @@
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
 * [CentOS top命令详解](note/linux/CentOS-top命令详解.md)
 * [CentOS 集群时间同步](note/linux/CentOS集群时间同步.md)
+* [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
+* [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
+* [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
+* [集群同步脚本](note/linux/集群同步脚本.md)
+* [集群批量执行脚本](note/linux/集群批量执行脚本.md)
   </details>  
 
 <details>
@@ -285,14 +292,6 @@
 
 
 
-## CentOS 相关
-<details>
-<summary>CentOS</summary>
-
-* [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
-* [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
-  </details>  
-  
 ## 科学上网
 <details>
 <summary>科学上网</summary>
