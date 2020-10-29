@@ -99,7 +99,7 @@ export JAVA_HOME=/usr/java/jdk1.8.0_131
 ```
 ⑧ 配置 `workers` 
 ```bash
-[root@hadoop1 hadoop]# vim slaves
+[root@hadoop1 hadoop]# vim workers
 hadoop1
 hadoop2
 hadoop3
@@ -150,7 +150,7 @@ YARN_NODEMANAGER_USER=root
 
 ## 5.2 启动集群
 ```bash
-[root@hadoop1 hadoop-3.1.1]$ start-all.sh
+[root@hadoop1 hadoop-3.1.1]$ sbin/start-all.sh
 ```
 
 ## 5.3 在 WebUI 中查看

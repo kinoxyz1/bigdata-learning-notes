@@ -51,11 +51,26 @@ export HIVE_CONF_DIR=/usr/bigdata/hive-3.1.2
 ```
 
 # 五、配置 Hadoop 集群
-## 5.1 必须启动 hdfs 和 yarn
+## 5.1 修改 core-site.xml 文件
+```bash
+<property>
+    <name>hadoop.proxyuser.xxx.hosts</name>
+    <value>*</value>
+</property>
+<property>
+    <name>hadoop.proxyuser.xxx.groups</name>
+    <value>*</value>
+</property>
+```
+其中"xxx"是连接beeline的用户, 将"xxx"替换成自己的用户名即可
+
+"*"表示可通过超级代理"xxx"操作hadoop的用户、用户组和主机
+
+## 5.2 必须启动 hdfs 和 yarn
 ```bash
 [root@hadoop1 conf]# start-all.sh
 ```
-## 5.2 在 HDFS 上创建文件夹并赋予权限
+## 5.3 在 HDFS 上创建文件夹并赋予权限
 ```bash
 [root@hadoop1 conf]# hadoop fs -mkdir /tmp
 [root@hadoop1 conf]# hadoop fs -mkdir -p /user/hive/warehouse
