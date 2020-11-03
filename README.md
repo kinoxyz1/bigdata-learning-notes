@@ -282,6 +282,7 @@
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
 * [集群同步脚本](note/linux/集群同步脚本.md)
 * [集群批量执行脚本](note/linux/集群批量执行脚本.md)
+* [echo 命令详解](note/linux/echo命令.md)
   </details>  
 
 <details>
