@@ -70,7 +70,7 @@ ntpdate time.windows.com
 Kubernetes默认CRI（容器运行时）为Docker，因此先安装Docker。
 
 ### 3.1 安装Docker
-![CentOS7安装Docker](../docker/CentOS7安装Docker.md)
+[CentOS7安装Docker](../docker/CentOS7安装Docker.md)
 
 ### 3.2 添加阿里云YUM软件源
 
