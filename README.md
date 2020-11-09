@@ -258,7 +258,7 @@
 <summary>Kubernetes</summary>
 
 * [K8s 入门](note/Kubernetes/Kubernetes入门.md)
-* [使用kubeadm部署k8s集群](note/Kubernetes/使用kubeadm部署k8s集群.md)
+* [K8s 部署](note/Kubernetes/k8s部署.md)
 * [解决K8S Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
 </details>
 
