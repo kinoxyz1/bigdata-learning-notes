@@ -257,7 +257,8 @@
 <details>
 <summary>Kubernetes</summary>
 
-* [Kubernetes 入门](note/Kubernetes/Kubernetes入门.md)
+* [K8s 入门](note/Kubernetes/Kubernetes入门.md)
+* [使用kubeadm部署k8s集群](note/Kubernetes/使用kubeadm部署k8s集群.md)
 </details>
 
 
@@ -280,9 +281,6 @@
 * [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
-* [集群同步脚本](note/linux/集群同步脚本.md)
-* [集群批量执行脚本](note/linux/集群批量执行脚本.md)
-* [echo 命令详解](note/linux/echo命令.md)
   </details>  
 
 <details>
@@ -295,6 +293,9 @@
 * [shell 读取控制台输入数据](note/linux/shell/shell读取控制台输入数据.md)
 * [shell 函数](note/linux/shell/shell函数.md)
 * [shell 工具](note/linux/shell/shell工具.md)
+* [echo 命令详解](note/linux/echo命令.md)
+* [集群同步脚本](note/linux/集群同步脚本.md)
+* [集群批量执行脚本](note/linux/集群批量执行脚本.md)
 </details>  
 
 
