@@ -50,10 +50,11 @@ hostnamectl set-hostname <hostname>
 
 # 在master添加hosts
 cat >> /etc/hosts << EOF
-192.168.220.135    master.k8s.io   k8s-vip
-192.168.220.131    master01.k8s.io master1
-192.168.220.132    master02.k8s.io master2
-192.168.220.133    node01.k8s.io   node1
+192.168.220.135    k8s-vip
+192.168.220.131    k8s-master1
+192.168.220.132    k8s-master2
+192.168.220.133    k8s-node1
+192.168.220.134    k8s-node2
 EOF
 
 # 将桥接的IPv4流量传递到iptables的链
@@ -70,9 +71,9 @@ ntpdate time.windows.com
 
 
 
-## 3. 所有master节点部署keepalived
+## 3. 所有 master节点部署 keepalived
 
-### 3.1 安装相关包和keepalived
+### 3.1 安装相关包和 keepalived
 
 ```
 yum install -y conntrack-tools libseccomp libtool-ltdl
