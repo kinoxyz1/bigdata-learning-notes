@@ -257,9 +257,11 @@
 <details>
 <summary>Kubernetes</summary>
 
-* [K8s 入门](note/Kubernetes/Kubernetes入门.md)
 * [K8s 部署](note/Kubernetes/k8s部署.md)
+* [K8s YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
 * [解决K8S Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
+* [K8s 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
+* [K8s 常用操作命令](note/Kubernetes/k8s常用操作命令.md)
 </details>
 
 
