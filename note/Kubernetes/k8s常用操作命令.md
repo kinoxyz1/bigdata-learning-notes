@@ -8,7 +8,20 @@ k8s-master   Ready    master   2d4h   v1.18.0
 k8s-node1    Ready    <none>   2d4h   v1.18.0
 k8s-node2    Ready    <none>   2d4h   v1.18.0
 ```
-② 检查节点上各个系统 Pod 的状态
+② 查看指定 pod
+```bash
+[root@k8s-master yaml]# kubectl get pods -l app=nginx
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5bf87f5f59-pkkrf   1/1     Running   0          4m14s
+nginx-deployment-5bf87f5f59-sdvqd   1/1     Running   0          4m14s
+```
+`kubectl get` 指令的作用: 就是从 Kubernetes 里面获取（GET）指定的 API 对象
+
+可以看到, 在这里我还加上了一个 -l 参数, 即获取所有匹配 app: nginx 标签的 Pod。
+
+需要注意的是, 在命令行中, 所有 key-value 格式的参数, 都使用 “=” 而非 “:” 表示
+
+③ 检查节点上各个系统 Pod 的状态
 ```bash
 [root@k8s-master ~]# kubectl get pods -n kube-system
 NAME                                 READY   STATUS    RESTARTS   AGE
@@ -25,7 +38,7 @@ kube-proxy-9n774                     1/1     Running   1          2d4h
 kube-proxy-dv9r4                     1/1     Running   1          2d4h
 kube-scheduler-k8s-master            1/1     Running   1          2d4h
 ```
-③ 查看 deployment
+④ 查看 deployment
 ```bash
 [root@k8s-master yaml]# kubectl get deployment
 NAME    READY   UP-TO-DATE   AVAILABLE   AGE
@@ -83,20 +96,6 @@ spec:
         ports:
         - containerPort: 80
 ```
-
-# get
-```bash
-[root@k8s-master yaml]# kubectl get pods -l app=nginx
-NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-5bf87f5f59-pkkrf   1/1     Running   0          4m14s
-nginx-deployment-5bf87f5f59-sdvqd   1/1     Running   0          4m14s
-```
-`kubectl get` 指令的作用: 就是从 Kubernetes 里面获取（GET）指定的 API 对象
-
-可以看到, 在这里我还加上了一个 -l 参数, 即获取所有匹配 app: nginx 标签的 Pod。
-
-需要注意的是, 在命令行中, 所有 key-value 格式的参数, 都使用 “=” 而非 “:” 表示
-
 
 # describe
 查看 node、pod 等详细信息

@@ -156,5 +156,17 @@ nginx-deployment-9754ccbdf-5spwg    0/1     ContainerCreating   0          19s
 
 然后, 你可以使用 `kubectl describe` 查看一下最新的 Pod, 就会发现 Volume 的信息已经出现在了 Container 描述部分:
 ```bash
-
+...
+Containers:
+  nginx:
+    Container ID:   docker://07b4f89248791c2aa47787e3da3cc94b48576cd173018356a6ec8db2b6041343
+    Image:          nginx:1.8
+    ...
+    Environment:    <none>
+    Mounts:
+      /usr/share/nginx/html from nginx-vol (rw)
+...
+Volumes:
+  nginx-vol:
+    Type:    EmptyDir (a temporary directory that shares a pod's lifetime)
 ```
