@@ -31,6 +31,12 @@
 * [Flume 安装部署](note/flume/Flume安装部署.md)
 </details>
 
+<details>
+<summary>HBase</summary>
+
+* [HBase 生产环境调优](note/HBase/HBase生产环境调优.md)
+</details>
+
 
 
 
@@ -302,6 +308,13 @@
 * [集群批量执行脚本](note/linux/集群批量执行脚本.md)
 </details>  
 
+
+## 乱七八糟
+<details>
+<summary>乱七八糟</summary>
+
+* [列式存储为什么快？](note/乱七八糟/列式存储.md)
+</details>  
 
 
 ## 科学上网
