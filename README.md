@@ -309,14 +309,6 @@
 </details>  
 
 
-## 乱七八糟
-<details>
-<summary>乱七八糟</summary>
-
-* [列式存储为什么快？](note/乱七八糟/列式存储.md)
-</details>  
-
-
 ## 科学上网
 <details>
 <summary>科学上网</summary>
