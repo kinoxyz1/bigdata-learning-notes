@@ -290,7 +290,7 @@
 * [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
-* [Linux CPU性能](note/linux/Linux-CPU性能.md)
+* [Linux CPU性能优化](note/linux/Linux-CPU性能.md)
   </details>  
 
 <details>
