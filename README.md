@@ -276,10 +276,9 @@
 <details>
 <summary>Linux</summary>
   
-* Linux 用户管理
-  * [vi和vim的使用](note/linux/Linux用户管理/vi和vim的使用.md)
-  * [开机、重启和用户登录注销](note/linux/Linux用户管理/开机、重启和用户登录注销.md)
-  * [用户管理](note/linux/Linux用户管理/用户管理.md)
+* [vi和vim的使用](note/linux/Linux用户管理/vi和vim的使用.md)
+* [开机、重启和用户登录注销](note/linux/Linux用户管理/开机、重启和用户登录注销.md)
+* [用户管理](note/linux/Linux用户管理/用户管理.md)
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
 * [Linux下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
 * [Linux Swap分区](note/linux/Linux-Swap分区.md)
@@ -291,6 +290,7 @@
 * [CentOS 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
+* [Linux CPU性能](note/linux/Linux-CPU性能.md)
   </details>  
 
 <details>
