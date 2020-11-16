@@ -277,6 +277,8 @@
 * [K8s 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
 * [K8s 常用操作命令](note/Kubernetes/k8s常用操作命令.md)
 * [K8s Volume](note/Kubernetes/k8s-Volume.md)
+* [K8s Pod](note/Kubernetes/k8s-pod.md)
+* [K8s label](note/Kubernetes/k8s-label.md)
 </details>
 
 
