@@ -23,10 +23,9 @@ hostnamectl set-hostname <hostname>
 
 # 在master添加hosts
 cat >> /etc/hosts << EOF
-192.168.220.121 k8s-master
-192.168.220.122 k8s-node1
-192.168.220.123 k8s-node2
-192.168.220.124 k8s-node3
+192.168.220.121 jz-desktop-01
+192.168.220.122 jz-desktop-02
+192.168.220.123 jz-desktop-03
 EOF
 
 # 将桥接的IPv4流量传递到iptables的链
@@ -58,10 +57,9 @@ vim /etc/hostname
 
 # 在master添加hosts
 cat >> /etc/hosts << EOF
-192.168.220.121 k8s-master
-192.168.220.122 k8s-node1
-192.168.220.123 k8s-node2
-192.168.220.124 k8s-node3
+192.168.220.121 jz-desktop-01
+192.168.220.122 jz-desktop-02
+192.168.220.123 jz-desktop-03
 EOF
 
 # 将桥接的IPv4流量传递到iptables的链
