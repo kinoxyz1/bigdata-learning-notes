@@ -97,6 +97,8 @@ echo "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main" > /
 apt-get update
 # 安装指定版本
 apt-get install -y kubelet=<version> kubeadm=<version> kubectl=<version>
+# 例如: 1.19.4-00 版本
+apt-get install -y kubelet=1.19.4-00 kubeadm=1.19.4-00 kubectl=1.19.4-00
 # 安装最新版本
 apt-get install -y kubelet kubeadm kubectl
 ```
@@ -128,7 +130,10 @@ gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors
 EOF
 yum clean all && yum makecache
 yum list kubelet --showduplicates | sort -r
-yum install -y kubelet-1.18.6-0 kubeadm-1.18.6-0 kubectl-1.18.6-0
+# 安装指定版本
+yum install -y kubelet-<version> kubeadm-<version> kubectl-<version>
+# 例如: 1.19.4-00 版本
+yum install -y kubelet=1.19.4-00 kubeadm=1.19.4-00 kubectl=1.19.4-00
 ```
 
 
