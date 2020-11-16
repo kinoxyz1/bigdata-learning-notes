@@ -229,6 +229,13 @@
 </details>
 
 
+<details>
+<summary>Redis</summary>
+
+* [Redis 单机版安装](note/docker/Docker常用安装.md)
+* [Redis 五大数据类型](note/docker/Docker五大数据类型.md)
+</details>
+
 
 ## 运维
 <details>
@@ -264,6 +271,7 @@
 <summary>Kubernetes</summary>
 
 * [K8s 部署](note/Kubernetes/k8s部署.md)
+* [K8s 扩容](note/Kubernetes/k8s扩容.md)
 * [K8s YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
 * [K8S Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
 * [K8s 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
