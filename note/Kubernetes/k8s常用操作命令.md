@@ -354,3 +354,27 @@ spec:
         effect: "NoExecute"
         tolerationSeconds: 3600
 ```
+
+# 存储库相关
+## 1. 添加存储库
+```bash
+$ helm repo add stable http://mirror.azure.cn/kubernetes/charts/
+"stable" has been added to your repositories
+$ helm repo add aliyun https://kubernetes.oss-cn-hangzhou.aliyuncs.com/charts
+"aliyun" has been added to your repositories
+
+$ helm repo update
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "aliyun" chart repository
+...Successfully got an update from the "stable" chart repository
+Update Complete. ⎈ Happy Helming!⎈ 
+```
+## 2. 查看存储库
+```bash
+helm repo list
+helm search repo stable
+```
+## 3 移除存储库
+```bash
+$ helm repo remove aliyun
+```

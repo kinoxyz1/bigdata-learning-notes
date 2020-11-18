@@ -287,6 +287,10 @@
 * [K8s cronjob](note/Kubernetes/k8s-cronjob.md)
 * [K8s Secret](note/Kubernetes/k8s-Secret.md)
 * [K8s ConfigMap](note/Kubernetes/k8s-ConfigMap.md)
+* [K8s Ingress](note/Kubernetes/k8s-Ingress.md)
+* [K8s helm](note/Kubernetes/k8s-helm.md)
+* [K8s PV/PVC](note/Kubernetes/k8s-PV-PVC.md)
+* [K8s 部署Java](note/Kubernetes/k8s-部署Java.md)
 </details>
 
 
