@@ -279,6 +279,8 @@
 * [K8s Volume](note/Kubernetes/k8s-Volume.md)
 * [K8s Pod](note/Kubernetes/k8s-pod.md)
 * [K8s label](note/Kubernetes/k8s-label.md)
+* [K8s Controller](note/Kubernetes/k8s-Controller.md)
+* [K8s Service](note/Kubernetes/k8s-Service.md)
 </details>
 
 
