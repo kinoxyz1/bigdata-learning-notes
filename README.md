@@ -281,6 +281,12 @@
 * [K8s label](note/Kubernetes/k8s-label.md)
 * [K8s Controller](note/Kubernetes/k8s-Controller.md)
 * [K8s Service](note/Kubernetes/k8s-Service.md)
+* [K8s statefulset和Deployment](note/Kubernetes/k8s-statefulset和Deployment.md)
+* [K8s DaemonSet](note/Kubernetes/k8s-DaemonSet.md)
+* [K8s job](note/Kubernetes/k8s-job.md)
+* [K8s cronjob](note/Kubernetes/k8s-cronjob.md)
+* [K8s Secret](note/Kubernetes/k8s-Secret.md)
+* [K8s ConfigMap](note/Kubernetes/k8s-ConfigMap.md)
 </details>
 
 
