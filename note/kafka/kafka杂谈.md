@@ -247,7 +247,37 @@ public class CustomProducer {
 }
 ```
 
-## 4.2 数据可靠行保证
+## 4.2 数据可靠行保证(数据丢失)
+上面说完了 producer 是怎么发送消息到对应的 topic 的, 那么 Kafka 是如何保证这个数据一定会发送到的呢?
+
+为了保证 producer 能可靠的将数据发送到 topic, topic 的每个 partition 收到 producer 发送的数据后, 都需要像 producer 发送 ack(acknowledgement) 来确认收到, 如果 producer 收到 ack, 则进行下一轮的发送, 否则重新发送数据.
+
+因为 partition 由副本实现容错, 保证一个 partition 数据丢失, Kafka 还能正常工作, 所以对于上面那句话严谨的来说应该是: **当 producer 发送消息到 topic 的一个 partition 的 leader, 如果仅需要 leader 收到就满足需要, 即 leader 收到时就可以返回 ack, 但是如果数据比较重要, 则需要当 leader 下的 follower 同步消息完成后, 才可以返回 ack, 这其中又涉及到多个 follower 要每一个都同步还是部分 follower 同步完成即可?**
+
+![Producer发送消息流程](../../img/kafka/杂谈/Producer发送消息流程.png)
+
+
+### 4.2.1 副本数据同步策略
+Kafka 给出了两套副本数据同步方案:
+
+| 方案 | 优点 | 缺点 |
+|----| ----| ---- |
+| 一半的 follower 同步完成发送 ack | 延迟低 | 选举新的 leader时, 容忍 n 台节点故障, 需要 2n+1 个副本
+| 全部的 follower 同步完成发送 ack |选举新的 leader时, 容忍 n 台节点故障, 需要 n+1 个副本 | 延迟高
+
+最终 Kafka 选择了第二种方案:
+1. 同样为了容忍 n 台节点故障, 第一种方案需要 2n+1 个副本, 而第二种方案只需要 n+1 个副本, Kafka 的每个分区都有大量的数据, 第一种方案会造成大量的数据冗余
+2. 虽然第二种方案的网络延迟比较高, 但是网络延迟对 Kafka 的影响比较小, 且一般 Kafka 都部署在局域网中
+
+
+### 4.2.2 ISR
+
+
+### 4.2.3 ack 应答机制
+
+
+### 4.2.4 故障处理细节(HW/LEO)
+
 
 ## 4.3 Exactly Once 语义
 
