@@ -55,6 +55,7 @@ index 和 log 文件以当前 segment 的第一条消息的 offset 命名, 如�
 ### 4.1.2 分区的策略
 所谓分区策略是决定生产者将消息发送到哪个分区算法, Kafka 提供了默认的分区策略, 同时也支持自定义分区策略
 
+#### Kafka 提供的默认分区策略
 有兴趣的同学可以使用 idea 创建一个maven工程, 一起看看发送消息的源码
 
 在 pom 文件中增加如下内容:
@@ -153,10 +154,98 @@ public ProducerRecord(String topic, Integer partition, Long timestamp, K key, V 
 可以看见, 这里仅需要一个 topic 名称和 value 即可向 Kafka 发送一条消息
 
 这里 Kafka 的分区分配策略如下:
-1. 必须制定 Topic 和 value, 否则报错
-2. 如果指明了 partition 的情况下, 直接将知名的值作为 partition 值;
-3. 如果没有指明 partition, 但是指定了 Key, 则将 Key 的 hash 值与 Topic 的 partition 取余得到 partition 值;
-4. 如果没有指明 partition, 也没有指定 Key, 则第一次调用的时候随机生成一个整数, 将这个值与 Topic 可用的 partition 总数取余得到 partition 值, 也就是 round-robin 算法
+1. 必须指明 Topic 和 value, 否则报错
+2. 如果指明了 partition 的情况下, 直接将知名的值作为 partition 值(看下面名为 `partition` 的图片);
+3. 如果没有指明 partition, 但是指定了 Key, 则将 Key 的 hash 值与 Topic 的 partition 取余得到 partition 值(看下面名为 `partition` 的图片);
+4. 如果没有指明 partition, 也没有指定 Key, 则第一次调用的时候随机生成一个整数, 将这个值与 Topic 可用的 partition 总数取余得到 partition 值, 也就是 round-robin 算法(看下面名为 `key` 的图片);
+
+该源码在: org.apache.kafka.clients.producer.KafkaProducer
+![partition](../../img/kafka/杂谈/partition.png)
+
+该源码在: org.apache.kafka.clients.producer.internals.DefaultPartitioner
+![key](../../img/kafka/杂谈/key.png)
+
+
+#### 自定义分区策略
+1. 编写一个类, 实现 `org.apache.kafka.clients.producer.Partitioner` 接口, 实现 `partition()` 和 `close()` 方法
+```java
+package com.kino.kafka;
+
+import org.apache.kafka.clients.producer.Partitioner;
+import org.apache.kafka.common.Cluster;
+import org.apache.kafka.common.utils.Utils;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class MyPartitions implements Partitioner {
+
+    // 线程安全的具有原子性的能返回 int类型 的对象
+    private AtomicInteger counter = new AtomicInteger(0);
+
+    /**
+     * TODO 自定义分区策略
+     * 
+     * return 返回自定义分区号
+     */
+    @Override
+    public int partition(String topic, Object key, byte[] keyBytes, Object value, byte[] valueBytes, Cluster cluster) {
+        //获取可用分区数
+        int numPartitions = cluster.partitionsForTopic(topic).size();
+        if (keyBytes == null || keyBytes.length == 0) {
+            // 没有 Key 的情况下, 使用 counter 和 可用partition 数量进行取模获取 partition值,
+            return counter.addAndGet(1) & Integer.MAX_VALUE % numPartitions;
+        } else {
+            // 有 Key 的情况下, 根号有 Key 和 可用partition 数量进行取模获取 partition值,
+            return Utils.toPositive(Utils.murmur2(keyBytes)) % numPartitions;
+        }
+    }
+
+    @Override
+    public void close() {
+        // 关闭方法
+        System.out.println("close...");
+    }
+
+    @Override
+    public void configure(Map<String, ?> configs) {
+        System.out.println("configure...");
+    }
+}
+```
+2. 在 Properties 增加配置如下:
+```java
+package com.kino.kafka;
+
+import org.apache.kafka.clients.producer.*;
+
+import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+
+public class CustomProducer {
+
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", "hadoop102:9092");//kafka集群，broker-list
+        props.put("acks", "all");
+        props.put("retries", 1);//重试次数
+        props.put("batch.size", 16384);//批次大小
+        props.put("linger.ms", 1);//等待时间
+        props.put("buffer.memory", 33554432);//RecordAccumulator缓冲区大小
+        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+
+        // 增加一行内容, 填自己实现 Partitioner 接口的自定义分区类名
+        props.put(ProducerConfig.PARTITIONER_CLASS_CONFIG, MyPartitions.class.getName());
+
+        Producer<String, String> producer = new KafkaProducer<>(props);
+        for (int i = 0; i < 100; i++) {
+            producer.send(new ProducerRecord<String, String>("first", Integer.toString(i), Integer.toString(i)));
+        }
+        producer.close();
+    }
+}
+```
 
 ## 4.2 数据可靠行保证
 
