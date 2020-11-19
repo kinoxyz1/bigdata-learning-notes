@@ -271,18 +271,63 @@ Kafka 给出了两套副本数据同步方案:
 
 
 ### 4.2.2 ISR
+上面说到 Kafka 选择了第二种方案
+
+这里我们做一个假设: 
+  
+当一个 partition 的 leader 收到数据之后, 所有的 follower 开始同步数据, 假如有一个 follower, 因为某种原因发生故障, 一直不能完成 leader 的数据同步工作, 那么 leader 就得一直等待, 直到这个 follower 故障恢复同步完成, 才发送 ack.
+
+这个等待过程可能运维人员发现及时几分钟就恢复了, 也可能运维人员没发现, 那这个过程就得遥遥无期的等待下去了, 很显然这种做法无法接受
+
+Kafka 的 leader 维护了一个动态的 in-sync replica set(ISR), 这个 ISR 的工作是: 当 ISR 中的 follower 完成数据的同步之后, leader 就会给 producer 发送 ack, 如果 follower 长时间没有同步 leader 的数据, 那么这个 follower 就会被踢出 ISR, 该时间的阈值由 `replica.lag.time.max.ms` 参数设定, leader 发生故障后, 就会从 ISR 中选举新的 leader
 
 
 ### 4.2.3 ack 应答机制
+对于 Kafka 选择的第二种方案, 需要 ISR 中全部的 follower 同步完 leader 数据后, 才发送 ack, 这样延迟会比较高, 但是对于一些不太重要的数据、对数据的可靠性要求不是很高的、能够容忍数据少量丢失的, 就没有必要等待 ISR 中全部的 follower 全部同步完成
 
+Kafka 一共提供了三种同步的可靠性配置:
+- `acks=0`: producer 不等待 broker 的 ack, 延迟最低, broker 一接收到消息没来得及写磁盘, ack 就已经返回,  当 broker 故障时, **会丢数据**
+- `acks=1`: producer 等待 broker 的 ack, 但是只等待 partition 的 leader 落盘成功后返回 ack, 如果在 follower 同步 leader 消息成功前, leader 故障, **会丢数据**
+- `ack=-1`: producer 等待 broker 的 ack, 此时必须要 partition 的 leader 和 所有 follower 全部落盘成功后, 才会返回 ack, 但是如果在 follower 同步完成后, broker 发送 ack 之前, leader 发生故障, **会数据重复**
 
 ### 4.2.4 故障处理细节(HW/LEO)
+leader 和 follower 的 offset 图
+![offset](../../img/kafka/杂谈/offset.png)
 
+#### 4.2.4.1 follower 故障
+之前说到 ISR 的时候, 在 follower 故障的时候会被踢出 ISR, 等到故障的 follower 恢复后, follower 会读取本地磁盘记录的上次的 HW, 并将 log 文件高于 HW 的部分截取掉, 从 HW 开始向 leader 进行同步, 等这个 follower 的 LEO 大于等于该 partition 的 HW, 即 follower 追上 leader 后, 才可以重新加入 ISR
+
+#### 4.2.4.2 leader 故障
+leader 故障后, 会从 ISR 中选举出一个新的 leader, 之后, 为了保证多个副本之间的数据一致性, 其余的 follower 会先将各自的 log 文件高于 HW 的部分截掉, 然后从新的 leader 开始同步数据
 
 ## 4.3 Exactly Once 语义
+对于一些比较重要的数据, 例如涉及到钱的, 我们就得保证**每条消息被发送且只被发送一次**, 就是说**数据不能多也不能少**
+
+在 0.11 版本之后, Kafka producer 引入了 **幂等性机制(idempotent)**, 配合 **acks=-1** 时的 `at least once` 语义, 就能实现 producer 到 broker 的 Exactly Once 语义
+
+使用时, 只需要将 `enable.idempotence` 属性设置为 true, Kafka 自动将 acks 属性设置为 -1, 并将 retries 属性设置为 `Integer.MAX_VALUE`
 
 # 五、Kafka 消费者
+## 5.1 消费者的消费方式
+对于 Kafka 这种基于 `发布/订阅` 模式的消息队列, 消费者有两种消费方式可以采用:
+1. `pull`: 消费者用 pull(主动拉取) 的方式从 broker 中读取消息
+2. `push`: 消费者被动的接收 push的方式, 这种方式会因为不同的消费者消费速度(能力)的不同, 导致数据处理不及时或者网络堵塞.
 
+pull 方式可能会产生一个死循环, 当 topic 中没有数据的时候, 消费者可能会陷入消费循环, 一直返回空数据. 
+
+对于这一种方式, Kafka 在消费者消费数据的时候, 会传入一个时长参数 `timeout`, 如果当前没有数据可以提供消费, consumer 会等待一段时间之后再返回, 这段时长即为 `timeout`
+
+## 5.2 分区分配策略
+从 最开始的 Kafka架构图 中可以看到, 一个 consumer group 中有多个 consumer, 一个 topic 有多个 partition, 所以必然会涉及到 partition 分配的问题, 就是说要确定 一个partition由哪个consumer来消费
+
+Kafka 有两个分配策略:
+- roundrobin
+- range
+
+### 5.2.1 roundrobin
+
+
+### 5.2.2 range
 
 # 六、Kafka 高效读写
 
