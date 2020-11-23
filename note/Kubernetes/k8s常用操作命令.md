@@ -112,7 +112,7 @@ nginx-deployment-5bf87f5f59-sdvqd   1/1     Running   0          9m40s
 # 查看指定 pod 的详细信息
 $ kubectl describe pod nginx-deployment-5bf87f5f59-pkkrf
 ```
-在 `kubectl describe` 命令返回的结果中, 你可以清楚地看到这个 Pod 的详细信息, 比如它的 IP 地址等等。
+在 `kubectl describe` 命令返回的结果中, 你可以清楚地看到这个 Pod 的详细信息, 比如它的 IP 地  `址等等。
 
 其中, 有一个部分值得你特别关注, 它就是 Events（事件）。
 
