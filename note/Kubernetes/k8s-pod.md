@@ -304,6 +304,128 @@ nginx-deployment-5bb8bccc44-xjdhj   1/1     Running   0          9s    10.244.1.
 
 上面设置了 副本是为4, 所有的 pod 均运行在标识有 label=env_role: dev 的节点(k8s-node1)上
 
+
+# 十、NodeName 
+pod.spec.nodeName 用于强制约束将Pod调度到指定的Node节点上, 一旦 Pod 的这个字段被赋值, k8s 就会认为这个 Pod 已经经过了调度, 调度的结果就是赋值的节点名字, 所以这个字段一般由调度器负责设置, 但是用户也可以设置它来 骗过 调度器, 这里说是“调度”，但其实指定了nodeName的Pod会直接跳过Scheduler的调度逻辑，直接写入PodList列表，该匹配规则是强制匹配。
+
+```yaml
+$ vim nodeName.yaml
+apiVersion: apps/v1              #当前配置格式版本
+kind: Deployment                                #创建资源类型
+metadata:                                       #资源元数据，name是必须项
+  name: tomcat7-deployment
+spec:                                           #资源规格说明
+  replicas: 3                                   #副本数量
+  selector:
+    matchLabels:
+      k8s-app: web-tomcat7
+  template:                                 #定义pod模板
+    metadata:                                   #pod元数据，至少一个label
+      labels:
+        k8s-app: web-tomcat7
+    spec:                                       #pod规格说明
+      nodeName: k8s-node1
+      containers:
+      - name: tomcat7
+        image: tomcat:8.0
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat7-deployment
+spec:
+  ports:
+  - nodePort: 31348
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    k8s-app: web-tomcat7
+  type: NodePort
+```
+查看 pod
+```bash
+$ kubectl get pod -o wide
+NAME                                  READY   STATUS    RESTARTS   AGE   IP            NODE        NOMINATED NODE   READINESS GATES
+tomcat7-deployment-66cc45dd88-fpql8   1/1     Running   0          19s   10.244.1.28   k8s-node1   <none>           <none>
+tomcat7-deployment-66cc45dd88-lnxzz   1/1     Running   0          19s   10.244.1.27   k8s-node1   <none>           <none>
+tomcat7-deployment-66cc45dd88-m76xw   1/1     Running   0          19s   10.244.1.29   k8s-node1   <none>           <none>
+```
+还可以在浏览器中通过 `masterIP:31348` 访问tomcat
+
+# 十一、hostAliases
+定义了 Pod 的 hosts 文件(如 /etc/hosts) 里的内容
+```yaml
+$ vim hostAliases.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomcat7-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      k8s-app: web-tomcat7
+  template:
+    metadata:
+      labels:
+        k8s-app: web-tomcat7
+    spec:
+      hostAliases:
+      - ip: "10.1.2.3"
+        hostnames:
+        - "foo.remote"
+        - "bar.remote"
+      nodeName: k8s-node1
+      containers:
+      - name: tomcat7
+        image: tomcat:8.0
+        ports:
+        - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat7-deployment
+spec:
+  ports:
+  - nodePort: 31348
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    k8s-app: web-tomcat7
+  type: NodePort
+
+$ kubectl apply -f hostAliases.yaml
+
+$ kubectl get pod 
+NAME                                  READY   STATUS    RESTARTS   AGE
+tomcat7-deployment-76744f6846-7v5lr   1/1     Running   0          2m37s
+tomcat7-deployment-76744f6846-hxd88   1/1     Running   0          2m37s
+tomcat7-deployment-76744f6846-vv47b   1/1     Running   0          2m37s
+
+$ kubectl exec -it tomcat7-deployment-76744f6846-7v5lr bash
+
+root@tomcat7-deployment-76744f6846-7v5lr:/usr/local/tomcat# cat /etc/hosts
+# Kubernetes-managed hosts file.
+127.0.0.1	localhost
+::1	localhost ip6-localhost ip6-loopback
+fe00::0	ip6-localnet
+fe00::0	ip6-mcastprefix
+fe00::1	ip6-allnodes
+fe00::2	ip6-allrouters
+10.244.1.32	tomcat7-deployment-76744f6846-7v5lr
+
+# Entries added by HostAliases.
+10.1.2.3	foo.remote	bar.remote
+```
+如果要在k8s中设置 hosts 文件中的内容, 一定要通过这种方式, 否则直接修改hosts 文件的话, 在 Pod 被删除重建后, k8s 会自动覆盖掉被修改的内容
+
 # 十、污点和污点容忍
 污点(Taint): 节点不做普通分配调度, 是node属性
 

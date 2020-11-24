@@ -315,7 +315,6 @@ $ kubectl create deployment web --image=nginx --dry-run -o yaml > web.yaml
 W1117 17:46:18.012487  127855 helpers.go:553] --dry-run is deprecated and can be replaced with --dry-run=client.
 
 # 导出指定端口的 yaml 文件
-$ kubectl expose deployment web --port=80 --target-port=80 --dry-run -o yaml > web1.yaml
 $ kubectl expose deployment web --port=80 --target-port=80 --dry-run -o yaml > service.yaml
 ```
 
