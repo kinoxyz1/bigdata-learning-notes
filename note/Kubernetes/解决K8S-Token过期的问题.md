@@ -1,5 +1,7 @@
 
-
+* [一、查看 token 剩余时间](#%E4%B8%80%E6%9F%A5%E7%9C%8B-token-%E5%89%A9%E4%BD%99%E6%97%B6%E9%97%B4)
+* [二、创建永久token](#%E4%BA%8C%E5%88%9B%E5%BB%BA%E6%B0%B8%E4%B9%85token)
+---
 
 由于我是用kubeadm搭建的K8s集群, kubeadm创建的Token的默认有效期为24小时, 因此24小时后会失效
 

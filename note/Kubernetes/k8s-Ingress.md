@@ -1,5 +1,13 @@
 
-
+* [一、概述](#%E4%B8%80%E6%A6%82%E8%BF%B0)
+* [二、Ingress 和 Pod 的关系](#%E4%BA%8Cingress-%E5%92%8C-pod-%E7%9A%84%E5%85%B3%E7%B3%BB)
+* [三、Ingress 工作流程](#%E4%B8%89ingress-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B)
+* [四、如何使用 Ingress](#%E5%9B%9B%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-ingress)
+* [五、使用 Ingress 暴露 Nginx 应用](#%E4%BA%94%E4%BD%BF%E7%94%A8-ingress-%E6%9A%B4%E9%9C%B2-nginx-%E5%BA%94%E7%94%A8)
+  * [5\.1 创建](#51-%E5%88%9B%E5%BB%BA)
+  * [5\.2 部署](#52-%E9%83%A8%E7%BD%B2)
+  * [5\.3 创建 Ingress 规则](#53-%E5%88%9B%E5%BB%BA-ingress-%E8%A7%84%E5%88%99)
+  * [5\.4 在浏览器中访问](#54-%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E4%B8%AD%E8%AE%BF%E9%97%AE)
 
 ---
 # 一、概述

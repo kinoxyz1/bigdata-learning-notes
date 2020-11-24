@@ -1,5 +1,10 @@
 
-
+* [一、Service 存在的意义](#%E4%B8%80service-%E5%AD%98%E5%9C%A8%E7%9A%84%E6%84%8F%E4%B9%89)
+* [二、常用 Service 类型](#%E4%BA%8C%E5%B8%B8%E7%94%A8-service-%E7%B1%BB%E5%9E%8B)
+* [三、例子](#%E4%B8%89%E4%BE%8B%E5%AD%90)
+  * [Service 为 ClusterIP](#service-%E4%B8%BA-clusterip)
+  * [Service 为 NodePort](#service-%E4%B8%BA-nodeport)
+  * [Service 为 LoadBalancer](#service-%E4%B8%BA-loadbalancer)
 
 
 --- 

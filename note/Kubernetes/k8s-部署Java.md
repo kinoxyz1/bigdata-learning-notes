@@ -1,5 +1,14 @@
 
-
+* [一、步骤总览](#%E4%B8%80%E6%AD%A5%E9%AA%A4%E6%80%BB%E8%A7%88)
+* [二、步骤一](#%E4%BA%8C%E6%AD%A5%E9%AA%A4%E4%B8%80)
+* [三、步骤二](#%E4%B8%89%E6%AD%A5%E9%AA%A4%E4%BA%8C)
+  * [3\.1 编写 Dockerfile 文件](#31-%E7%BC%96%E5%86%99-dockerfile-%E6%96%87%E4%BB%B6)
+  * [3\.2 docker build](#32-docker-build)
+  * [3\.3 docker images](#33-docker-images)
+  * [3\.4 docker run](#34-docker-run)
+  * [3\.5 访问](#35-%E8%AE%BF%E9%97%AE)
+* [四、步骤三: 上传到 阿里云](#%E5%9B%9B%E6%AD%A5%E9%AA%A4%E4%B8%89-%E4%B8%8A%E4%BC%A0%E5%88%B0-%E9%98%BF%E9%87%8C%E4%BA%91)
+* [五、步骤四: 部署镜像, 暴露应用](#%E4%BA%94%E6%AD%A5%E9%AA%A4%E5%9B%9B-%E9%83%A8%E7%BD%B2%E9%95%9C%E5%83%8F-%E6%9A%B4%E9%9C%B2%E5%BA%94%E7%94%A8)
 
 
 ---
