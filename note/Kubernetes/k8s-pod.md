@@ -426,12 +426,39 @@ fe00::2	ip6-allrouters
 ```
 如果要在k8s中设置 hosts 文件中的内容, 一定要通过这种方式, 否则直接修改hosts 文件的话, 在 Pod 被删除重建后, k8s 会自动覆盖掉被修改的内容
 
-# 十、污点和污点容忍
+# 十二、Lifecycle
+Lifecycle(Container Lifecycle Hooks) 的作用: 在容器状态发生变化时触发一系列 "钩子" 
+
+先看个官方例子:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-demo
+spec:
+  containers:
+  - name: lifecycle-demo-container
+    image: nginx
+    lifecycle:
+      postStart:
+        exec:
+          command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+      preStop:
+        exec:
+          command: ["/usr/sbin/nginx","-s","quit"]
+```
+这个 yaml 文件定义了一个 nginx 镜, 在 lifecycle 配置了如下两个参数:
+- postStart: 容器启动后, 立即执行一个指定的操作
+- preStop: 容器被杀死之前, 立即执行一个指定的操作, 直到这个操作执行完成, 才允许容器被杀死
+
+这个yaml中, 在容器启动后, 执行 echo 输出了一句话, 在容器被杀死之前, 指定 nginx 的退出命令, 然后杀死容器, 实现了容器的 "优雅退出" 
+
+# 十三、污点和污点容忍
 污点(Taint): 节点不做普通分配调度, 是node属性
 
 和 `九、label 对Pod调度的影响`、 `八、节点亲和性` 类似
 
-## 10.1 查看节点污染情况
+## 13.1 查看节点污染情况
 ```bash
 $ kubectl describe node master | grep Taint
 Taints:             node.kubernetes.io/unreachable:NoExecute
@@ -441,7 +468,7 @@ Taints:             node.kubernetes.io/unreachable:NoExecute
 - PreferNoSchedule: 尽量不被调度
 - NoExecute: 不会调度, 并且会驱除 Node 已有 Pod
 
-## 10.2 为节点添加污点
+## 13.2 为节点添加污点
 ```bash
 # 添加污点
 $ kubectl taint node k8s-master <key>=<value>:<effect>
@@ -453,7 +480,7 @@ $ kubectl describe node k8s-master | grep Taint
 Taints:             kino=test:NoSchedule
 ```
 
-## 10.3 污点容忍
+## 13.3 污点容忍
 ```yaml
 spec: 
   tolerations:
@@ -465,3 +492,20 @@ spec:
   - name: webdemo
     image: nginx
 ```
+
+# 十四、Pod 的生命周期
+Pod 生命周期的变化, 主要体现在 Pod API 对象的 STATUS 部分
+```bash
+$ kubectl get pod
+NAME                                  READY   STATUS    RESTARTS   AGE
+tomcat7-deployment-76744f6846-7v5lr   1/1     Running   0          72m
+tomcat7-deployment-76744f6846-hxd88   1/1     Running   0          72m
+tomcat7-deployment-76744f6846-vv47b   1/1     Running   0          72m
+```
+
+该 STATUS 有如下几种情况:
+1. `Pending`: 表示 Pod 的 YAML 文件已经提交给 k8s, API 对象已经被创建并保存在 Etcd 中, 但是这个 Pod 里有些容器因为某种原因而不能被顺利创建, 比如调度不成功
+2. `Running`: 表示 Pod 调度已经成功, 跟一个具体的节点绑定, 它包含的容器都已经创建, 并且至少有一个正在运行
+3. `Succeeded`: 表示 Pod 中的所有容器都正常运行完毕, 并且已经退出了, 这种情况在一次性任务最常见
+4. `Failed`: 表示 Pod 中至少有一个容器以不正常状态(非0的返回码)退出, 这个转状态的出现, 意味着得想办法 debug 这个容器的应用, 比如查看 Pod 和 Events 和 日志
+5. `Unknown`: 异常状态, 表示 Pod 的状态不能被持续的被 kubelet 汇报给 kube-apiserver, 这很有可能是主从节点间的通信出现了问题 

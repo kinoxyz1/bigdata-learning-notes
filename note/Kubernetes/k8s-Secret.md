@@ -7,6 +7,14 @@
 
 
 ---
+在之前的笔记中, 有介绍过 volume 存放/共享容器中的数据, 在 k8s 中, 还存在几种特殊的 volume, 它们存在的意义不是为了存放/共享容器中的数据。**这些特殊的 volume 的作用是为容器提供预先定义好的数据**, 所以从容器的角度来看, 这些 volume 里的信息就是仿佛**被 k8s 投射进容器的一样**
+
+目前为止, k8s 支持的特殊 volume 一共有四种:
+1. Secret
+2. ConfigMap
+3. Downward API
+4. ServiceAccountToken
+
 # 一、Secret 作用
 加密数据存在 etcd 里面, 让 Pod 容器以挂载 Volume 方式进行访问
 

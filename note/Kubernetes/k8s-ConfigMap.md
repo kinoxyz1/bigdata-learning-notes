@@ -6,6 +6,16 @@
 * [四、以 变量 的形式挂载到 Pod 中去](#%E5%9B%9B%E4%BB%A5-%E5%8F%98%E9%87%8F-%E7%9A%84%E5%BD%A2%E5%BC%8F%E6%8C%82%E8%BD%BD%E5%88%B0-pod-%E4%B8%AD%E5%8E%BB)
 
 ---
+
+在之前的笔记中, 有介绍过 volume 存放/共享容器中的数据, 在 k8s 中, 还存在几种特殊的 volume, 它们存在的意义不是为了存放/共享容器中的数据。**这些特殊的 volume 的作用是为容器提供预先定义好的数据**, 所以从容器的角度来看, 这些 volume 里的信息就是仿佛**被 k8s 投射进容器的一样**
+
+目前为止, k8s 支持的特殊 volume 一共有四种:
+1. Secret
+2. ConfigMap
+3. Downward API
+4. ServiceAccountToken
+
+
 # 一、ConfigMap 作用
 和 Secret 类似, ConfigMap 的作用是将不加密数据存储到 etcd 中, 让 Pod 以变量的形式或者 Volume 挂载到容器中.
 
