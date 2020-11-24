@@ -1,60 +1,41 @@
-
-# get
-① 查看节点状态
-```bash
-$ kubectl get nodes
-NAME         STATUS   ROLES    AGE    VERSION
-k8s-master   Ready    master   2d4h   v1.18.0
-k8s-node1    Ready    <none>   2d4h   v1.18.0
-k8s-node2    Ready    <none>   2d4h   v1.18.0
-```
-② 查看指定 pod
-```bash
-$ kubectl get pods -l app=nginx
-NAME                                READY   STATUS    RESTARTS   AGE
-nginx-deployment-5bf87f5f59-pkkrf   1/1     Running   0          4m14s
-nginx-deployment-5bf87f5f59-sdvqd   1/1     Running   0          4m14s
-```
-`kubectl get` 指令的作用: 就是从 Kubernetes 里面获取（GET）指定的 API 对象
-
-可以看到, 在这里我还加上了一个 -l 参数, 即获取所有匹配 app: nginx 标签的 Pod。
-
-需要注意的是, 在命令行中, 所有 key-value 格式的参数, 都使用 “=” 而非 “:” 表示
-
-③ 检查节点上各个系统 Pod 的状态
-```bash
-$ kubectl get pods -n kube-system
-NAME                                 READY   STATUS    RESTARTS   AGE
-coredns-7ff77c879f-7jvnh             1/1     Running   1          2d4h
-coredns-7ff77c879f-kh7j9             1/1     Running   1          2d4h
-etcd-k8s-master                      1/1     Running   1          2d4h
-kube-apiserver-k8s-master            1/1     Running   1          2d4h
-kube-controller-manager-k8s-master   1/1     Running   1          2d4h
-kube-flannel-ds-9r9xv                1/1     Running   1          2d4h
-kube-flannel-ds-n6x9j                1/1     Running   1          2d4h
-kube-flannel-ds-wbjrv                1/1     Running   1          2d4h
-kube-proxy-5lj6m                     1/1     Running   1          2d4h
-kube-proxy-9n774                     1/1     Running   1          2d4h
-kube-proxy-dv9r4                     1/1     Running   1          2d4h
-kube-scheduler-k8s-master            1/1     Running   1          2d4h
-```
-④ 查看 deployment
-```bash
-$ kubectl get deployment
-NAME    READY   UP-TO-DATE   AVAILABLE   AGE
-nginx   1/1     1            1           2d5h
-```
+* [create](#create)
+* [get](#get)
+* [describe](#describe)
+  * [查看这个节点(Node)对象的详细信息、状态和事件(Event)](#%E6%9F%A5%E7%9C%8B%E8%BF%99%E4%B8%AA%E8%8A%82%E7%82%B9node%E5%AF%B9%E8%B1%A1%E7%9A%84%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF%E7%8A%B6%E6%80%81%E5%92%8C%E4%BA%8B%E4%BB%B6event)
+  * [查看 node、pod 等详细信息](#%E6%9F%A5%E7%9C%8B-nodepod-%E7%AD%89%E8%AF%A6%E7%BB%86%E4%BF%A1%E6%81%AF)
+* [replace](#replace)
+* [apply](#apply)
+* [exec](#exec)
+* [delete](#delete)
+* [label](#label)
+  * [查看 label](#%E6%9F%A5%E7%9C%8B-label)
+  * [修改 label](#%E4%BF%AE%E6%94%B9-label)
+  * [删除 label](#%E5%88%A0%E9%99%A4-label)
+* [扩容/缩容](#%E6%89%A9%E5%AE%B9%E7%BC%A9%E5%AE%B9)
+* [弹性伸缩](#%E5%BC%B9%E6%80%A7%E4%BC%B8%E7%BC%A9)
+* [导出 Yaml 文件](#%E5%AF%BC%E5%87%BA-yaml-%E6%96%87%E4%BB%B6)
+* [应用升级](#%E5%BA%94%E7%94%A8%E5%8D%87%E7%BA%A7)
+* [查看升级版本](#%E6%9F%A5%E7%9C%8B%E5%8D%87%E7%BA%A7%E7%89%88%E6%9C%AC)
+* [回滚到上一版本](#%E5%9B%9E%E6%BB%9A%E5%88%B0%E4%B8%8A%E4%B8%80%E7%89%88%E6%9C%AC)
+* [回滚到指定版本](#%E5%9B%9E%E6%BB%9A%E5%88%B0%E6%8C%87%E5%AE%9A%E7%89%88%E6%9C%AC)
+* [查看回滚状态](#%E6%9F%A5%E7%9C%8B%E5%9B%9E%E6%BB%9A%E7%8A%B6%E6%80%81)
+* [污点相关](#%E6%B1%A1%E7%82%B9%E7%9B%B8%E5%85%B3)
+  * [1\.1 添加污点:](#11-%E6%B7%BB%E5%8A%A0%E6%B1%A1%E7%82%B9)
+  * [1\.2 查看污点](#12-%E6%9F%A5%E7%9C%8B%E6%B1%A1%E7%82%B9)
+  * [1\.3 删除污点](#13-%E5%88%A0%E9%99%A4%E6%B1%A1%E7%82%B9)
+  * [1\.4 污点容忍度](#14-%E6%B1%A1%E7%82%B9%E5%AE%B9%E5%BF%8D%E5%BA%A6)
+    * [① 等值判断](#-%E7%AD%89%E5%80%BC%E5%88%A4%E6%96%AD)
+    * [② 存在性判断](#-%E5%AD%98%E5%9C%A8%E6%80%A7%E5%88%A4%E6%96%AD)
+* [存储库相关](#%E5%AD%98%E5%82%A8%E5%BA%93%E7%9B%B8%E5%85%B3)
+  * [1\. 添加存储库](#1-%E6%B7%BB%E5%8A%A0%E5%AD%98%E5%82%A8%E5%BA%93)
+  * [2\. 查看存储库](#2-%E6%9F%A5%E7%9C%8B%E5%AD%98%E5%82%A8%E5%BA%93)
+  * [3 移除存储库](#3-%E7%A7%BB%E9%99%A4%E5%AD%98%E5%82%A8%E5%BA%93)
+  
+  
+  
+---
 
 
-# describe
-查看这个节点(Node)对象的详细信息、状态和事件(Event)
-```bash
-$ kubectl describe node k8s-master
-Name:               k8s-master
-Roles:              master
-Labels:             beta.kubernetes.io/arch=amd64
-                    beta.kubernetes.io/os=linux
-```
 
 
 # create
@@ -97,8 +78,65 @@ spec:
         - containerPort: 80
 ```
 
+
+# get
+① 查看节点状态
+```bash
+$ kubectl get nodes
+NAME         STATUS   ROLES    AGE    VERSION
+k8s-master   Ready    master   2d4h   v1.18.0
+k8s-node1    Ready    <none>   2d4h   v1.18.0
+k8s-node2    Ready    <none>   2d4h   v1.18.0
+```
+② 查看指定 pod
+```bash
+$ kubectl get pods -l app=nginx
+NAME                                READY   STATUS    RESTARTS   AGE
+nginx-deployment-5bf87f5f59-pkkrf   1/1     Running   0          4m14s
+nginx-deployment-5bf87f5f59-sdvqd   1/1     Running   0          4m14s
+```
+`kubectl get` 指令的作用: 就是从 Kubernetes 里面获取（GET）指定的 API 对象
+
+可以看到, 在这里我还加上了一个 -l 参数, 即获取所有匹配 app: nginx(spec.template.metadata.labels的值) 标签的 Pod。
+
+需要注意的是, 在命令行中, 所有 key-value 格式的参数, 都使用 “=” 而非 “:” 表示
+
+③ 检查节点上各个系统 Pod 的状态
+```bash
+$ kubectl get pods -n kube-system
+NAME                                 READY   STATUS    RESTARTS   AGE
+coredns-7ff77c879f-7jvnh             1/1     Running   1          2d4h
+coredns-7ff77c879f-kh7j9             1/1     Running   1          2d4h
+etcd-k8s-master                      1/1     Running   1          2d4h
+kube-apiserver-k8s-master            1/1     Running   1          2d4h
+kube-controller-manager-k8s-master   1/1     Running   1          2d4h
+kube-flannel-ds-9r9xv                1/1     Running   1          2d4h
+kube-flannel-ds-n6x9j                1/1     Running   1          2d4h
+kube-flannel-ds-wbjrv                1/1     Running   1          2d4h
+kube-proxy-5lj6m                     1/1     Running   1          2d4h
+kube-proxy-9n774                     1/1     Running   1          2d4h
+kube-proxy-dv9r4                     1/1     Running   1          2d4h
+kube-scheduler-k8s-master            1/1     Running   1          2d4h
+```
+④ 查看 deployment
+```bash
+$ kubectl get deployment
+NAME    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx   1/1     1            1           2d5h
+```
+
+
 # describe
-查看 node、pod 等详细信息
+## 查看这个节点(Node)对象的详细信息、状态和事件(Event)
+```bash
+$ kubectl describe node k8s-master
+Name:               k8s-master
+Roles:              master
+Labels:             beta.kubernetes.io/arch=amd64
+                    beta.kubernetes.io/os=linux
+```
+
+## 查看 node、pod 等详细信息
 ```bash
 # 查看 node 详细信息
 $ kubectl describe node k8s-node1
@@ -219,6 +257,46 @@ deployment.apps "nginx" deleted
 ```bash
 $ kubectl get pods
 No resources found in default namespace.
+```
+
+# label
+## 查看 label
+```bash
+$ kubectl get nodes --show-label
+[root@k8s-master yaml]# kubectl get nodes --show-labels
+NAME         STATUS   ROLES    AGE    VERSION   LABELS
+k8s-master   Ready    master   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-master,kubernetes.io/os=linux,label_key=label_value,node-role.kubernetes.io/master=
+k8s-node1    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node1,kubernetes.io/os=linux
+k8s-node2    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node2,kubernetes.io/os=linux
+```
+
+## 修改 label
+```bash
+# 语法
+$ kubectl label nodes <node> <key>=<value> --overwrite
+
+# 例子
+$ kubectl label nodes k8s-master label_key=label_value2 --overwrite
+node/k8s-master labeled
+
+# 查看
+[root@k8s-master yaml]# kubectl get nodes --show-labels
+NAME         STATUS   ROLES    AGE    VERSION   LABELS
+k8s-master   Ready    master   7d6h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-master,kubernetes.io/os=linux,label_key=label_value2,node-role.kubernetes.io/master=
+k8s-node1    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node1,kubernetes.io/os=linux
+k8s-node2    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node2,kubernetes.io/os=linux
+```
+
+## 删除 label
+```bash
+# 语法
+$ kubectl label node <node> <key>-
+# 例子
+$ kubectl get nodes --show-labels
+NAME         STATUS   ROLES    AGE    VERSION   LABELS
+k8s-master   Ready    master   7d6h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-master,kubernetes.io/os=linux,node-role.kubernetes.io/master=
+k8s-node1    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node1,kubernetes.io/os=linux
+k8s-node2    Ready    <none>   7d5h   v1.18.0   beta.kubernetes.io/arch=amd64,beta.kubernetes.io/os=linux,kubernetes.io/arch=amd64,kubernetes.io/hostname=k8s-node2,kubernetes.io/os=linux
 ```
 
 # 扩容/缩容
