@@ -255,17 +255,54 @@ spec:
     - Lt
     - DoesNotExists
     
-# 九、label 对Pod调度的影响
+# 九、label 对 Pod 调度的影响
 [对节点创建 label](k8s-label.md)
 
 ```bash
-spex: 
-  nodeSelector"
-    env_role: dev
-  containers:
-  - name: nginx
-    image: nginx:1.15
+# 对 Node 创建 label
+$ kubectl label node k8s-node1 env_role=dev
+
+# yaml 示例
+apiVersion: apps/v1
+kind: Deployment 
+metadata: 
+  name: nginx-deployment 
+spec: 
+  selector: 
+    matchLabels: 
+      app: nginx 
+  replicas: 4 
+  template: 
+    metadata: 
+      labels: 
+        app: nginx 
+    spec: 
+      nodeSelector:      # 定义有指定 label标签的 node 节点
+        env_role: dev    # 指定 label的具体值
+      containers: 
+      - name: nginx 
+        image: nginx:1.8 
+        ports: 
+        - containerPort: 80
+        volumeMounts: 
+          - mountPath: "/usr/share/nginx/html"
+            name: nginx-vol
+      volumes: 
+      - name: nginx-vol 
+        hostPath: 
+          path: "/var/data"
+
+# 查看 pod 详细信息
+$ kubectl get pod -o wide
+NAME                                READY   STATUS    RESTARTS   AGE   IP            NODE        NOMINATED NODE   READINESS GATES
+nginx-deployment-5bb8bccc44-f4frb   1/1     Running   0          67s   10.244.1.21   k8s-node1   <none>           <none>
+nginx-deployment-5bb8bccc44-fsb4n   1/1     Running   0          9s    10.244.1.23   k8s-node1   <none>           <none>
+nginx-deployment-5bb8bccc44-xb44p   1/1     Running   0          9s    10.244.1.22   k8s-node1   <none>           <none>
+nginx-deployment-5bb8bccc44-xjdhj   1/1     Running   0          9s    10.244.1.24   k8s-node1   <none>           <none>
 ```
+这个配置意味着, 这个 Pod 永远只能运行在携带了 "env_role: dev" 标签(label) 的节点上, 否则将调度失效
+
+上面设置了 副本是为4, 所有的 pod 均运行在标识有 label=env_role: dev 的节点(k8s-node1)上
 
 # 十、污点和污点容忍
 污点(Taint): 节点不做普通分配调度, 是node属性
