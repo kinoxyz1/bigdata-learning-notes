@@ -204,8 +204,8 @@ spec:
         command:
         - cat
         - /tmp/healthy
-      initialDelaySeconds: 5
-      periodSeconds: 5
+      initialDelaySeconds: 5  # 在容器启动 5 s 后开始执行
+      periodSeconds: 5        # 每 5 s 执行一次
 ```
 - livenessProbe(存活检查): 如果检查失败, 将杀死容器, 根据 Pod 的 restartPolicy 来操作.
 - readinessProbe(就绪检查): 如果检查失败, k8s 会把该Pod从 service endpoints中剔除

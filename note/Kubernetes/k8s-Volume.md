@@ -172,3 +172,346 @@ Volumes:
   nginx-vol:
     Type:    EmptyDir (a temporary directory that shares a pod's lifetime)
 ```
+
+
+
+
+---
+在之前的笔记中, 有介绍过 volume 存放/共享容器中的数据, 在 k8s 中, 还存在几种特殊的 volume, 它们存在的意义不是为了存放/共享容器中的数据。**这些特殊的 volume 的作用是为容器提供预先定义好的数据**, 所以从容器的角度来看, 这些 volume 里的信息就是仿佛**被 k8s 投射进容器的一样**
+
+目前为止, k8s 支持的特殊 volume 一共有四种:
+1. Secret
+2. ConfigMap
+3. Downward API
+4. ServiceAccountToken
+
+# 一、Secret 作用
+讲加密数据存在 etcd 里面, 让 Pod 容器以挂载 Volume 方式进行访问
+
+使用场景: 数据库的凭证
+
+
+# 二、创建 secret 加密数据
+```yaml
+$ vim Secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+data:
+  username: YWRtaW4=
+  password: MWYyZDFlMmU2N2Rm
+
+$ kubectl apply -f Secret.yaml 
+secret/mysecret created
+$ kubectl get secret
+NAME                  TYPE                                  DATA   AGE
+default-token-ch88s   kubernetes.io/service-account-token   3      9d
+mysecret              Opaque                                2      6s
+```
+
+# 三、以变量的形式挂载到 pod 容器中
+```bash
+$ vim secret-var.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    env:
+      - name: SECRET_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: username
+      - name: SECRET_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: password
+
+$ kubectl get pod
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          29s
+
+$ kubectl exec -it mypod bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+
+root@mypod:/# echo $SECRET_USERNAME
+admin
+root@mypod:/# echo $SECRET_PASSWORD
+1f2d1e2e67df
+```
+
+
+# 四、以 volume 形式挂载到 pod 容器中
+```bash
+$ vim secret-vol.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: foo
+      mountPath: "/etc/foo"
+      readOnly: true
+  volumes:
+  - name: foo
+    secret:
+      secretName: mysecret
+
+$ kubectl apply -f secret-vol.yaml 
+pod/mypod created
+
+$ kubectl get pods
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          10s
+
+$ kubectl exec -it mypod bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
+
+root@mypod:/# ls /etc/fo
+fonts/ foo/   
+
+root@mypod:/# ls /etc/fo
+fonts/ foo/   
+
+root@mypod:/# ls /etc/foo/
+password  username
+
+root@mypod:/# cat /etc/foo/password
+1f2d1e2e67dfroot@mypod:/# cat /etc/foo/username 
+adminroot@mypod:/# 
+```
+
+
+
+
+
+
+
+---
+
+在之前的笔记中, 有介绍过 volume 存放/共享容器中的数据, 在 k8s 中, 还存在几种特殊的 volume, 它们存在的意义不是为了存放/共享容器中的数据。**这些特殊的 volume 的作用是为容器提供预先定义好的数据**, 所以从容器的角度来看, 这些 volume 里的信息就是仿佛**被 k8s 投射进容器的一样**
+
+目前为止, k8s 支持的特殊 volume 一共有四种:
+1. Secret
+2. ConfigMap
+3. Downward API
+4. ServiceAccountToken
+
+
+# 一、ConfigMap 作用
+和 Secret 类似, ConfigMap 的作用是将不加密数据存储到 etcd 中, 让 Pod 以变量的形式或者 Volume 挂载到容器中.
+
+场景: 配置文件
+
+
+# 二、创建 ConfigMap
+```bash
+# 1. 准备 redis.properties 配置文件, 如下:
+redis.host=127.0.0.1
+redis.port=6379
+redis.password=123456
+
+# 2. 创建
+$ kubectl create configmap redis-config --from-file=redis.properties 
+configmap/redis-config created
+
+$ kubectl get cm
+NAME           DATA   AGE
+redis-config   1      5s
+
+$ kubectl describe cm redis-config
+Name:         redis-config
+Namespace:    default
+Labels:       <none>
+Annotations:  <none>
+
+Data
+====
+redis.properties:
+----
+redis.host=127.0.0.1
+redis.port=6379
+redis.password=123456
+
+
+Events:  <none>
+```
+
+# 三、以 Volume 的形式挂载到 Pod 中去
+```bash
+$ vim cm.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command: [ "/bin/sh","-c","cat /etc/config/redis.properties" ]
+      volumeMounts:
+      - name: config-volume
+        mountPath: /etc/config
+  volumes:
+    - name: config-volume
+      configMap:
+        name: redis-config
+  restartPolicy: Never
+
+$ kubectl apply -f cm.yaml 
+pod/mypod created
+
+$ kubectl get pod
+NAME    READY   STATUS      RESTARTS   AGE
+mypod   0/1     Completed   0          6s
+
+$ kubectl logs mypod
+redis.host=127.0.0.1
+redis.port=6379
+redis.password=123456
+```
+
+# 四、以 变量 的形式挂载到 Pod 中去
+```bash
+$ vim myconfig.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: myconfig
+  namespace: default
+data:
+  special.level: info
+  special.type: hello
+
+$ kubectl apply -f myconfig.yaml 
+configmap/myconfig created
+
+$ kubectl get cm
+NAME           DATA   AGE
+myconfig       2      3s
+redis-config   1      5m8s
+
+$ vim config-var.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+spec:
+  containers:
+    - name: busybox
+      image: busybox
+      command: [ "/bin/sh", "-c", "echo $(LEVEL) $(TYPE)" ]
+      env:
+        - name: LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: myconfig
+              key: special.level
+        - name: TYPE
+          valueFrom:
+            configMapKeyRef:
+              name: myconfig
+              key: special.type
+  restartPolicy: Never
+
+
+$ kubectl apply -f config-var.yaml 
+pod/mypod created
+
+$ kubectl get pods
+NAME    READY   STATUS              RESTARTS   AGE
+mypod   0/1     ContainerCreating   0          3s
+
+$ kubectl logs mypod
+info hello
+
+```
+
+
+# Downward API
+作用: 让 Pod 里的容器能够直接获取到这个 **Pod 对象本身的信息**
+
+例如:
+```yaml
+$ vim downward-vol.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-downwardapi-volume
+  labels:
+    zone: us-est-coast
+    cluster: test-cluster1
+    rack: rack-22
+spec:
+  containers:
+    - name: client-container
+      image: busybox
+      command: ["sh", "-c"]
+      args:
+      - while true; do
+          if [[ -e /etc/podinfo/labels ]]; then
+            echo -en '\n\n'; cat /etc/podinfo/labels; fi;
+          sleep 5;
+        done;
+      volumeMounts:
+        - name: podinfo
+          mountPath: /etc/podinfo
+          readOnly: false
+  volumes:
+    - name: podinfo
+      projected:
+        sources:
+        - downwardAPI:
+            items:
+              - path: "labels"
+                fieldRef:
+                  fieldPath: metadata.labels
+```
+在这个 Yaml 文件中, 声明了一个 projected 类型的 volume, 数据源是 Downward API, 这个 Downward API column 声明了要暴露 Pod 的 metadata.labels 信息给容器
+
+通过这样的声明, 当前 Pod 的 labels 字段的值, 就会被 k8s 自动挂载称为容器里面的 /etc/podinfo/labels 文件
+
+当启动这个容器的时候, 会不断的打印出 /etc/podinfo/labels 里的内容, 可以通过 kubectl logs 查看
+```bash
+$ kubectl apply -f downward-vol.yaml
+$ kubectl logs test-downwardapi-volume
+```
+
+到目前为止 Downward API 支持的字段如下: 
+```yaml
+1. 使用fieldRef可以声明使用:
+spec.nodeName - 宿主机名字
+status.hostIP - 宿主机IP
+metadata.name - Pod的名字
+metadata.namespace - Pod的Namespace
+status.podIP - Pod的IP
+spec.serviceAccountName - Pod的Service Account的名字
+metadata.uid - Pod的UID
+metadata.labels['<KEY>'] - 指定<KEY>的Label值
+metadata.annotations['<KEY>'] - 指定<KEY>的Annotation值
+metadata.labels - Pod的所有Label
+metadata.annotations - Pod的所有Annotation
+
+2. 使用resourceFieldRef可以声明使用:
+容器的CPU limit
+容器的CPU request
+容器的memory limit
+容器的memory request
+```
+
+需要注意的是, Downward API 能够获取到的信息, 一定是 Pod 里的容器进程启动之前就能够确定下来的, 如果你想获取容器进程的 Pid, 则通过 Downward API 获取不到
+
+
+# 四、补充
+需要注意的是, 通过 Secret/ConfigMap 的方式挂载到容器里, 一旦其对应的 Etcd 里的数据被更新, 这些 volume 里的内容也会被更新, 但是存在一定的延迟, 如果以环境变量的方式挂载, 则不会自动更新

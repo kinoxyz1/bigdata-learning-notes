@@ -318,6 +318,25 @@ W1117 17:46:18.012487  127855 helpers.go:553] --dry-run is deprecated and can be
 $ kubectl expose deployment web --port=80 --target-port=80 --dry-run -o yaml > service.yaml
 ```
 
+# 查看 secret 加密信息
+```bash
+$ kubectl get secret
+NAME                  TYPE                                  DATA   AGE
+default-token-xd659   kubernetes.io/service-account-token   3      47h
+mysecret              Opaque                                2      9m45s
+
+$ kubectl get secret mysecret -o yaml
+apiVersion: v1
+data:
+  password: OXpkYXRhMTIzLg==
+  username: emhhbmdzYW4=
+kind: Secret
+...
+
+$ echo -n "emhhbmdzYW4=" | base64 --decode
+zhangsan
+```
+
 # 应用升级
 ```bash
 $ kubectl set image deployment web nginx=nginx:1.5
