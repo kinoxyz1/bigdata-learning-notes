@@ -109,13 +109,20 @@
 
 
 <details>
+<summary>Atlas</summary>
+
+* [Atlas 安装](note/Atlas/Atlas安装.md)
+</details>
+
+
+
+<details>
 <summary>CDH</summary>
 
 * [CentOS7.7 CDH6.2.1 安装教程](note/cdh/Centos7.7-CDH6.2.1安装教程.md)
 * [CDH 安装 Hue 连接不上MySQL](note/cdh/CDH安装Hue连接不上MySQL.md)
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
 </details>
-
 
 
 
@@ -283,8 +290,9 @@
 * [K8s Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [K8s Secret](note/Kubernetes/k8s-Secret.md)
 * [K8s ConfigMap](note/Kubernetes/k8s-ConfigMap.md)
+* [K8s 副本机制和水平扩展&滚动更新](note/Kubernetes/k8s-副本机制和水平扩展&滚动更新.md)
 * [K8s Service](note/Kubernetes/k8s-Service.md)
-* [K8s statefulset和Deployment](note/Kubernetes/k8s-statefulset和Deployment.md)
+* [K8s statefulset](note/Kubernetes/k8s-statefulset.md)
 * [K8s DaemonSet](note/Kubernetes/k8s-DaemonSet.md)
 * [K8s job](note/Kubernetes/k8s-job.md)
 * [K8s cronjob](note/Kubernetes/k8s-cronjob.md)
