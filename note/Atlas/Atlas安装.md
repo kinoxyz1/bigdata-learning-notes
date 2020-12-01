@@ -26,15 +26,15 @@
 修改 CDH 组件对应的版本, 组件版本具体信息在 CDH Web UI 中查看, 如下图
 ![CDH组件版本信息](../../img/atlas/atlas安装部署/CDH组件版本信息.png)
 ```pom
-<lucene-solr.version>7.4.0+cdh6.3.2</lucene-solr.version>
-<hadoop.version>3.0.0+cdh6.3.2</hadoop.version>
-<hbase.version>2.1.0+cdh6.3.2</hbase.version>
-<solr.version>7.4.0+cdh6.3.2</solr.version>
-<hive.version>2.1.1+cdh6.3.2</hive.version>
-<kafka.version>2.2.1+cdh6.3.2</kafka.version>
+<lucene-solr.version>7.4.0-cdh6.3.2</lucene-solr.version>
+<hadoop.version>3.0.0-cdh6.3.2</hadoop.version>
+<hbase.version>2.1.0-cdh6.3.2</hbase.version>
+<solr.version>7.4.0-cdh6.3.2</solr.version>
+<hive.version>2.1.1-cdh6.3.2</hive.version>
+<kafka.version>2.2.1-cdh6.3.2</kafka.version>
 <kafka.scala.binary.version>2.11</kafka.scala.binary.version>
 <calcite.version>1.16.0</calcite.version>
-<zookeeper.version>3.4.5+cdh6.3.2</zookeeper.version>
+<zookeeper.version>3.4.5-cdh6.3.2</zookeeper.version>
 <falcon.version>0.8</falcon.version>
 <sqoop.version>1.4.7+cdh6.3.2</sqoop.version>
 ```
@@ -65,6 +65,11 @@ this.metastoreHandler = null;
 ```
 
 # 二、编译
+如果使用外部的 HBase和Solr, 则使用如下编译命令
+```bash
+$ mvn clean -DskipTests package -Pdist
+```
+如果使用 atlas 自带的 HBase 和 Solr, 则使用如下编译命令
 ```bash
 $ mvn clean -DskipTests package -Pdist,embedded-hbase-solr
 ```
@@ -82,6 +87,8 @@ $ tar -zxvf apache-atlas-2.1.0-bin.tar.gz
 ```bash
 $ vim atlas-application.properties 
 #修改atlas存储数据主机
+atlas.graph.storage.backend=hbase
+atlas.graph.storage.hbase.table=atlas
 atlas.graph.storage.hostname=kino1:2181,kino2:2181,kino3:2181
 ```
 ## 4.2 添加 HBase 配置文件
@@ -109,10 +116,7 @@ $ cp -r solr /opt/cloudera/parcels/CDH/lib/solr/
 ## 5.3 将拷贝的文件重命名为 atlas_conf
 ```bash
 $ cd /opt/cloudera/parcels/CDH/lib/solr/
-$ mv solr atlas-solr
-# 分发到其他从节点
-$ scp -r /opt/cloudera/parcels/CDH/lib/solr/atlas_conf root@kino2://opt/cloudera/parcels/CDH/lib/solr/
-$ scp -r /opt/cloudera/parcels/CDH/lib/solr/atlas_conf root@kino3://opt/cloudera/parcels/CDH/lib/solr/
+$ mv solr atlas_conf
 ```
 ## 5.4 修改 /etc/passwd 文件
 ```bash
@@ -147,8 +151,8 @@ $ /opt/cloudera/parcels/CDH/lib/solr/bin/solr delete -c ${collection_name}
 ```bash
 $ vim atlas-application.properties 
 atlas.notification.embedded=false
-atlas.kafka.zookeeper.connect=ioubuy-bd-01:2281,ioubuy-bd-02:2281,ioubuy-bd-03:2281
-atlas.kafka.bootstrap.servers=ioubuy-bd-01:9092,ioubuy-bd-02:9092,ioubuy-bd-03:9092
+atlas.kafka.zookeeper.connect=kino1:2281,kino2:2281,kino3:2281
+atlas.kafka.bootstrap.servers=kino1:9092,kino2:9092,kino3:9092
 atlas.kafka.zookeeper.session.timeout.ms=4000
 atlas.kafka.zookeeper.connection.timeout.ms=2000
 atlas.kafka.zookeeper.sync.time.ms=20
@@ -159,9 +163,9 @@ atlas.kafka.enable.auto.commit=true
 ```
 ## 6.1 创建 kafka topic
 ```bash
-$ kafka-topics --zookeeper ioubuy-bd-01:2281,ioubuy-bd-02:2281,ioubuy-bd-03:2281 --create --replication-factor 3 --partitions 3 --topic _HOATLASOK
-$ kafka-topics --zookeeper ioubuy-bd-01:2281,ioubuy-bd-02:2281,ioubuy-bd-03:2281 --create --replication-factor 3 --partitions 3 --topic ATLAS_ENTITIES
-$ kafka-topics --zookeeper ioubuy-bd-01:2281,ioubuy-bd-02:2281,ioubuy-bd-03:2281 --create --replication-factor 3 --partitions 3 --topic ATLAS_HOOK
+$ kafka-topics --zookeeper kino1:2281,kino2:2281,kino3:2281 --create --replication-factor 3 --partitions 3 --topic _HOATLASOK
+$ kafka-topics --zookeeper kino1:2281,kino2:2281,kino3:2281 --create --replication-factor 3 --partitions 3 --topic ATLAS_ENTITIES
+$ kafka-topics --zookeeper kino1:2281,kino2:2281,kino3:2281 --create --replication-factor 3 --partitions 3 --topic ATLAS_HOOK
 ```
 ## 6.2 查看 topic
 ```bash
@@ -217,6 +221,11 @@ Apache Atlas Server started!!!
 
 默认用户名和密码为：admin
 
+或者
+```bash
+$ 
+```
+
 # 八、集成外部框架 - Hive
 ## 修改配置文件
 ```bash
@@ -227,6 +236,25 @@ atlas.hook.hive.numRetries=3
 atlas.hook.hive.queueSize=10000
 atlas.cluster.name=primary
 ```
+
+## 添加相关配置
+将 编译好的 apache-atlas-2.1.0-hive-hook.tar.gz 上传到服务器上
+```bash
+$ tar -zxvf apache-atlas-2.0.0-hive-hook.tar.gz
+```
+将 hook和hook-bin 目录到到/app/atlas-2.1.0 文件夹中
+```bash
+$ cp hook* /app/atlas-2.1.0
+```
+将 atlas-application.properties 配置文件加入到 atlas-plugin-classloader-2.1.0.jar 中
+```bash
+$ zip -u /app/atlas-2.1.0/hook/hive/atlas-plugin-classloader-2.1.0.jar /app/atlas-2.1.0/conf/atlas-application.properties
+
+$ cp /app/atlas-2.1.0/conf/atlas-application.properties /etc/hive/conf/
+```
+**原因：这个配置不能参照官网，将配置文件考到hive的conf中。参考官网的做法一直读取不到atlas-application.properties配置文件，看了源码发现是在classpath读取的这个配置文件，所以将它压到jar里面。**
+
+## 重启 Hive
 
 ## 8.1 修改 Hive 相关配置文件
 ```bash
@@ -297,3 +325,6 @@ Failed to import Hive Meta Data!!!
 ```bash
 $ cp conf/atlas-application.properties /etc/hive/conf/
 ```
+
+
+
