@@ -1,6 +1,37 @@
 
 
-
+* [一、下载源码包](#%E4%B8%80%E4%B8%8B%E8%BD%BD%E6%BA%90%E7%A0%81%E5%8C%85)
+  * [1\.1 修改 pom 文件](#11-%E4%BF%AE%E6%94%B9-pom-%E6%96%87%E4%BB%B6)
+  * [1\.2 兼容 Hive2\.1\.1版本](#12-%E5%85%BC%E5%AE%B9-hive211%E7%89%88%E6%9C%AC)
+* [二、编译](#%E4%BA%8C%E7%BC%96%E8%AF%91)
+* [三、解压](#%E4%B8%89%E8%A7%A3%E5%8E%8B)
+* [四、集成外部框架 \- HBase](#%E5%9B%9B%E9%9B%86%E6%88%90%E5%A4%96%E9%83%A8%E6%A1%86%E6%9E%B6---hbase)
+  * [4\.1 进入 atlas/conf 目录, 修改配置文件](#41-%E8%BF%9B%E5%85%A5-atlasconf-%E7%9B%AE%E5%BD%95-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [4\.2 添加 HBase 配置文件](#42-%E6%B7%BB%E5%8A%A0-hbase-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [4\.3 配置 HBASE\_CONF\_DIR](#43-%E9%85%8D%E7%BD%AE-hbase_conf_dir)
+* [五、集成外部框架 \- Solr](#%E4%BA%94%E9%9B%86%E6%88%90%E5%A4%96%E9%83%A8%E6%A1%86%E6%9E%B6---solr)
+  * [5\.1 进入 atlas/conf 目录, 修改配置文件](#51-%E8%BF%9B%E5%85%A5-atlasconf-%E7%9B%AE%E5%BD%95-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [5\.2 将 Atlas 自带的 Solr 文件拷贝到外部 Solr 集群](#52-%E5%B0%86-atlas-%E8%87%AA%E5%B8%A6%E7%9A%84-solr-%E6%96%87%E4%BB%B6%E6%8B%B7%E8%B4%9D%E5%88%B0%E5%A4%96%E9%83%A8-solr-%E9%9B%86%E7%BE%A4)
+  * [5\.3 将拷贝的文件重命名为 atlas\_conf](#53-%E5%B0%86%E6%8B%B7%E8%B4%9D%E7%9A%84%E6%96%87%E4%BB%B6%E9%87%8D%E5%91%BD%E5%90%8D%E4%B8%BA-atlas_conf)
+  * [5\.4 修改 /etc/passwd 文件](#54-%E4%BF%AE%E6%94%B9-etcpasswd-%E6%96%87%E4%BB%B6)
+  * [5\.5 切换登录用户](#55-%E5%88%87%E6%8D%A2%E7%99%BB%E5%BD%95%E7%94%A8%E6%88%B7)
+  * [5\.6 执行如下 3条命令](#56-%E6%89%A7%E8%A1%8C%E5%A6%82%E4%B8%8B-3%E6%9D%A1%E5%91%BD%E4%BB%A4)
+  * [5\.7 验证创建collection成功](#57-%E9%AA%8C%E8%AF%81%E5%88%9B%E5%BB%BAcollection%E6%88%90%E5%8A%9F)
+* [六、集成外部框架 \- Kafka](#%E5%85%AD%E9%9B%86%E6%88%90%E5%A4%96%E9%83%A8%E6%A1%86%E6%9E%B6---kafka)
+  * [修改 atlas\-application\.properties](#%E4%BF%AE%E6%94%B9-atlas-applicationproperties)
+  * [6\.1 创建 kafka topic](#61-%E5%88%9B%E5%BB%BA-kafka-topic)
+  * [6\.2 查看 topic](#62-%E6%9F%A5%E7%9C%8B-topic)
+* [七、Atlas 其他配置](#%E4%B8%83atlas-%E5%85%B6%E4%BB%96%E9%85%8D%E7%BD%AE)
+  * [7\.1 修改 atlas\-application\.properties](#71-%E4%BF%AE%E6%94%B9-atlas-applicationproperties)
+  * [7\.2 修改 atlas\-log4j\.xml](#72-%E4%BF%AE%E6%94%B9-atlas-log4jxml)
+  * [7\.3 分发配置文件](#73-%E5%88%86%E5%8F%91%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [7\.4 启动 Atlas](#74-%E5%90%AF%E5%8A%A8-atlas)
+* [八、集成外部框架 \- Hive](#%E5%85%AB%E9%9B%86%E6%88%90%E5%A4%96%E9%83%A8%E6%A1%86%E6%9E%B6---hive)
+  * [修改配置文件](#%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [添加相关配置](#%E6%B7%BB%E5%8A%A0%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE)
+  * [重启 Hive](#%E9%87%8D%E5%90%AF-hive)
+  * [8\.1 修改 Hive 相关配置文件](#81-%E4%BF%AE%E6%94%B9-hive-%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [8\.2 将hive元数据导入Atlas](#82-%E5%B0%86hive%E5%85%83%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%85%A5atlas)
 
 
 ---
@@ -117,6 +148,9 @@ $ cp -r solr /opt/cloudera/parcels/CDH/lib/solr/
 ```bash
 $ cd /opt/cloudera/parcels/CDH/lib/solr/
 $ mv solr atlas_conf
+# 将 atlas_conf 发送到其他从节点
+$ scp -r atlas_conf root@kino2:///opt/cloudera/parcels/CDH/lib/solr/
+$ scp -r atlas_conf root@kino3:///opt/cloudera/parcels/CDH/lib/solr/
 ```
 ## 5.4 修改 /etc/passwd 文件
 ```bash
@@ -206,8 +240,15 @@ $ vim atlas-log4j.xml
     <appender-ref ref="perf_appender" />
 </logger>
 ```
+## 7.3 分发配置文件
+```bash
+$ scp atlas-application.properties root@kino2://opt/atlas/conf/
+$ scp atlas-application.properties root@kino3://opt/atlas/conf/
 
-# 七、启动 Atlas
+$ scp atlas-log4j.xml root@kino2://opt/atlas/conf/
+$ scp atlas-log4j.xml root@kino3://opt/atlas/conf/
+```
+## 7.4 启动 Atlas
 ```bash
 $ cd /opt/atlas/atlas-2.1.0
 $ bin/atlas_start.py
@@ -221,14 +262,12 @@ Apache Atlas Server started!!!
 
 默认用户名和密码为：admin
 
-或者
-```bash
-$ 
-```
 
 # 八、集成外部框架 - Hive
+该步骤所有的配置文件及 jar包都需要分发到hive相关的节点
 ## 修改配置文件
 ```bash
+$ vim atlas-application.properties
 # 增加如下内容
 ######### Hive Hook Configs #######
 atlas.hook.hive.synchronous=false
@@ -248,11 +287,17 @@ $ cp hook* /app/atlas-2.1.0
 ```
 将 atlas-application.properties 配置文件加入到 atlas-plugin-classloader-2.1.0.jar 中
 ```bash
-$ zip -u /app/atlas-2.1.0/hook/hive/atlas-plugin-classloader-2.1.0.jar /app/atlas-2.1.0/conf/atlas-application.properties
+$ cd /app/atlas-2.1.0/hook/hive
+
+$ cp /app/atlas-2.1.0/conf/atlas-application.properties ./
+
+$ zip -u atlas-plugin-classloader-2.1.0.jar atlas-application.properties
 
 $ cp /app/atlas-2.1.0/conf/atlas-application.properties /etc/hive/conf/
+
+$ rm -rf ./atlas-application.properties
 ```
-**原因：这个配置不能参照官网，将配置文件考到hive的conf中。参考官网的做法一直读取不到atlas-application.properties配置文件，看了源码发现是在classpath读取的这个配置文件，所以将它压到jar里面。**
+**原因：这个配置不能参照官网，将配置文件考到hive的conf中。参考官网的做法一直读取不到atlas-application.properties配置文件，看了源码发现是在classpath读取的这个配置文件，所以将它压到jar的根目录下面里面。**
 
 ## 重启 Hive
 
