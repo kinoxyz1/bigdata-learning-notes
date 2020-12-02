@@ -27,11 +27,11 @@
   * [7\.3 分发配置文件](#73-%E5%88%86%E5%8F%91%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
   * [7\.4 启动 Atlas](#74-%E5%90%AF%E5%8A%A8-atlas)
 * [八、集成外部框架 \- Hive](#%E5%85%AB%E9%9B%86%E6%88%90%E5%A4%96%E9%83%A8%E6%A1%86%E6%9E%B6---hive)
-  * [修改配置文件](#%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
-  * [添加相关配置](#%E6%B7%BB%E5%8A%A0%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE)
-  * [重启 Hive](#%E9%87%8D%E5%90%AF-hive)
-  * [8\.1 修改 Hive 相关配置文件](#81-%E4%BF%AE%E6%94%B9-hive-%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
-  * [8\.2 将hive元数据导入Atlas](#82-%E5%B0%86hive%E5%85%83%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%85%A5atlas)
+  * [8\.1 修改配置文件](#81-%E4%BF%AE%E6%94%B9%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [8\.2 添加相关配置](#82-%E6%B7%BB%E5%8A%A0%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE)
+  * [8\.3 重启 Hive](#83-%E9%87%8D%E5%90%AF-hive)
+  * [8\.4 修改 Hive 相关配置文件](#84-%E4%BF%AE%E6%94%B9-hive-%E7%9B%B8%E5%85%B3%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
+  * [8\.5 将hive元数据导入Atlas](#85-%E5%B0%86hive%E5%85%83%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%85%A5atlas)
 
 
 ---
@@ -265,7 +265,7 @@ Apache Atlas Server started!!!
 
 # 八、集成外部框架 - Hive
 该步骤所有的配置文件及 jar包都需要分发到hive相关的节点
-## 修改配置文件
+## 8.1 修改配置文件
 ```bash
 $ vim atlas-application.properties
 # 增加如下内容
@@ -276,7 +276,7 @@ atlas.hook.hive.queueSize=10000
 atlas.cluster.name=primary
 ```
 
-## 添加相关配置
+## 8.2 添加相关配置
 将 编译好的 apache-atlas-2.1.0-hive-hook.tar.gz 上传到服务器上
 ```bash
 $ tar -zxvf apache-atlas-2.0.0-hive-hook.tar.gz
@@ -299,9 +299,9 @@ $ rm -rf ./atlas-application.properties
 ```
 **原因：这个配置不能参照官网，将配置文件考到hive的conf中。参考官网的做法一直读取不到atlas-application.properties配置文件，看了源码发现是在classpath读取的这个配置文件，所以将它压到jar的根目录下面里面。**
 
-## 重启 Hive
+## 8.3 重启 Hive
 
-## 8.1 修改 Hive 相关配置文件
+## 8.4 修改 Hive 相关配置文件
 ```bash
 修改: hive-site.xml的Hive服务高级代码段(安全阀)
 名称: hive.exec.post.hooks
@@ -335,7 +335,7 @@ HIVE_AUX_JARS_PATH=/opt/atlas/atlas-2.1.0/hook/hive
 
 ![hive4](../../img/atlas/atlas安装部署/hive4.png)
 
-## 8.2 将hive元数据导入Atlas
+## 8.5 将hive元数据导入Atlas
 添加 Hive 环境变量, 如下:
 ```bash
 $ export HIVE_HOME=/opt/cloudera/parcels/CDH/lib/hive
