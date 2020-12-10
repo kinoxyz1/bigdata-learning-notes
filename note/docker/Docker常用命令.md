@@ -280,7 +280,10 @@ root                72878               72708               0                   
             "while true;do echo hello zzyy;sleep 2;done"
         ........
 ```
-    
+查看数据卷情况
+```bash
+docker inspect -f "{{.Mounts}}" 91d15091c262
+```    
 ## 3.13 `docker exec -it 容器ID bashShell`: 进入正在运行的容器并以命令交互
 ```bash
 [root@docker1 ~]# docker exec -it 510b350fe6ce /bin/bash
@@ -301,7 +304,10 @@ bin  dev  etc  home  lib  lib64  lost+found  media  mnt  opt  proc  root  run  s
 ```bash
 [root@docker1 tmp]# docker cp 510b350fe6ce:/opt/docker-test.txt /tmp/test.txt
 ```
-    
+
+
+
+
 # 四、常用命令小结:
 ![docker常用命令.png](../../img/docker/docker常用命令/docker常用命令.png)
 
