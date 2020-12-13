@@ -1362,3 +1362,21 @@ CONTAINER ID        IMAGE               COMMAND                  CREATED        
     -rw-r--r--. 1 polkitd input 52 8月  26 16:06 appendonly.aof
     [root@docker1 data]# vim appendonly.aof 
     ```
+   
+# 五、其他部署
+## 5.1 SqlServer
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=123456" -p 14330:1433 --name sqlserver2019 -v /app/data/sqlserver_data:/var/opt/mssql  -d microsoft/mssql-server-linux
+/opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "123456"
+```
+
+## 5.2 informix
+```bash
+docker run -it -p 9088:9088 ibmcom/informix-developer-database:12.10.FC9W1DE -d
+```
+
+## 5.3 pgsql
+```bash
+$ docker run --name postgres-test -v /app/postgresql/data:/var/lib/postgresql/data -e POSTGRES_PASSWORD=123456 -p 29092:5432 -d --privileged=true postgres:9.6
+psql -U postgres -d postgres -h localhost -p 5432 -W 123456
+```

@@ -188,8 +188,8 @@ $ sqlserver-kafka-pgsql-sink.json
 ```
 ## 3.3 启动
 ```bash
-$ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @register-sqlserver.json 
-$ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @sink-1.json
+$ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @sqlserver-kafka-pgsql-source.json
+$ curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @sqlserver-kafka-pgsql-sink.json
 ```
 ## 3.4 查看
 ```bash
