@@ -5,16 +5,16 @@
 ---
 # 一、下载
 CM:
-[下载](http://archive.cloudera.com/cm5/cm/5/)
-[下载](http://archive.cloudera.com/cm5/installer/5.13.0/)
+[下载1](http://archive.cloudera.com/cm5/cm/5/)
+[下载2](http://archive.cloudera.com/cm5/installer/5.13.0/)
 
 CDH:
-[下载](https://archive.cloudera.com/cdh5/parcels/5.13.3/)
-[下载](http://archive.cloudera.com/cdh5/parcels/5.13/)
+[下载1](https://archive.cloudera.com/cdh5/parcels/5.13.3/)
+[下载2](http://archive.cloudera.com/cdh5/parcels/5.13/)
 
 KAFKA:
-[下载](https://archive.cloudera.com/kafka/parcels/3.1.0/)
-[下载](http://archive.cloudera.com/csds/kafka/)
+[下载1](https://archive.cloudera.com/kafka/parcels/3.1.0/)
+[下载2](http://archive.cloudera.com/csds/kafka/)
 
 # 二、安装前准备
 ## 2.1 配置 hosts
@@ -228,7 +228,6 @@ mysql-connector-java.jar 				100%  984KB  25.3MB/s   00:00
 [root@kino-cdh01 java]# scp -r /usr/share/java/mysql-connector-java.jar root@kino-cdh03:/usr/share/java/
 mysql-connector-java.jar     			100%  984KB  30.7MB/s   00:00 
 ```
-
 ---
 # 四、安装
 ## 4.1 解压 & 分发
@@ -310,3 +309,11 @@ tail -f /opt/cloudera/cm-5.13.3/log/cloudera-scm-agent/cloudera-scm-agent.out
 ## 5.3 登录
 http://bigdata001:7180
 
+
+
+## 安装 kafka
+将 第一步 KAFKA 下载1 的内容 copy 到 parcel-repo
+
+将 第一步 KAFKA 下载2 的内容 copy 到 /opt/cloudera/csd
+
+webui 上 -> 检查新 Parcel
