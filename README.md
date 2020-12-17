@@ -24,6 +24,12 @@
 </details>
 
 
+<details>
+<summary>git</summary>
+
+* [git 基操](note/git/git基操.md)
+</details>
+
 
 <details>
 <summary>Flume</summary>
@@ -119,11 +125,18 @@
 </details>
 
 
+<details>
+<summary>DolphinScheduler</summary>
+
+* [DolphinScheduler 安装](note/DolphinScheduler/DolphinScheduler安装.md)
+* [DolphinScheduler 使用](note/DolphinScheduler/DolphinScheduler使用.md)
+</details>
+
 
 <details>
 <summary>CDH</summary>
 
-* [CentOS7.7 CDH5.13.3 安装教程](note/cdh/Centos7.7-CDH5.13.3安装教程.md)
+* [CentOS7.3 CDH5.13.3 安装教程](note/cdh/Centos7.3-CDH5.13.3安装教程.md)
 * [CentOS7.7 CDH6.2.1 安装教程](note/cdh/Centos7.7-CDH6.2.1安装教程.md)
 * [CDH 安装 Hue 连接不上MySQL](note/cdh/CDH安装Hue连接不上MySQL.md)
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)

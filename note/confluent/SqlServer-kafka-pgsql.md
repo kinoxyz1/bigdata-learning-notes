@@ -143,14 +143,14 @@ $ vim sqlserver-kafka-pgsql-source.json
     "config": {
         "connector.class" : "io.debezium.connector.sqlserver.SqlServerConnector",
         "tasks.max" : "1",
-        "database.server.name" : "server1",
+        "database.server.name" : "kino",
         "database.hostname" : "192.168.1.146",
         "database.port" : "14330",
         "database.user" : "SA",
         "database.password" : "Kino@123.,",
         "database.dbname" : "kinodb",
         "database.history.kafka.bootstrap.servers" : "192.168.1.146:9093",
-        "database.history.kafka.topic": "server1.inventory",
+        "database.history.kafka.topic": "kino.inventory",
         "include.schema.changes": "true",
         "transforms":"unwrap",
         "transforms.unwrap.type":"io.debezium.transforms.ExtractNewRecordState",
@@ -169,8 +169,6 @@ $ sqlserver-kafka-pgsql-sink.json
         "connection.url" : "jdbc:postgresql://192.168.1.146:5432/kong",
         "connection.user" : "kong",
         "connection.password" : "Kong@2020",
-        "col.names" : "id,name,age",
-        "col.types" : "integer,varchar,integer",
         "pk.mode": "record_key",
         "pk.fields" : "id",
         "target.tablename" : "test",
@@ -213,4 +211,33 @@ $ insert into test values(3, 'kino1', 3);
 查看
 ```postgres-sql
 $ select * from test
+```
+
+## 4.3 查看 Kafka
+```bash
+# 查看topic
+$ docker exec -it your CONTAINER ID exec
+
+$ bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
+kino
+kino.dbo.test
+kino.inventory
+
+# 消费 
+$ bin/kafka-console-consumer.sh --bootstrap-server kafka:9092 --from-beginning --topic kino.dbo.test
+```
+
+## 4.4 查看详细日志
+需要进入 debezium/connect:1.4.0.Alpha2 镜像中
+```bash
+$ docker exec -it your CONTAINER ID bash
+
+$ ll -rt 
+-rw-r--r-- 1 kafka kafka 1020609 Dec 17 11:51 connect-service.log
+
+$ vi connect-service.log
+...
+2020-12-17 11:51:33,968 INFO   ||  WorkerSourceTask{id=sqlserver-connector-kino-0} Committing offsets   [org.apache.kafka.connect.runtime.WorkerSourceTask]
+2020-12-17 11:51:33,969 INFO   ||  WorkerSourceTask{id=sqlserver-connector-kino-0} flushing 0 outstanding messages for offset commit   [org.apache.kafka.connect.runtime.WorkerSourceTask]
+...
 ```
