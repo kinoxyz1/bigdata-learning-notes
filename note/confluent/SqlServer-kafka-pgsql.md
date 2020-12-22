@@ -85,6 +85,23 @@ $ /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "123456"
 # 二、开启 SqlServer CDC
 需要为监控的数据库开启cdc功能以便debezium连接器能够获取日志文件。
 
+确保开启SQL server agent服务, 如果不开启会报如下错误:
+```bash
+SQLServerAgent is not currently running so it cannot be notified of this action.
+```
+开启 SQL server agent服务
+```bash
+> sp_configure 'show advanced options', 1;   
+> GO   
+> RECONFIGURE;   
+> GO   
+> sp_configure 'Agent XPs', 1;   
+> GO   
+> RECONFIGURE   
+> GO 
+```
+
+
 进入要开启 CDC 的数据库
 ```bash
 > use kinodb;
