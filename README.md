@@ -73,7 +73,7 @@
 <details>
 <summary>debezium/confluent</summary>
 
-* [使用 confluent 实现 SqlServer 实时同步数据到 PostGreSql](note/confluent/SqlServer-kafka-pgsql.md)
+* [使用 confluent 实现 SqlServer 实时同步数据到 PostGreSql](note/debezium/SqlServer-kafka-pgsql.md)
 </details>
 
 
