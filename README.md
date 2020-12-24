@@ -96,6 +96,9 @@
 * [redis 发布订阅](note/redis/发布订阅.md)
 * [redis 主从复制](note/redis/主从复制.md)
 * [redis java客户端](note/redis/java客户端.md)
+* [redis 数据备份与恢复](note/redis/数据备份与恢复.md)
+* [redis 安全](note/redis/安全.md)
+* [redis 性能测试](note/redis/性能测试.md)
 </details>
 
 
