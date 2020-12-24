@@ -88,7 +88,8 @@
 <details>
 <summary>redis</summary>
 
-* [centos7安装redis](note/redis/安装.md)
+* [centos7 安装redis](note/redis/安装.md)
+* [Redis 安装(docker)](note/docker/Docker常用安装.md)
 * [redis 数据类型](note/redis/数据类型.md)
 * [redis conf详解](note/redis/conf.md)
 * [redis 持久化](note/redis/持久化.md)
@@ -267,14 +268,6 @@
 
 * [CentOS7 安装 MariaDB](note/MariaDB/CentOS7安装MariaDB.md)
 * [修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
-</details>
-
-
-<details>
-<summary>Redis</summary>
-
-* [Redis 单机版安装](note/docker/Docker常用安装.md)
-* [Redis 五大数据类型](note/docker/Docker五大数据类型.md)
 </details>
 
 
