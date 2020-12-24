@@ -74,6 +74,7 @@
 <summary>debezium/confluent</summary>
 
 * [使用 confluent 实现 SqlServer 实时同步数据到 PostGreSql](note/debezium/SqlServer-kafka-pgsql.md)
+* [confluent6.0.1 平台搭建](note/debezium/confluent6.0.1平台搭建.md)
 </details>
 
 
@@ -84,7 +85,12 @@
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
 </details>
 
+<details>
+<summary>redis</summary>
 
+* [centos7安装redis](note/redis/安装.md)
+* [redis数据类型](note/redis/数据类型.md)
+</details>
 
 
 <details>
