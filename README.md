@@ -89,7 +89,13 @@
 <summary>redis</summary>
 
 * [centos7安装redis](note/redis/安装.md)
-* [redis数据类型](note/redis/数据类型.md)
+* [redis 数据类型](note/redis/数据类型.md)
+* [redis conf详解](note/redis/conf.md)
+* [redis 持久化](note/redis/持久化.md)
+* [redis 事务](note/redis/事务.md)
+* [redis 发布订阅](note/redis/发布订阅.md)
+* [redis 主从复制](note/redis/主从复制.md)
+* [redis java客户端](note/redis/java客户端.md)
 </details>
 
 
