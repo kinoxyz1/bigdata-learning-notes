@@ -426,6 +426,7 @@ always-show-logo yes
 ```
 
 # 六、SNAPSHOTTING 
+看后续, 暂不做解释
 ```bash
 #
 # Save the DB on disk:
@@ -507,10 +508,11 @@ dir ./
 ```
 
 # 七、REPLICATION
-
+看后续, 暂不做解释
 
 
 # 八、SECURITY
+设置 redis 密码
 ```bash
 # Require clients to issue AUTH <PASSWORD> before processing any other
 # commands.  This might be useful in environments in which you do not trust
@@ -544,8 +546,46 @@ dir ./
 # Please note that changing the name of commands that are logged into the
 # AOF file or transmitted to replicas may cause problems.
 ```
+示例:
+```bash
+> ping
+PONG
+# 查看密码
+> CONFIG GET requirepass
+1) "requirepass"
+2) ""
+
+# 设置密码
+> CONFIG SET requirepass "123"
+OK
+> ping 
+(error) NOAUTH Authentication required.
+
+# 使用密码登录
+> auth "123"
+OK
+> ping
+PONG
+```
+或者修改 redis.conf 文件:
+```bash
+requirepass "123"
+```
+重启 redis 并测试
+```bash
+$ ps -ef | grep redis | awk '{print $2}' | xargs kill -9
+$ bin/redis-server conf/redis.conf
+> ping
+(error) NOAUTH Authentication required
+> auth 123
+ok
+>ping
+PONG
+```
 
 # 九、CLIENTS
+## 9.1 maxclients
+设置 客户端最大连接数
 ```bash
 # Set the max number of connected clients at the same time. By default
 # this limit is set to 10000 clients, however if the Redis server is not
@@ -561,6 +601,7 @@ dir ./
 
 
 # 十、APPEND ONLY MODE
+看后续, 暂不做解释
 ```bash
 # By default Redis asynchronously dumps the dataset on disk. This mode is
 # good enough in many applications, but an issue with the Redis process or
