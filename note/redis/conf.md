@@ -201,7 +201,7 @@ bind 127.0.0.1
 ```
 redis 的 `bind` 值默认是 `127.0.0.1`, 此时就只有本机能访问, 其他机器并不可以访问该redis, 因为从上面 `ifconfig` 可以看到: `127.0.0.1` 是 `lo网卡`, 这是一个回环地址, 仅只有本机才能访问该回环地址, 其他机器也只能访问他们自己的回环地址, 所以配置 `127.0.0.1` 就只有本机可以访问
 
-当 `1`bind=0.0.0.0` 时, 表示所有主机都可以连接到该redis
+当 `bind=0.0.0.0` 时, 表示所有主机都可以连接到该redis
 
 ## 4.2 protected-mode
 保护模式是否开启
@@ -235,3 +235,192 @@ protected-mode yes
 2. 没有设置密码
 
 当满足这三个条件之后, redis 的保护机制就会被打开, 如果三个条件有一个不满足, 则保护机制不生效
+
+## 4.3 port
+redis 的 端口号, 默认是 6379, 如果修改之后, 连接 `redis-cli` 的命令应该变成: `redis-cli -p your-port`
+```bash
+# Accept connections on the specified port, default is 6379 (IANA #815344).
+# If port 0 is specified Redis will not listen on a TCP socket.
+port 6379
+```
+
+## 4.4 tcp-backlog
+说明如下:
+```bash
+# TCP listen() backlog.
+#
+# In high requests-per-second environments you need an high backlog in order
+# to avoid slow clients connections issues. Note that the Linux kernel
+# will silently truncate it to the value of /proc/sys/net/core/somaxconn so
+# make sure to raise both the value of somaxconn and tcp_max_syn_backlog
+# in order to get the desired effect.
+tcp-backlog 511
+```
+此参数确定了TCP连接中已完成队列(完成三次握手之后)的长度， 当然此值必须**不大于**Linux系统定义的 `/proc/sys/net/core/somaxconn` 值，默认是511，而Linux的默认参数值是128。当系统并发量大并且客户端速度缓慢的时候，可以将这二个参数一起参考设定。
+
+建议修改为 2048
+
+修改somaxconn, 该内核参数默认值一般是128，对于负载很大的服务程序来说大大的不够。一般会将它修改为2048或者更大。
+```bash
+echo 2048 > /proc/sys/net/core/somaxconn 但是这样系统重启后保存不了
+```
+在/etc/sysctl.conf中添加如下
+```bash
+net.core.somaxconn = 2048
+```
+然后在终端中执行
+```bash
+sysctl -p
+```
+
+## 4.5 timeout
+设置 客户端空闲超时时间, 当`timeout` 为 `0` 时, 表示禁用
+```bash
+# Unix socket.
+#
+# Specify the path for the Unix socket that will be used to listen for
+# incoming connections. There is no default, so Redis will not listen
+# on a unix socket when not specified.
+#
+# unixsocket /tmp/redis.sock
+# unixsocketperm 700
+
+# Close the connection after a client is idle for N seconds (0 to disable)
+timeout 0
+```
+
+## 4.6 tcp-keepalive
+客户端TCP连接的健康性检查，如果不设置为0就表示Redis服务端会定时发送SO_KEEPALIVE心跳机制检测客户端的反馈情况。该配置的默认值为300秒，既是300秒检测一次。健康性检查的好处是，在客户端异常关闭的情况下，Redis服务端可以发现这个问题，并主动关闭对端通道。这个参数建议开启。
+```bash
+# TCP keepalive.
+#
+# If non-zero, use SO_KEEPALIVE to send TCP ACKs to clients in absence
+# of communication. This is useful for two reasons:
+#
+# 1) Detect dead peers.
+# 2) Take the connection alive from the point of view of network
+#    equipment in the middle.
+#
+# On Linux, the specified value (in seconds) is the period used to send ACKs.
+# Note that to close the connection the double of the time is needed.
+# On other kernels the period depends on the kernel configuration.
+#
+# A reasonable value for this option is 300 seconds, which is the new
+# Redis default starting with Redis 3.2.1.
+tcp-keepalive 300
+```
+
+# 五、GENERAL
+## 5.1 daemonize
+是否以守护进程的模式运行
+```bash
+# By default Redis does not run as a daemon. Use 'yes' if you need it.
+# Note that Redis will write a pid file in /var/run/redis.pid when daemonized.
+daemonize yes
+```
+
+## 5.2 supervised
+管理 redis 守护进程
+
+选项：
+- `supervised no`: 没有监督互动
+- `supervised upstart`: 通过将 `Redis` 置于 `SIGSTOP` 模式来启动信号
+- `supervised systemd`: `signal systemd` 将 `READY = 1` 写入`$ NOTIFY_SOCKET`
+- `supervised auto`: 检测 `upstart` 或 `systemd` 方法基于 `UPSTART_JOB` 或 `NOTIFY_SOCKET` 环境变量
+```bash
+# If you run Redis from upstart or systemd, Redis can interact with your
+# supervision tree. Options:
+#   supervised no      - no supervision interaction
+#   supervised upstart - signal upstart by putting Redis into SIGSTOP mode
+#   supervised systemd - signal systemd by writing READY=1 to $NOTIFY_SOCKET
+#   supervised auto    - detect upstart or systemd method based on
+#                        UPSTART_JOB or NOTIFY_SOCKET environment variables
+# Note: these supervision methods only signal "process is ready."
+#       They do not enable continuous liveness pings back to your supervisor.
+supervised no
+```
+
+## 5.3 pidfile
+守护进程的 pid 文件
+```bash
+# If a pid file is specified, Redis writes it where specified at startup
+# and removes it at exit.
+#
+# When the server runs non daemonized, no pid file is created if none is
+# specified in the configuration. When the server is daemonized, the pid file
+# is used even if not specified, defaulting to "/var/run/redis.pid".
+#
+# Creating a pid file is best effort: if Redis is not able to create it
+# nothing bad happens, the server will start and run normally.
+pidfile /var/run/redis_6379.pid
+```
+
+## 5.4 loglevel
+log 日志的级别
+```bash
+# Specify the server verbosity level.
+# This can be one of:
+# debug (a lot of information, useful for development/testing)
+# verbose (many rarely useful info, but not a mess like the debug level)
+# notice (moderately verbose, what you want in production probably)
+# warning (only very important / critical messages are logged)
+# loglevel notice
+loglevel debug
+```
+选项: 
+- debug: 输出信息最多, 适用于 **开发、测试** 环境
+- verbose: 输出信息不如 debug 多
+- notice: 输出信息 不如 verbose 多, 适用于 **生产** 环境
+- warning: 仅输出 **非常重要、关键** 的信息
+
+## 5.5 logfile
+log 文件目录
+```bash
+# Specify the log file name. Also the empty string can be used to force
+# Redis to log on the standard output. Note that if you use standard
+# output for logging but daemonize, logs will be sent to /dev/null
+logfile ""
+```
+
+## 5.6 syslog-enabled
+是否将日志输出到系统log中
+```bash
+# To enable logging to the system logger, just set 'syslog-enabled' to yes,
+# and optionally update the other syslog parameters to suit your needs.
+# syslog-enabled no
+```
+
+## 5.7 syslog-ident
+系统日志的前缀
+```bash
+# Specify the syslog identity.
+# syslog-ident redis
+```
+
+## 5.8 syslog-facility
+指定 syslog 设备, 可以使 LOCAL0-LOCAL7.
+```bash
+# Specify the syslog facility. Must be USER or between LOCAL0-LOCAL7.
+# syslog-facility local0
+```
+
+## 5.9 databases
+设置数据库数
+```bash
+# Set the number of databases. The default database is DB 0, you can select
+# a different one on a per-connection basis using SELECT <dbid> where
+# dbid is a number between 0 and 'databases'-1
+databases 16
+```
+
+## 5.10 always-show-logo
+是否显示 redis 的logo
+```bash
+# By default Redis shows an ASCII art logo only when started to log to the
+# standard output and if the standard output is a TTY. Basically this means
+# that normally a logo is displayed only in interactive sessions.
+#
+# However it is possible to force the pre-4.0 behavior and always show a
+# ASCII art logo in startup logs by setting the following option to yes.
+always-show-logo yes
+```
