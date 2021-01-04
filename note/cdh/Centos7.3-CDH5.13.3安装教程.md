@@ -247,6 +247,7 @@ useradd --system --home=/opt/cloudera/cm-5.13.3/run/cloudera-scm-server/ --no-cr
 ```
 
 ## 4.3 为Cloudera Manager 建立数据库 并初始化
+所有节点执行
 ```bash
 #创建/usr/share/java/ 用于后期cdh启动部署
 mkdir -p /usr/share/java/
