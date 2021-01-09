@@ -85,22 +85,6 @@
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
 </details>
 
-<details>
-<summary>redis</summary>
-
-* [centos7 安装redis](note/redis/安装.md)
-* [Redis 安装(docker)](note/docker/Docker常用安装.md)
-* [redis 数据类型](note/redis/数据类型.md)
-* [redis conf详解](note/redis/conf.md)
-* [redis 持久化](note/redis/持久化.md)
-* [redis 事务](note/redis/事务.md)
-* [redis 发布订阅](note/redis/发布订阅.md)
-* [redis 主从复制](note/redis/主从复制.md)
-* [redis java客户端](note/redis/java客户端.md)
-* [redis 数据备份与恢复](note/redis/数据备份与恢复.md)
-* [redis 安全](note/redis/安全.md)
-* [redis 性能测试](note/redis/性能测试.md)
-</details>
 
 
 <details>
@@ -271,6 +255,34 @@
 </details>
 
 
+## Java
+<details>
+<summary>Nginx</summary>
+
+- [nginx](note/nginx/nginx.md)
+</details>
+
+
+<details>
+<summary>Redis</summary>
+
+* [centos7 安装redis](note/redis/安装.md)
+* [Redis 安装(docker)](note/docker/Docker常用安装.md)
+* [redis 数据类型](note/redis/数据类型.md)
+* [redis conf详解](note/redis/conf.md)
+* [redis 持久化](note/redis/持久化.md)
+* [redis 事务](note/redis/事务.md)
+* [redis 发布订阅](note/redis/发布订阅.md)
+* [redis 主从复制](note/redis/主从复制.md)
+* [redis java客户端](note/redis/java客户端.md)
+* [redis 数据备份与恢复](note/redis/数据备份与恢复.md)
+* [redis 安全](note/redis/安全.md)
+* [redis 性能测试](note/redis/性能测试.md)
+</details>
+
+
+
+
 ## 运维
 <details>
 <summary>Zabbix</summary>
@@ -285,8 +297,7 @@
 * [Zabbix5.0 中文乱码](note/zabbix/Zabbix5.0中文乱码.md)
 * [Zabbix: 添加被监控主机、创建主机、监控项、触发器、图形和模板](note/zabbix/Zabbix添加被监控主机、创建主机、监控项、触发器、图形和模板.md)
 * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
-
-  </details>
+</details>
   
 <details>
 <summary>Docker</summary>
