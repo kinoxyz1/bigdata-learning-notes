@@ -260,6 +260,7 @@
 <summary>Nginx</summary>
 
 - [nginx](note/nginx/nginx.md)
+- [alias和root的区别](note/nginx/alias和root的区别.md)
 </details>
 
 
