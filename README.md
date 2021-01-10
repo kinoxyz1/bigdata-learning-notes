@@ -257,6 +257,12 @@
 
 ## Java
 <details>
+<summary>Gitlab</summary>
+
+- [docker 部署 gitlab](note/gitlab/docker-gitlab.md)
+</details>
+
+<details>
 <summary>Nginx</summary>
 
 - [nginx](note/nginx/nginx.md)
