@@ -257,9 +257,9 @@
 
 ## Java
 <details>
-<summary>Gitlab</summary>
+<summary>GitLab</summary>
 
-- [docker 部署 gitlab](note/gitlab/docker-gitlab.md)
+- [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
 </details>
 
 <details>
