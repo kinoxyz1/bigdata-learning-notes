@@ -260,6 +260,7 @@
 <summary>GitLab</summary>
 
 - [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
+- [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
 </details>
 
 <details>
