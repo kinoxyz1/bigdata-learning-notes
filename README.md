@@ -292,6 +292,12 @@
 
 ## 运维
 <details>
+<summary>软件部署</summary>
+
+- [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
+</details>
+
+<details>
 <summary>Zabbix</summary>
   
 * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
