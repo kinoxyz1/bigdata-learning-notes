@@ -13,8 +13,49 @@ stream.addSink(new MySink(abcd))
 
 ![官方提供的一部分框架的 Sink](../../img/flink/sink/sink.png)
 
+# 一、File Sink
+```bash
+package com.kino.sink
 
-# 一、Kafka Sink
+import com.kino.mode.SensorReading
+import org.apache.flink.api.common.serialization.SimpleStringEncoder
+import org.apache.flink.core.fs.Path
+import org.apache.flink.streaming.api.functions.sink.filesystem.StreamingFileSink
+import org.apache.flink.streaming.api.scala._
+
+/**
+ * create by kino on 2021/1/15
+ */
+object FileSink {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
+
+    // 读取数据
+    val inputStream = env.readTextFile("D:\\work\\note-codes\\FlinkTutorial\\src\\main\\resources\\SensorReading.txt")
+
+    // 转换成样例类类型(简单的转换操作)
+    val dataStream = inputStream.map(x => {
+      val splits = x.split(",")
+      SensorReading(splits(0), splits(1).toLong, splits(2).toDouble)
+    })
+
+    dataStream.print()
+    //    dataStream.writeAsCsv("D:\\Projects\\BigData\\FlinkTutorial\\src\\main\\resources\\out.txt")
+    dataStream.addSink(
+      StreamingFileSink.forRowFormat(
+        new Path("D:\\work\\note-codes\\FlinkTutorial\\src\\main\\resources\\out.txt"),
+        new SimpleStringEncoder[SensorReading]()
+      ).build()
+    )
+
+    env.execute(this.getClass.getName)
+  }
+}
+```
+
+
+# 二、Kafka Sink
 在前面的文章 [Flink Source](../../note/flink/flinkSource.md) 中, 列举了 Kafka Source, 这里讲述 Kafka Sink
 
 添加 pom 依赖
@@ -98,7 +139,7 @@ sensor_1,1547718199,35.8
 ```
 
 
-# 二、Redis Sink
+# 三、Redis Sink
 添加 pom 依赖
 ```xml
 <!-- https://mvnrepository.com/artifact/org.apache.bahir/flink-connector-redis-->
@@ -197,7 +238,7 @@ HYPER_LOG_LOG | PFADD
 SORTED_SET | ZADD
 SORTED_SET | ZREM
 
-# 三、Elasticsearch Sink
+# 四、Elasticsearch Sink
 [docker 部署 Elasticsearch](../../note/elasticsearch/Docker安装Elasticsearch.md)
 
 [docker 部署 Kibana](../../note/kibana/Docker安装Kibana.md)
@@ -210,6 +251,120 @@ SORTED_SET | ZREM
     <version>1.10.1</version>
 </dependency>
 ```
+代码如下:
+```scala
+package com.kino.sink
+
+import com.kino.mode.SensorReading
+import org.apache.flink.api.common.functions.RuntimeContext
+import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.connectors.elasticsearch.{ElasticsearchSinkFunction, RequestIndexer}
+import org.apache.flink.streaming.connectors.elasticsearch6.ElasticsearchSink
+import org.apache.http.HttpHost
+import org.elasticsearch.client.Requests
+
+import java.util
 
 
-# 四、自定义JDBC Sink
+/**
+ * create by kino on 2021/1/14
+ */
+object EsSink {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+
+    // 1. 读取数据
+    val inputStream = env.readTextFile("D:\\work\\note-codes\\FlinkTutorial\\src\\main\\resources\\SensorReading.txt")
+
+    // 2. 转换成样例类类型(简单转换操作)
+    val dataStream = inputStream.map(x => {
+      val arr = x.split(",")
+      SensorReading(arr(0), arr(1).toLong, arr(2).toDouble)
+    })
+
+    // 3. 定义 httpHosts
+    val httpHosts = new util.ArrayList[HttpHost]()
+    httpHosts.add(new HttpHost("localhost", 9200))
+
+    // 4. 自定义写入 es 的 EsSinkFunction
+    val myEsSinkFunction  = new ElasticsearchSinkFunction[SensorReading] {
+      override def process(t: SensorReading, runtimeContext: RuntimeContext, requestIndexer: RequestIndexer): Unit = {
+        // 包装一个 Map 作为 data source
+        val datasource = new util.HashMap[String, String]()
+        datasource.put("id", t.id)
+        datasource.put("temperature", t.temperature.toString)
+        datasource.put("ts", t.timestamp.toString)
+
+        // 创建 index request, 用于发送 http 请求
+        val indexRequest = Requests.indexRequest()
+          .index("sensor")
+          .`type`("readingdata")
+          .source(datasource)
+
+        // 用indexer发送请求
+        requestIndexer.add(indexRequest)
+      }
+    }
+    dataStream.addSink(new ElasticsearchSink.Builder[SensorReading](httpHosts, myEsSinkFunction).build())
+
+    env.execute(this.getClass.getName)
+  }
+}
+```
+
+# 五、自定义JDBC Sink
+```scala
+package com.kino.sink
+
+import com.kino.mode.SensorReading
+import com.kino.source.CustomSource.MySensorSource
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
+import org.apache.flink.streaming.api.scala._
+
+import java.sql.{Connection, DriverManager, PreparedStatement}
+
+/**
+ * create by kino on 2021/1/15
+ */
+object JdbcSink {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val inputStream: DataStream[SensorReading] = env.addSource(new MySensorSource())
+    inputStream.addSink(new MyJdbcSinkFunction())
+    env.execute(this.getClass.getName)
+  }
+}
+
+class MyJdbcSinkFunction() extends RichSinkFunction[SensorReading]{
+  // 定义连接、预编译语句
+  var conn: Connection = _
+  var insertStmt: PreparedStatement = _
+  var updateStmt: PreparedStatement = _
+
+  override def open(parameters: Configuration): Unit ={
+    conn = DriverManager.getConnection("jdbc:mysql://192.168.1.140:3307/test", "dmp", "Ioubuy123")
+    insertStmt = conn.prepareStatement("insert into sensor_temp (id, temp) values (?, ?)")
+    updateStmt = conn.prepareStatement("update sensor_temp set temp = ? where id = ?")
+  }
+
+  override def invoke(value: SensorReading, context: SinkFunction.Context[_]): Unit = {
+    // 先执行更新操作，查到就更新
+    updateStmt.setDouble(1, value.temperature)
+    updateStmt.setString(2, value.id)
+    updateStmt.execute()
+    // 如果更新没有查到数据，那么就插入
+    if( updateStmt.getUpdateCount == 0 ){
+      insertStmt.setString(1, value.id)
+      insertStmt.setDouble(2, value.temperature)
+      insertStmt.execute()
+    }
+  }
+
+  override def close(): Unit = {
+    insertStmt.close()
+    updateStmt.close()
+    conn.close()
+  }
+}
+```
