@@ -46,6 +46,7 @@ import com.kino.mode.SensorReading
 import org.apache.flink.api.common.serialization.SimpleStringSchema
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011
 
 import java.util.Properties
@@ -77,11 +78,169 @@ object TumblingWindowTest {
     // 将样例类转换成 元祖, 然后做 keyBy, 设置 15s 一个窗口
     val outputSteam: DataStream[(String, Double)] = dataStream
       .map(x => (x.id, x.temperature))
+      //       如果不进行 keyBy 就开窗, 需要用 .windowAll 函数, 传入 WindowAssigner 的实现类
+      //      .windowAll(TumblingEventTimeWindows.of(Time.seconds(15)))
       .keyBy(_._1)
       .timeWindow(Time.seconds(15))
       .reduce((x1, x2) => (x1._1, x1._2.min(x2._2)))
 
     outputSteam.print()
+    env.execute(this.getClass.getName)
+  }
+}
+```
+
+## 3.2 滑动窗口(SlidingEventTimeWindows)
+滑动窗口和滚动窗口的函数名是完全一样的, 只是在传参数时需要传入两个参数, 一个是 `window size` 一个是 `sliding size`
+
+设置 `sliding size` = 5s, `window size` = 15s, 表示窗口长度是15s, 滑动步长是5s
+```scala
+package com.kino.windows
+
+import com.kino.mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.time.Time
+
+/**
+ * create by kino on 2021/1/17
+ */
+object SlidingWindowTest {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val inputStream = env.socketTextStream("localhost", 8888)
+
+    val dataStream = inputStream.map(x => {
+      val splits = x.split(",")
+      SensorReading(splits(0).toString, splits(1).toLong, splits(2).toDouble)
+    })
+
+    val outputStream = dataStream
+      .map(x => (x.id, x.temperature))
+      .keyBy((_._1))
+      .timeWindow(Time.seconds(15), Time.seconds(5))
+      .reduce((x1, x2) => (x1._1, x1._2.min(x2._2)))
+
+    outputStream.print()
+
+    env.execute(this.getClass.getName)
+  }
+}
+```
+如果需要设置时区, 则可以调用 `.window` API, 例如:
+```bash
+package com.kino.windows
+
+import com.kino.mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows
+import org.apache.flink.streaming.api.windowing.time.Time
+
+/**
+ * create by kino on 2021/1/17
+ */
+object SlidingWindowTest {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val inputStream = env.socketTextStream("localhost", 8888)
+
+    val dataStream = inputStream.map(x => {
+      val splits = x.split(",")
+      SensorReading(splits(0).toString, splits(1).toLong, splits(2).toDouble)
+    })
+
+    val outputStream = dataStream
+      .map(x => (x.id, x.temperature))
+      .keyBy((_._1))
+//      .timeWindow(Time.seconds(15), Time.seconds(5))
+      // 设置窗口, 并且添加时区
+      .window(
+        SlidingEventTimeWindows.of(
+          Time.seconds(15),
+          Time.seconds(5),
+          Time.hours(-8)))
+      .reduce((x1, x2) => (x1._1, x1._2.min(x2._2)))
+
+    outputStream.print()
+
+    env.execute(this.getClass.getName)
+  }
+}
+```
+## 3.3 CountWindow
+CountWindow 根据窗口中相同 Key 元素的数量来触发执行, 执行时只计算元素数量达到窗口大小的 Key 对应的结果
+
+注意: CountWindow 的 `window size` 指的是相同 Key 的元素的个数, 不是输入所有元素的总数
+
+### 3.3.1 滚动窗口
+```scala
+package com.kino.windows
+
+import com.kino.mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+
+/**
+ * create by kino on 2021/1/17
+ */
+object CountWindowTest {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val inputStream = env.socketTextStream("localhost", 8888)
+    val dataStream = inputStream.map(x => {
+      val splits = x.split(",")
+      SensorReading(splits(0).toString, splits(1).toLong, splits(2).toDouble)
+    })
+    val outputStream = dataStream
+      .map(x => (x.id, x.temperature))
+      .keyBy(_._1)
+      .countWindow(3)
+      .reduce((x1, x2) => (x1._1, x1._2.max(x2._2)))
+
+    outputStream.print()
+    env.execute(this.getClass.getName)
+  }
+}
+```
+socket 输入如下内容:
+```text
+sensor_1,1547718199,35.8
+sensor_6,1547718201,15.4
+sensor_7,1547718202,6.7
+sensor_1,1547718199,35.8
+sensor_1,1547718200,33.8
+```
+flink 则输入如下内容:
+```text
+5> (sensor_1,35.8)
+```
+我们代码中设置的窗口长度是3, 但是在 socket 中输入前三行记录后flink并没有输入, 而是 socket 输入三个 sensor_1 时flink才输出, 所以**CountWindow 的 `window size` 指的是相同 Key 的元素的个数, 不是输入所有元素的总数**
+
+### 3.3.2 滑动窗口
+```scala
+package com.kino.windows
+
+import com.kino.mode.SensorReading
+import org.apache.flink.streaming.api.scala._
+
+/**
+ * create by kino on 2021/1/17
+ */
+object CountWindowTest {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val inputStream = env.socketTextStream("localhost", 8888)
+    val dataStream = inputStream.map(x => {
+      val splits = x.split(",")
+      SensorReading(splits(0).toString, splits(1).toLong, splits(2).toDouble)
+    })
+    val outputStream = dataStream
+      .map(x => (x.id, x.temperature))
+      .keyBy(_._1)
+      // 表示 每收到 2 个相同 id 的数据就计算一次, 每一次计算的 window 范围是 10 个元素 
+      .countWindow(10, 2)
+      .reduce((x1, x2) => (x1._1, x1._2.max(x2._2)))
+
+    outputStream.print()
     env.execute(this.getClass.getName)
   }
 }
