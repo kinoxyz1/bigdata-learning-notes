@@ -182,3 +182,5 @@ class MyWatermark(bound: Long) extends AssignerWithPeriodicWatermarks[SensorRead
   }
 }
 ```
+
+# 六、第一个窗口生成规则
