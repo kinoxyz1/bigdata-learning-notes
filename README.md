@@ -62,6 +62,14 @@
 
 
 <details>
+<summary>Kudu</summary>
+
+* [kudu异常](note/kudu/kudu异常.md)
+</details>
+
+
+
+<details>
 <summary>Kafka</summary>
 
 * [kafka 安装部署](note/kafka/kafka安装部署.md)
@@ -217,7 +225,6 @@
 * [Flink Sink](note/flink/flinkSink.md)
 * [Flink Window](note/flink/flinkWindow.md)
 * [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
-* [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
 </details>
 
 
@@ -320,7 +327,8 @@
 <details>
 <summary>Docker</summary>
 
-* [CentOS7 安装 docker](note/docker/CentOS7安装Docker.md)
+* [CentOS7 YUM安装 docker](note/docker/CentOS7安装Docker.md)
+* [CentOS7 离线安装 docker](note/docker/CentOS7离线安装Docker.md)
 * [Docker 常用命令](note/docker/Docker常用命令.md)
 * [Docker 镜像](note/docker/Docker镜像.md)
 * [Docker 容器数据卷](note/docker/Docker容器数据卷.md)
