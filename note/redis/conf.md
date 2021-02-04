@@ -340,7 +340,7 @@ daemonize yes
 supervised no
 ```
 
-## 5.3 pidfile
+## 5.3 file
 守护进程的 pid 文件
 ```bash
 # If a pid file is specified, Redis writes it where specified at startup
