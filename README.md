@@ -256,6 +256,7 @@
 <summary>Azkaban</summary>
 
 * [Azkaban 安装部署](note/Azkaban/Azkaban安装部署.md)
+* [Azkaban 迁移机器找不到executor](note/Azkaban/Azkaban迁移机器找不到executor.md)
 </details>
 
 <details>
