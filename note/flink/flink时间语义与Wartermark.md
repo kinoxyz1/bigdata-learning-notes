@@ -184,3 +184,61 @@ class MyWatermark(bound: Long) extends AssignerWithPeriodicWatermarks[SensorRead
 ```
 
 # 六、第一个窗口生成规则
+```scala
+val outputSteam: DataStream[(String, Double)] = dataStream
+      .map(x => (x.id, x.temperature))
+//       如果不进行 keyBy 就开窗, 需要用 .windowAll 函数, 传入 WindowAssigner 的实现类
+//      .windowAll(TumblingEventTimeWindows.of(Time.seconds(15)))
+      .keyBy(_._1)
+      .timeWindow(Time.seconds(15))
+      .reduce((x1, x2) => (x1._1, x1._2.min(x2._2)))
+```
+进入 timeWindow 方法
+
+```scala
+def timeWindow(size: Time): WindowedStream[T, K, TimeWindow] = {
+    new WindowedStream(javaStream.timeWindow(size))
+  }
+```
+进入 javaStream.timeWindow(size) 方法
+
+```scala
+public WindowedStream<T, KEY, TimeWindow> timeWindow(Time size) {
+		if (environment.getStreamTimeCharacteristic() == TimeCharacteristic.ProcessingTime) {
+			return window(TumblingProcessingTimeWindows.of(size));
+		} else {
+			return window(TumblingEventTimeWindows.of(size));
+		}
+	}
+```
+进入 TumblingProcessingTimeWindows 或 TumblingEventTimeWindows 类, 找到 assignWindows 方法
+
+```scala
+public Collection<TimeWindow> assignWindows(Object element, long timestamp, WindowAssignerContext context) {
+		if (timestamp > Long.MIN_VALUE) {
+			// Long.MIN_VALUE is currently assigned when no timestamp is present
+			long start = TimeWindow.getWindowStartWithOffset(timestamp, offset, size);
+			return Collections.singletonList(new TimeWindow(start, start + size));
+		} else {
+			throw new RuntimeException("Record has Long.MIN_VALUE timestamp (= no timestamp marker). " +
+					"Is the time characteristic set to 'ProcessingTime', or did you forget to call " +
+					"'DataStream.assignTimestampsAndWatermarks(...)'?");
+		}
+	}
+```
+进入 TimeWindow.getWindowStartWithOffset 方法
+
+```scala
+public static long getWindowStartWithOffset(long timestamp, long offset, long windowSize) {
+		return timestamp - (timestamp - offset + windowSize) % windowSize;
+	}
+```
+
+此处就是产生第一个 window 起始时间的源码, 假设现在第一条数据的时间戳是 1424247053000(毫秒), 窗口长度是 15s , 则
+
+第一个 window 的起始时间是:1424247045000(毫秒)
+
+第一个 window 的结束时间是:1424247060000(毫秒)
+```scala
+1424247053000 - (1424247053000 - 0 + 15000) % 15000  = 1424247045000
+```
