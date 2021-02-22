@@ -138,6 +138,7 @@
 
 * [DolphinScheduler 安装](note/DolphinScheduler/DolphinScheduler安装.md)
 * [DolphinScheduler 使用](note/DolphinScheduler/DolphinScheduler使用.md)
+* [DolphinScheduler 本地开发环境搭建](note/DolphinScheduler/DolphinScheduler本地开发环境搭建.md)
 </details>
 
 
@@ -164,7 +165,6 @@
 * [6. scala 类和对象](note/scala/scala类和对象.md)
 * [7. scala 给类取别名](note/scala/scala给类取别名.md)
 * [8. scala 的 trait](note/scala/scala的trait.md)
-* [9. scala 集合的 map 映射、高阶函数使用、集合的压平、 集合的过滤、集合的简化、集合的折叠、集合的扫描、集合的拉链、集合的迭代器、集合的分组](note/scala/scala集合的map映射等.md)
 * [9. scala 集合的 map 映射、高阶函数使用、集合的压平、 集合的过滤、集合的简化、集合的折叠、集合的扫描、集合的拉链、集合的迭代器、集合的分组](note/scala/scala集合的map映射等.md)
 * [10.scala 模式匹配](note/scala/scala模式匹配match.md)
 * [11.scala 部分应用函数与偏函数](note/scala/scala部分应用函数与偏函数.md)
