@@ -87,6 +87,33 @@ spring.datasource.password=123456
 ![注释8](../../img/dolphinschedule/调试/注释8.png)
 
 # 五、创建表
+修改 sql/upgrade/1.4.0_schema/mysql/dolphinscheduler_ddl.sql 文件中的两段sql
+```bash
+DROP TABLE IF EXISTS `t_ds_plugin_define`;
+CREATE TABLE `t_ds_plugin_define` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `plugin_name` varchar(100) NOT NULL COMMENT 'the name of plugin eg: email',
+  `plugin_type` varchar(100) NOT NULL COMMENT 'plugin type . alert=alert plugin, job=job plugin',
+  `plugin_params` text COMMENT 'plugin params',
+  created_at timestamp NULL DEFAULT '0000-00-00 00:00:00',
+      updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `t_ds_plugin_define_UN` (`plugin_name`,`plugin_type`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+  
+  
+DROP TABLE IF EXISTS `t_ds_alert_plugin_instance`;
+CREATE TABLE `t_ds_alert_plugin_instance` (
+                                              `id`                     int NOT NULL AUTO_INCREMENT,
+                                              `plugin_define_id`       int NOT NULL,
+                                              `plugin_instance_params` text COMMENT 'plugin instance params. Also contain the params value which user input in web ui.',
+                                              created_at timestamp NULL DEFAULT '0000-00-00 00:00:00',
+                                                  updated_at timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                              `instance_name`          varchar(200) DEFAULT NULL COMMENT 'alert instance name',
+                                              PRIMARY KEY (`id`)  
+```
+
+执行创建类
 ![注释9](../../img/dolphinschedule/调试/注释9.png)
 
 # 六、编译
