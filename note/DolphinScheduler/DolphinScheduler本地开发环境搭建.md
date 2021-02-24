@@ -86,6 +86,10 @@ spring.datasource.password=123456
 
 ![注释8](../../img/dolphinschedule/调试/注释8.png)
 
+修改 dolphinscheduler-ui/.env 文件
+
+![注释15](../../img/dolphinschedule/调试/注释15.png)
+
 # 五、创建表
 修改 sql/upgrade/1.4.0_schema/mysql/dolphinscheduler_ddl.sql 文件中的两段sql
 ```bash

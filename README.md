@@ -76,6 +76,7 @@
 * [kafka 常用命令](note/kafka/kafka常用命令.md)
 * [kafka 杂谈](note/kafka/kafka杂谈.md)
 * [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
+* [kafka connector rest api](note/kafka/KafkaConnectorRestApi.md)
 </details>
 
 <details>
