@@ -98,9 +98,9 @@ curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add -
 echo "deb https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
 apt-get update
 # 安装指定版本
-apt-get install -y kubelet=<version> kubeadm=<version> kubectl=<version>
+apt-get install -y kubelet-<version> kubeadm-<version> kubectl-<version>
 # 例如: 1.19.4-00 版本
-apt-get install -y kubelet=1.19.4-00 kubeadm=1.19.4-00 kubectl=1.19.4-00
+apt-get install -y kubelet-1.19.4 kubeadm-1.19.4 kubectl-1.19.4
 # 安装最新版本
 apt-get install -y kubelet kubeadm kubectl
 ```

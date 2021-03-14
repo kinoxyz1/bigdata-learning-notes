@@ -133,8 +133,42 @@ spec:
 imagePullPolicy有三个参数可选:
 - IfNotPresent: 默认值, 镜像在宿主机上不存在时才拉取
 - Always: 每次创建 pod 都会重新拉取一次镜像
-- Never: Pod 永远不会主动拉取这个镜像
+- Never: Pod 永远不会主动拉取这个镜像, 只使用本地镜像
 
+当 imagePullPolicy 是 Always 时, 查看 初始化过程:
+```bash
+[root@k8s-master k8s]# kubectl apply -f nginx.yaml
+[root@k8s-master k8s]# kubectl describe pod nginx-deployment-7b67cf5cdf-54hkf
+...
+Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
+                 node.kubernetes.io/unreachable:NoExecute for 300s
+Events:
+  Type    Reason     Age    From                Message
+  ----    ------     ----   ----                -------
+  Normal  Scheduled  3m57s  default-scheduler   Successfully assigned default/nginx-deployment-7b67cf5cdf-54hkf to k8s-node2
+  Normal  Pulling    3m56s  kubelet, k8s-node2  Pulling image "nginx:1.8"
+  Normal  Pulled     3m21s  kubelet, k8s-node2  Successfully pulled image "nginx:1.8"
+  Normal  Created    3m20s  kubelet, k8s-node2  Created container nginx
+  Normal  Started    3m20s  kubelet, k8s-node2  Started container nginx
+```
+可以看到, 在初始化过程中是有 Pulling image 的;
+
+当 imagePullPolicy 是 IfNotPresent 时, 查看 初始化过程:
+```bash
+...
+Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
+                 node.kubernetes.io/unreachable:NoExecute for 300s
+Events:
+  Type    Reason     Age   From                Message
+  ----    ------     ----  ----                -------
+  Normal  Scheduled  12s   default-scheduler   Successfully assigned default/nginx-deployment-54557f6559-rsmlc to k8s-node2
+  Normal  Pulled     11s   kubelet, k8s-node2  Container image "nginx:1.8" already present on machine
+  Normal  Created    11s   kubelet, k8s-node2  Created container nginx
+  Normal  Started    11s   kubelet, k8s-node2  Started container nginx
+```
+可以看到, 此时的初始化过程并没有去 Pulling image 了, 因为 本地已经有了 nginx 容器;
+
+需要注意的是: 如果 image 的 tag 标签, 如果省略或者为 latest, 那么策略走的还是 Always, 反之则为 IfNotPresent;
 
 # 五、Pod资源限制
 ```yaml
@@ -143,7 +177,7 @@ kind: Pod
 metadata:
   name: frontend
 spec:
-  comtainers:
+  containers:
   - name: db
     image: mysql
     env:

@@ -6,7 +6,7 @@
 
 <details>
 <summary>Zookeeper</summary>
- 
+
 * [Zookeeper3.4.5 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
 * [Zookeeper 常用命令行操作](note/zookeeper/zookeeper常用命令行操作.md)
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
@@ -314,7 +314,7 @@
 
 <details>
 <summary>Zabbix</summary>
-  
+
 * [Centos7.7 安装 Zabbix](note/zabbix/Centos7.7安装Zabbix.md)
   * 编译源码安装zabbix4.4
     * [Centos7.7 编译源码安装使用 Zabbix(zabbix-server)](note/zabbix/Centos7.7编译源码安装使用Zabbix(zabbix-server).md)
@@ -344,10 +344,11 @@
 <details>
 <summary>Kubernetes</summary>
 
-* [K8s 部署](note/Kubernetes/k8s部署.md)
-* [K8s 扩容](note/Kubernetes/k8s扩容.md)
-* [K8s YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
+* [部署两种模式的k8s](note/Kubernetes/k8s部署.md)
+* [扩容 K8s](note/Kubernetes/k8s扩容.md)
+* [first k8s容器化应用](note/Kubernetes/第一个k8s容器化应用.md)
 * [K8S Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
+* [K8s YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
 * [K8s 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
 * [K8s 常用操作命令](note/Kubernetes/k8s常用操作命令.md)
 * [K8s Pod](note/Kubernetes/k8s-pod.md)
@@ -372,7 +373,7 @@
 ## Linux 相关
 <details>
 <summary>Linux</summary>
-  
+
 * [vi和vim的使用](note/linux/Linux用户管理/vi和vim的使用.md)
 * [开机、重启和用户登录注销](note/linux/Linux用户管理/开机、重启和用户登录注销.md)
 * [用户管理](note/linux/Linux用户管理/用户管理.md)
@@ -417,6 +418,6 @@
 ## 欢迎加我微信一起交流
 <details>
 <summary>我的微信</summary>
-  
+
 ![我的微信](img/wechat/MyWechat.jpg)
   </details>  
