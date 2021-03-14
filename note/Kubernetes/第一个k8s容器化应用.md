@@ -14,11 +14,7 @@
 
 kubernates 运行容器的前提是容器在中央仓库或者本地docker hub 中存在
 
-## 1.2 运行方式
-
-kubernates 有两种运行容器的方式:
-
-1. 直接运行（不推荐）
+## 1.2 直接运行（不推荐）
 
    ```bash
    run NAME --image=image [--env="key=value"] [--port=port] [--replicas=replicas] [--dry-run=bool] [--overrides=inline-json] [--command] -- [COMMAND] [args...]
@@ -41,7 +37,7 @@ kubernates 有两种运行容器的方式:
 
    直接运行容器的其他参数可以参考官方文档: [kubectl run](http://docs.kubernetes.org.cn/468.html#kubectl_run)
 
-2. 编写yaml运行（推荐）
+## 1.3 编写yaml运行（推荐）
 
    使用 kubernates 官方推荐的方式是编辑(将容器的定义、参数、配置等)yaml文件，通过`kubectl create -f my_yaml.yaml`运行
 
@@ -88,11 +84,7 @@ kubernates 有两种运行容器的方式:
 
    上面这个yaml 文件例子中，对应到 kubernates 就是一个 API 对象，yaml 中的 Kind 字段描述了这个 API对象的类型是 Deployment；
 
-   
+   Deployment就是一个多副本应用(多副本pod)的对象，Deployment 会负责在 Pod定义发生变化时，对每个副本进行滚动更新，Deployment会保证该pod的副本数是2(yaml中定义了pod的副本数（spec.replicas）是2)；
 
-​		Deployment就是一个多副本应用(多副本pod)的对象，Deployment 会负责在 Pod定义发生变化时，对每个副本进行滚动更新，Deployment会保证该pod的副本数是2(yaml中定义了pod的副本数（spec.replicas）是2)；
-
-
-
-​		在上面的yaml中，定义了pod的模板(spec.template)，这个pod 只有一个容器，这个容器的镜像(spec.containers.image)就是 nginx:1.7.9，这个容器监听端口号(spec.containers.ports.containerPort)是 80，
+   在上面的yaml中，定义了pod的模板(spec.template)，这个pod 只有一个容器，这个容器的镜像(spec.containers.image)就是 nginx:1.7.9，这个容器监听端口号(spec.containers.ports.containerPort)是 80，
 
