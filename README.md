@@ -412,6 +412,7 @@
 <summary>科学上网</summary>
 
 * [科学上网指南](note/科学上网/科学上网指南.md)
+* [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
 </details>  
 
 ---
