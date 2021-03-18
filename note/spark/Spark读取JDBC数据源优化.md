@@ -93,7 +93,7 @@ println("读取数据库的并行度是: "+readDf.rdd.partitions.size)
 ```
 此时, Spark 的并行度就是: 6;
 
-# 三、多并发读取指定量数据
+# 三、多并发带条件的读取数据
 ```scala
 val conf = new SparkConf()
   .setMaster("local[*]")
