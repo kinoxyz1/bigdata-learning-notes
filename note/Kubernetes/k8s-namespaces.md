@@ -12,11 +12,11 @@ namespace 是对一组资源和对象的抽象集合，比如可以将系统内�
 
 
 
-namespace 常用来隔离不同的用户，比如 kubernates 自带的服务一般运行在 kube-system namespace中。
+namespace 常用来隔离不同的用户，比如 kubernetes 自带的服务一般运行在 kube-system namespace中。
 
 
 
-kubernates 中的namespace与docker 中的namespace 不同，kubernates的namespace只是做了一个逻辑上的隔离。
+kubernetes 中的namespace与docker 中的namespace 不同，kubernetes的namespace只是做了一个逻辑上的隔离。
 
 
 

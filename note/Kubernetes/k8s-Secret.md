@@ -7,13 +7,118 @@
 
 
 ---
-# 一、Secret 作用
-加密数据存在 etcd 里面, 让 Pod 容器以挂载 Volume 方式进行访问
+在 kubernetes v1.11 之后有一种特殊的 Volume, 称之为 "投射数据卷"(Projected Volume);
 
-使用场景: 凭证
+kubernetes 中一共支持四种 projected volume:
+- Secret
+- ConfigMap
+- Downward Api
+- ServiceAccountToken
+
+在 kubernetes 中, 这几种特殊的 Volume 存在的意义不是为了存放容器里面的数据, 也不是用来进行容器和宿主机之间的数据交换, 而是为容器提供预先定义好的数据. 所以从容器的角度来看, 这些 Volume 里面的信息就是仿佛被 kubernetes "投射" 进容器当中的.
 
 
-# 二、创建 secret 加密数据
+# 一、特殊 Volume 之 Secret
+Secret 常见的使用场景就是存放数据库的相关信息(用户名、密码等), 
+
+## 1.1 创建 Secret - 方式一
+创建两个名为 name 和 pass 的 secret: 
+```bash
+$ vim ./user.txt
+admin
+$ vim ./pass.txt
+c1oudc0w!
+
+$ kubectl create secret generic user --from-file=./user.txt
+$ kubectl create secret generic pass --from-file=./pass.txt
+```
+其中, user.txt 和 pass.txt 两个文件里面, 存放的就是 用户名 和 密码, 而 user 和 pass 则是为 Secret 对象指定的名字
+
+查看 Secret 对象: 
+```bash
+$ kubectl get secret
+NAME                  TYPE                                  DATA   AGE
+default-token-lmxpl   kubernetes.io/service-account-token   3      9d
+pass                  Opaque                                1      81m
+user                  Opaque                                1      81m
+```
+
+## 1.2 创建 Secret - 方式二
+创建 Secret 除了使用 `kubectl create secret` 命令之外, 还可以通过编写 YAML 文件的方式来创建 Secret 对象, 例如:
+```bash
+$ vim secret-yaml.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+type: Opaque
+data:
+  user: YWRtaW4=
+  pass: MTIzNDU2
+```
+通过编写 YAML 文件创建出来的 Secret 对象只有一个, 但是它的 data 字段是以 Key-Value 键值对格式保存了两份 Secret 数据, 其中 "user" 就是第一份数据的 Key, "pass" 就是第二份数据的 Key.
+
+需要注意的是, Secret 对象要求这些数据必须是经过 Base64 转码的, 以免出现明文密码的安全隐患
+
+明文转 Base64 可以使用如下命令
+```bash
+$ echo -n 'admin' | base64
+YWRtaW4=
+$ echo -n '123456' | base64
+```
+
+像这样创建 Secret 对象, 它里面的内容仅仅是经过了转码, 并没有被加密, 在生产环境中, 需要在 kubernetes 中开启 Secret 的加密插件, 增强数据的安全性.
+
+## 1.3、将 kubectl create secret 创建的 secret 挂载到 Pod 中
+```bash
+$ test-projected-volume-load-secret.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-projected-volume 
+spec:
+  containers:
+  - name: test-secret-volume
+    image: busybox
+    args:
+    - sleep
+    - "86400"
+    volumeMounts:
+    - name: mysql-cred
+      mountPath: "/projected-volume"
+      readOnly: true
+  volumes:
+  - name: mysql-cred
+    projected:
+      sources:
+      - secret:
+          name: user
+      - secret:
+          name: pass
+          
+$ kubectl apply -f test-projected-volume-load-secret.yaml
+pod/test-projected-volume created
+
+$ kubectl get pod 
+NAME                    READY   STATUS    RESTARTS   AGE
+test-projected-volume   1/1     Running   0          12s
+```
+当 Pod 变成 Running 之后, 验证 Secret 是否已经在容器中:
+```bash
+$ kubectl exec -it test-projected-volume -- /bin/sh
+/ # ls /projected-volume/
+password.txt  username.txt
+/ # cat /projected-volume/pass.txt 
+c1oudc0w!
+/ # cat /projected-volume/user.txt 
+admin
+```
+
+## 1.4 将 YAML 方式创建的 secret 挂载到 pod 中
+```bash
+
+```
+
 ```yaml
 $ vim Secret.yaml
 apiVersion: v1
