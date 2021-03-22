@@ -43,7 +43,7 @@ pass                  Opaque                                1      81m
 user                  Opaque                                1      81m
 ```
 
-## 1.2 创建 Secret - 方式二
+## 1.2 创建 Secret - 方式二(yaml)
 创建 Secret 除了使用 `kubectl create secret` 命令之外, 还可以通过编写 YAML 文件的方式来创建 Secret 对象, 例如:
 ```bash
 $ vim secret-yaml.yaml
@@ -54,7 +54,15 @@ metadata:
 type: Opaque
 data:
   user: YWRtaW4=
-  pass: MTIzNDU2
+  pass: MWYyZDFlMmU2N2Rm
+  
+$ kubectl apply -f secret-yaml.yaml
+secret/mysecret created
+
+$ kubectl get secret
+NAME                  TYPE                                  DATA   AGE
+default-token-lmxpl   kubernetes.io/service-account-token   3      13d
+mysecret              Opaque                                2      6s
 ```
 通过编写 YAML 文件创建出来的 Secret 对象只有一个, 但是它的 data 字段是以 Key-Value 键值对格式保存了两份 Secret 数据, 其中 "user" 就是第一份数据的 Key, "pass" 就是第二份数据的 Key.
 
@@ -114,31 +122,45 @@ c1oudc0w!
 admin
 ```
 
-## 1.4 将 YAML 方式创建的 secret 挂载到 pod 中
+## 1.4 将 YAML 方式创建的 secret 以 volume 的方式挂载到 pod 中
 ```bash
-
-```
-
-```yaml
-$ vim Secret.yaml
+$ vim secret-vol.yaml
 apiVersion: v1
-kind: Secret
+kind: Pod
 metadata:
-  name: mysecret
-type: Opaque
-data:
-  username: YWRtaW4=
-  password: MWYyZDFlMmU2N2Rm
+  name: mypod
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: foo
+      mountPath: "/etc/foo"
+      readOnly: true
+  volumes:
+  - name: foo
+    secret:
+      secretName: mysecret
+```
+查看挂载信息:
+```bash
+$ kubectl get pod 
+NAME    READY   STATUS    RESTARTS   AGE
+mypod   1/1     Running   0          2m46s
 
-$ kubectl apply -f Secret.yaml 
-secret/mysecret created
-$ kubectl get secret
-NAME                  TYPE                                  DATA   AGE
-default-token-ch88s   kubernetes.io/service-account-token   3      9d
-mysecret              Opaque                                2      6s
+$ kubectl exec -it mypod bash
+root@mypod:/# ls -l /etc/foo/
+total 0
+lrwxrwxrwx 1 root root 11 Mar 22 04:00 pass -> ..data/pass
+lrwxrwxrwx 1 root root 11 Mar 22 04:00 user -> ..data/user
+
+root@mypod:/# cat /etc/foo/user 
+adminroot@mypod:/# 
+root@mypod:/# cat /etc/foo/pass 
+1f2d1e2e67dfroot@mypod:/#
 ```
 
-# 三、以变量的形式挂载到 pod 容器中
+## 1.5 将 YAML 方式创建的 secret 以 变量 的方式挂载到 pod 中
 ```bash
 $ vim secret-var.yaml
 apiVersion: v1
@@ -150,16 +172,22 @@ spec:
   - name: nginx
     image: nginx
     env:
+      # 指定变量的名称是 SECRET_USERNAME
       - name: SECRET_USERNAME
         valueFrom:
           secretKeyRef:
+            # name 是创建的 secret 的名称
             name: mysecret
-            key: username
+            # key 是创建的 secret 里面执行的 Key
+            key: user
+      # 指定变量的名称是 SECRET_PASSWORD
       - name: SECRET_PASSWORD
         valueFrom:
           secretKeyRef:
+            # name 是创建的 secret 的名称
             name: mysecret
-            key: password
+            # key 是创建的 secret 里面执行的 Key
+            key: pass
 
 $ kubectl get pod
 NAME    READY   STATUS    RESTARTS   AGE
@@ -173,6 +201,24 @@ admin
 root@mypod:/# echo $SECRET_PASSWORD
 1f2d1e2e67df
 ```
+
+## 1.6 删除 secret
+```bash
+$ kubectl get secret
+NAME                         TYPE                                  DATA   AGE
+secret/default-token-lmxpl   kubernetes.io/service-account-token   3      13d
+secret/mysecret              Opaque                                2      4d20h
+secret/pass                  Opaque                                1      4d20h
+secret/user                  Opaque                                1      4d20h
+
+$ kubectl delete secret user
+secret "user" deleted
+$ kubectl delete secret pass
+secret "pass" deleted
+$ kubectl delete secret mysecret
+secret "mysecret" deleted
+```
+
 
 
 # 四、以 volume 形式挂载到 pod 容器中
@@ -205,11 +251,8 @@ mypod   1/1     Running   0          10s
 $ kubectl exec -it mypod bash
 kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl exec [POD] -- [COMMAND] instead.
 
-root@mypod:/# ls /etc/fo
-fonts/ foo/   
-
-root@mypod:/# ls /etc/fo
-fonts/ foo/   
+root@mypod:/# ls /etc/foo
+fonts/ foo/
 
 root@mypod:/# ls /etc/foo/
 password  username
