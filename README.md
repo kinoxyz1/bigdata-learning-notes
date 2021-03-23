@@ -359,6 +359,7 @@
 * [K8s Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [K8s 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
 * [K8s 容器健康检查和恢复机制](note/Kubernetes/k8s-容器健康检查和恢复机制.md)
+* [K8s PodPreset预设置](note/Kubernetes/k8s-PodPreset预设置.md)
 * [K8s Controller](note/Kubernetes/k8s-Controller.md)
 * [K8s 副本机制和水平扩展&滚动更新](note/Kubernetes/k8s-副本机制和水平扩展&滚动更新.md)
 * [K8s Service](note/Kubernetes/k8s-Service.md)
@@ -370,6 +371,7 @@
 * [K8s helm](note/Kubernetes/k8s-helm.md)
 * [K8s NFS-PV-PVC](note/Kubernetes/k8s-NFS-PV-PVC.md)
 * [K8s 部署Java](note/Kubernetes/k8s-部署Java.md)
+* [K8s 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
 </details>
 
 
