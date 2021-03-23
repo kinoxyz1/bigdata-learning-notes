@@ -3,6 +3,11 @@
 
 
 --- 
+# Binlog 的作用
+- MySQL 主从复制: MySQL Replication在Master端开启binlog，Master把它的二进制日志传递给slaves来达到master-slave数据一致的目的
+- 数据恢复: 通过使用 mysqlbinlog 工具来使恢复数据
+- 数据实时同步: canal/flink CDC/debezium等 将 MySQL 数据实时同步到对应目标库中
+
 
 # 一、Centos 安装mysql
 https://blog.csdn.net/Java_Road_Far/article/details/98041498
