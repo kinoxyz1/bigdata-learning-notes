@@ -266,6 +266,7 @@
 
 * [CentOS7 安装 MariaDB](note/MariaDB/CentOS7安装MariaDB.md)
 * [修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
+* [MySQL binlog](note/MySQL/binlog.md)
 </details>
 
 
