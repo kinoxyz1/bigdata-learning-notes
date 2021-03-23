@@ -17,7 +17,7 @@ kubernetes 运行容器的前提是容器在中央仓库或者本地docker hub �
 ## 1.2 直接运行（不推荐）
 
    ```bash
-   run NAME --image=image [--env="key=value"] [--port=port] [--replicas=replicas] [--dry-run=bool] [--overrides=inline-json] [--command] -- [COMMAND] [args...]
+   $ kubectl run NAME --image=image [--env="key=value"] [--port=port] [--replicas=replicas] [--dry-run=bool] [--overrides=inline-json] [--command] -- [COMMAND] [args...]
    ```
 
    示例:
