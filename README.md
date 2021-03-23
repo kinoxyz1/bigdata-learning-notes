@@ -413,6 +413,13 @@
 * [集群批量执行脚本](note/linux/集群批量执行脚本.md)
 </details>  
 
+## 内网穿透
+<details>
+<summary>内网穿透</summary>
+
+* [内网穿透-暴露内网端口](note/内网穿透/暴露内网端口.md)
+</details> 
+
 
 ## 科学上网
 <details>
