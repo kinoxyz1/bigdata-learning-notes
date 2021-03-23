@@ -121,3 +121,7 @@ livenessProbe:
   initialDelaySeconds: 15
   periodSeconds: 20
 ```
+所以, Pod 可以暴露一个健康检查的 URL, 或者直接让健康检查去检测应用的监听端口. 这两种配置, 在 Web 服务类的应用中非常常用
+
+# 四、readinessProbe
+和 livenessProbe 类似, readinessProbe 检查结果的成功与否, 决定这个 Pod 是不是能被通过 Service 的方式访问到, 而并不影响 Pod 的声明周期, 再续在补笔记。
