@@ -305,7 +305,11 @@
 * [redis 性能测试](note/redis/性能测试.md)
 </details>
 
+<details>
+<summary>Doris</summary>
 
+* [Doris 编译安装(填坑)](note/doris/Doris编译安装.md)
+</details>
 
 
 ## 运维
