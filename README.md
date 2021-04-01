@@ -201,6 +201,7 @@
   * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
 * [Spark 读取HDFS失败](note/spark/Spark读取HDFS失败.md)
 * [Spark 读取JDBC数据源优化和源码解析](note/spark/Spark读取JDBC数据源优化.md)
+* [Spark 读取JDBC数据Time类型字段异常解析](note/spark/Spark读取JDBC数据Time类型字段异常解析.md)
 </details>
 
 
