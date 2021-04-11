@@ -312,6 +312,12 @@
 * [Doris 编译安装(填坑)](note/doris/Doris编译安装.md)
 </details>
 
+<details>
+<summary>Idea</summary>
+
+* [Idea 常用配置](note/idea/idea常用配置.md)
+</details>
+
 
 ## 运维
 <details>
@@ -346,6 +352,8 @@
 * [DockerFile 解析](note/docker/DockerFile解析.md)
 * [Docker 常用安装](note/docker/Docker常用安装.md)
 * [Docker 本地镜像发布到阿里云](note/docker/Docker本地镜像发布到阿里云.md)
+* [可视化界面 Portainer](note/docker/Docker可视化界面Portainer.md)
+* [再探 Docker 数据卷 ](note/docker/再探Docker数据卷.md)
 </details>
 
 
