@@ -176,7 +176,7 @@ e4362ce90875        nginx               "/docker-entrypoint.…"   20 minutes ag
 - virtual size：容器使用的用于只读图像数据的数据量加上容器的可写图层大小。
 多个容器可以共享部分或全部只读图像数据。
   
-从同一图像开始的两个容器共享100％的只读数据，而具有不同图像的两个容器（具有相同的层）共享这些公共层。 因此，不能只对虚拟大小进行总计。这高估了总磁盘使用量，可能是一笔不小的数目。
+从同一镜像开始的两个容器共享100％的只读数据，而具有不同图像的两个容器（具有相同的层）共享这些公共层。 因此，不能只对虚拟大小进行总计。这高估了总磁盘使用量，可能是一笔不小的数目。
 
 # 五、base镜像的挑选
 - busybox：是一个集成了一百多个最常用Linux命令和工具的软件。linux工具里的瑞士军刀 
@@ -258,9 +258,147 @@ overlay的基本工作原理如下:
 ![容器挂载](../../img/docker/再探容器数据卷/容器挂载.png)
 
 容器支持三种挂载方式:
-- Docker自动在外部创建文件夹自动挂载容器内部指定的文件夹内容【Dockerfile VOLUME指令的作用】
-- 自己在外部创建文件夹，手动挂载
-- 可以把数据挂载到内存中。
+- Volumes(卷): Docker自动在外部创建文件夹自动挂载容器内部指定的文件夹内容【Dockerfile VOLUME指令的作用】
+- Bind mounts(绑定挂载): 自己在外部创建文件夹，手动挂载
+- tmpfs mounts(临时挂载): 可以把数据挂载到内存中。
 
 --mount 挂载到 Linux 宿主机, 手动挂载(现在不用了)
 -v 可以手动挂载到 Linux 宿主机 或 由Docker 自动管理
+
+
+## 7.1 Volumes(卷)
+## 7.1.1 匿名卷
+```bash
+# docker 将创建出匿名卷, 并将容器 /etc/nginx 目录下面的内容保存到宿主机
+$ docker run -d -v :/etc/nginx nginx
+90578007b35d08c9b6cb16fc210b23d6d6de38e0b6856d88a11503fe2f6fe235
+
+# 查看容器的挂载信息
+$ docker inspect 90578007b35d | grep Mounts -A 10
+        "Mounts": [
+            {
+                # 类型: 卷
+                "Type": "volume",
+                # 卷名称
+                "Name": "f1e79f3df5334c64f79d6f58a59e75308cf9c127cd9f8c8123f4d05589b91a4f",
+                # 宿主机目录
+                "Source": "/var/lib/docker/volumes/f1e79f3df5334c64f79d6f58a59e75308cf9c127cd9f8c8123f4d05589b91a4f/_data",
+                # 容器目录
+                "Destination": ":/etc/nginx",
+                "Driver": "local",
+                "Mode": "",
+                # 可读可写
+                "RW": true,
+                "Propagation": ""
+            }
+
+# 查看卷列表
+$ docker volume ls
+DRIVER    VOLUME NAME
+local     f1e79f3df5334c64f79d6f58a59e75308cf9c127cd9f8c8123f4d05589b91a4f
+```
+
+## 7.1.2 具名卷
+### 7.1.2.1 绝对路径(挂载)
+以绝对路径这种方式声明, 叫做挂载, 这种方式可能出现空挂载, 从而将容器内的文件清除
+```bash
+$ docker run -d -v /app/nginx:/etc/nginx nginx
+
+# 查看运行的容器, 并没有刚刚启动的容器
+$ docker ps 
+CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS     NAMES
+aa31776fe598   nginx     "/docker-entrypoint.…"   5 minutes ago   Up 5 minutes   80/tcp    jolly_kare
+90578007b35d   nginx     "/docker-entrypoint.…"   9 minutes ago   Up 9 minutes   80/tcp    frosty_easley
+
+# 查看启动过的容器
+$ docker ps -a 
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS                      PORTS     NAMES
+55e97857394f   nginx     "/docker-entrypoint.…"   14 seconds ago   Exited (1) 13 seconds ago             kind_roentgen
+aa31776fe598   nginx     "/docker-entrypoint.…"   5 minutes ago    Up 5 minutes                80/tcp    jolly_kare
+90578007b35d   nginx     "/docker-entrypoint.…"   9 minutes ago    Up 9 minutes                80/tcp    frosty_easley
+
+# 查看失败原因, 是因为 nginx.conf 不存在, 因为挂在时候, /app/nginx 目录是空文件, 产生了空挂载
+$ docker logs 55e97857394f
+/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf is not a file or does not exist
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2021/04/13 09:45:29 [emerg] 1#1: open() "/etc/nginx/nginx.conf" failed (2: No such file or directory)
+nginx: [emerg] open() "/etc/nginx/nginx.conf" failed (2: No such file or directory)
+```
+
+### 7.1.2.2 相对路径(绑定)
+以相对路径这种方式声明, 叫做绑定, docker 会自动管理, docker 不会把它当成目录, 而是把它当成卷
+1. docker 会首先在底层创建一个指定名字的卷(具名卷): nginx;
+2. 把这个卷和容器内部目录进行绑定;
+3. 容器启动后, 目录里面的内容就在卷里面存着;
+
+```bash
+# docker 将创建出名为 nginx 的卷, 并将容器 /etc/nginx 目录下面的内容保存到 nginx 卷下
+$ docker run -d -v nginx:/etc/nginx nginx
+aa31776fe598bac69ca0db4df610d590d08742fd2d1af33f891328ce2830155e
+
+# 查看镜像的挂载信息
+$ docker inspect aa31776fe598 | grep Mounts -A 10
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "nginx",
+                "Source": "/var/lib/docker/volumes/nginx/_data",
+                "Destination": "/etc/nginx",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+
+# 查看 nginx 卷下面的内容
+$ ll /var/lib/docker/volumes/nginx/_data
+总用量 36
+drwxr-xr-x 2 root root   26 4月  13 17:39 conf.d
+-rw-r--r-- 1 root root 1007 3月  30 22:47 fastcgi_params
+-rw-r--r-- 1 root root 2837 3月  30 22:47 koi-utf
+-rw-r--r-- 1 root root 2223 3月  30 22:47 koi-win
+-rw-r--r-- 1 root root 5231 3月  30 22:47 mime.types
+lrwxrwxrwx 1 root root   22 3月  30 22:58 modules -> /usr/lib/nginx/modules
+-rw-r--r-- 1 root root  643 3月  30 22:58 nginx.conf
+-rw-r--r-- 1 root root  636 3月  30 22:47 scgi_params
+-rw-r--r-- 1 root root  664 3月  30 22:47 uwsgi_params
+-rw-r--r-- 1 root root 3610 3月  30 22:47 win-utf
+
+# 查看卷列表
+$ docker volume ls
+DRIVER    VOLUME NAME
+local     f1e79f3df5334c64f79d6f58a59e75308cf9c127cd9f8c8123f4d05589b91a4f
+local     nginx
+
+
+# docker run -d -v nginx:/etc/nginx nginx 这个也可以用如下操作方式启动
+# 1. docker create volume nginx
+# 2. docker volume inspect nginx
+# 3. docker run -d -P -v nginx:/etc/nginx nginx
+```
+
+两种方式的选择:
+- 如果自己开发测试, 用 -v 绝对路径的方式
+- 如果是生产环境建议用 -v 相对路径 卷的方式
+
+### 7.1.2.3 挂载测试
+```bash
+# 不挂载, 可以访问 欢迎页
+$ docker run -d --name mynginx1 -p 8080:80 nginx
+
+# -v /app/html:/usr/share/nginx/html, 欢迎页报: 403 Forbidden
+$ docker run -d --name mynginx2 -p 8081:80 -v /app/html:/usr/share/nginx/html nginx
+
+# -v /usr/share/nginx/html(匿名卷), 可以访问 欢迎页
+$ docker run -d --name mynginx3 -p 8082:80 -v :/usr/share/nginx/html nginx
+
+# -v html:/usr/share/nginx/html(具名卷的), 可以访问 欢迎页
+$ docker run -d --name mynginx4 -p 8083:80 -v html:/usr/share/nginx/html nginx
+```
+
+## 7.2 Bind mounts(绑定挂载)
