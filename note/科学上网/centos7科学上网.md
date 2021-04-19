@@ -10,9 +10,10 @@
 
 
 ```bash
+$ yum install python-setuptools
 $ yum -y install python3-pip
 $ pip3 install shadowsocks
-$ mkdir -p /app/ss && cd /app/ss && vim ss.json
+$ vim /etc/shadowsocks.json
 {
         "server": "104.168.215.244",
         "server_port": 29257,
@@ -32,7 +33,7 @@ nohup sslocal -c /etc/shadowsocks.json /dev/null 2>&1 &
 echo " nohup sslocal -c /etc/shadowsocks.json /dev/null 2>&1 &" /etc/rc.local   #设置自启动
 
 # 测试
-运行 curl –socks5 127.0.0.1:1888 http://httpbin.org/ip, 如果返回你的 ss 服务器 ip 则测试成功
+运行 curl –socks5 127.0.0.1:1080 http://httpbin.org/ip, 如果返回你的 ss 服务器 ip 则测试成功
 $ curl http://httpbin.org/ip
 {
   "origin": "218.18.163.249"

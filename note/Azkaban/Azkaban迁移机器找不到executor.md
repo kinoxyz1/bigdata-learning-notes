@@ -3,8 +3,4 @@
 
 
 ---
-# 一、问题描述
-需要将azkaban迁移到别的服务器上
-
-# 二、迁移步骤
-1. 导出 
+curl http://0.0.0.0:12328/executor?action=activate
