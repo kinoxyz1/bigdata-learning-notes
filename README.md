@@ -355,6 +355,7 @@
 * [可视化界面 Portainer](note/docker/Docker可视化界面Portainer.md)
 * [再探 Docker 数据卷](note/docker/再探Docker数据卷.md)
 * [docker 网络](note/docker/docker网络.md)
+* [docker 的 CI/CD](note/docker/docker的CICD.md)
 </details>
 
 
@@ -430,6 +431,7 @@
 <summary>内网穿透</summary>
 
 * [内网穿透-暴露内网端口](note/内网穿透/暴露内网端口.md)
+* [内网穿透-frp开启web服务](note/内网穿透/frp开启web服务.md)
 </details> 
 
 
