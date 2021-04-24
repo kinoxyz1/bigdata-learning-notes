@@ -177,3 +177,10 @@ ENTRYPOINT [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom $JAVA_OPT
 
 
 # 五、Jenkins 邮件
+进入 Jenkins 主页面, 点击 "系统配置" -> "系统配置" -> 设置 Jenkins Location 中的 "系统管理员邮件地址", 填自己邮箱即可 -> 继续往下找, 找到 "Extended E-mall Notification" -> 设置 "SMTP server": "smtp.qq.com", 设置 "SMTP Port": "465" -> 点击 "高级" -> 设置 "SMTP Username" 为 "自己的邮箱", "SMTP Password" 为 "①得到的授权码", 设置 "Default Content Type" 为 "HTML",  找到 "邮件通知" -> 设置 "SMTP服务器" 为 "smtp.qq.com" -> 点击 "高级" -> 设置使用 "使用SMTP协议" 的用户名为 "自己的邮箱", 密码为 "①得到的授权码" -> 设置使用 "使用SSL协议" -> 设置 "SMTP 端口" 为 "465" -> 点击测试 
+
+
+①: 打开 qq邮箱, 点击设置,  拉到 "POP3/IM...", 开启 POP3 服务, 发短信后会拿到一个授权码
+
+
+在 Jenkins 的 工程中, 打开 "流水线语法", 打开 "片段生成器", 示例步骤选择 "setting-input dropdownList", 将要填的信息补齐, 生成流水线脚本, 然后贴入到 Jenkinsfile 文件中去 即可
