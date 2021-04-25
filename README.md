@@ -265,11 +265,11 @@
 <details>
 <summary>MySQL</summary>
 
-* [CentOS7 安装 MariaDB](note/MariaDB/CentOS7安装MariaDB.md)
-* [修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
-* [MySQL binlog](note/MySQL/binlog.md)
+1. [MySQL RMP 安装](note/MySQL/MySQL-RMP安装.md)
+2. [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
+3. [修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
+4. [MySQL binlog](note/MySQL/binlog.md)
 </details>
-
 
 ## Java
 <details>
