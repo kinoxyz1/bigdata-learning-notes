@@ -168,7 +168,7 @@ ENTRYPOINT [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom $JAVA_OPT
 第 ② 步中的 URL 的填写规则: http://<user>:<public_key>@③提示的连接
 - user: 登录 Jenkins 的用户名
 - public_key: 点击右上角 的 user, 选择 "设置", 选择 "API Token" -> "添加新 Token" -> "生成" -> 拷贝生成的 Token
-- jenkins_task_url: Jenkins 任务的 url 地址(公网能访问的)
+- jenkins_task_url: Jenkins 任务的 url 地址(公网能访问的) 
 
 例如我这里的url: http://kino:11a42bf2caa09751d9ad748feef8659c07@121.77.237.178:8040/job/java-devops-demo/build?token=kino
 
