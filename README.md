@@ -266,10 +266,10 @@
 <summary>MySQL</summary>
 
 1. [MySQL RMP 安装](note/MySQL/MySQL-RMP安装.md)
-2. [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 2. [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
-3. [修改MySQL中文乱码](note/MySQL/修改MySQL中文乱码.md)
+3. [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 4. [MySQL binlog](note/MySQL/binlog.md)
+5. [MySQL 优化](note/MySQL/MySQL优化.md)
 </details>
 
 ## Java
