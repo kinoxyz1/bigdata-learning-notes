@@ -1,21 +1,9 @@
 
-* [一、Pod基本概念](#%E4%B8%80pod%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5)
-* [二、Pod存在的意义](#%E4%BA%8Cpod%E5%AD%98%E5%9C%A8%E7%9A%84%E6%84%8F%E4%B9%89)
-* [三、Pod实现机制](#%E4%B8%89pod%E5%AE%9E%E7%8E%B0%E6%9C%BA%E5%88%B6)
-  * [例子一: Tomcat 和 War 包部署](#%E4%BE%8B%E5%AD%90%E4%B8%80-tomcat-%E5%92%8C-war-%E5%8C%85%E9%83%A8%E7%BD%B2)
-* [四、Pos镜像拉取策略](#%E5%9B%9Bpos%E9%95%9C%E5%83%8F%E6%8B%89%E5%8F%96%E7%AD%96%E7%95%A5)
-* [五、Pod资源限制](#%E4%BA%94pod%E8%B5%84%E6%BA%90%E9%99%90%E5%88%B6)
-* [六、Pod重启机制](#%E5%85%ADpod%E9%87%8D%E5%90%AF%E6%9C%BA%E5%88%B6)
-* [七、Pod健康检查](#%E4%B8%83pod%E5%81%A5%E5%BA%B7%E6%A3%80%E6%9F%A5)
-* [八、节点亲和性](#%E5%85%AB%E8%8A%82%E7%82%B9%E4%BA%B2%E5%92%8C%E6%80%A7)
-* [九、label 对Pod调度的影响](#%E4%B9%9Dlabel-%E5%AF%B9pod%E8%B0%83%E5%BA%A6%E7%9A%84%E5%BD%B1%E5%93%8D)
-* [十、污点和污点容忍](#%E5%8D%81%E6%B1%A1%E7%82%B9%E5%92%8C%E6%B1%A1%E7%82%B9%E5%AE%B9%E5%BF%8D)
-  * [10\.1 查看节点污染情况](#101-%E6%9F%A5%E7%9C%8B%E8%8A%82%E7%82%B9%E6%B1%A1%E6%9F%93%E6%83%85%E5%86%B5)
-  * [10\.2 为节点添加污点](#102-%E4%B8%BA%E8%8A%82%E7%82%B9%E6%B7%BB%E5%8A%A0%E6%B1%A1%E7%82%B9)
-  * [10\.3 污点容忍](#103-%E6%B1%A1%E7%82%B9%E5%AE%B9%E5%BF%8D)
 
 ---
-# 一、Pod基本概念
+# 一、Pod 是什么
+Kubernetes 中的一切都可以理解成一种资源对象, Pod、rc、service 等都可以理解成一种资源对象
+
 Pod 是 k8s 中可以创建和管理的最小单元
 
 Pod 是在 k8s 上运行容器化应用的资源对象, 其他的资源对象都是用来支撑或者扩展 Pod 对象功能的, 例如:
@@ -41,6 +29,8 @@ Pod 中的所有容器, 会共享同一个 network namespace, 并且可以声明
 
 在 k8s 中, Pod 的实现需要使用一个中间容器, 这个容器叫做: Infra容器. 在这个 Pod 中, Infra 容器永远都是第一个被创建的容器, 而其他用户定义的容器, 则通过 Join NetWork NameSpace 的方式, 与 Infra 容器关联在一起, 关系如下图:
 
+![Pod 组成](../../img/k8s/pod/pod组成.png)
+
 ![Infra关系](../../img/k8s/pod/Infra关系.png)
 
 如图中所示, 这个 Pod 中有两个用户容器 A 和 B, 还有一个 Infra 容器, 在 k8s 中, Infra 容器永远处于 "暂停状态", 且占用极少的资源
@@ -53,6 +43,237 @@ Pod 中的所有容器, 会共享同一个 network namespace, 并且可以声明
 5. Pod 的生命周期只跟 Infra 容器一致, 而与 容器A 和 容器B 无关
 
 对于容一个 Pod 里的所有用户容器来说, 他们的进出流量, 也可以认为都是通过 Infra 容器完成的。
+
+# 四、完整的 Pod Yaml 文件
+```yaml
+apiVersion: v1            //版本
+kind: pod                 //类型，pod
+metadata:                 //元数据
+  name: String            //元数据，pod的名字
+  namespace: String       //元数据，pod的命名空间
+  labels:                 //元数据，标签列表
+    - name: String        //元数据，标签的名字
+  annotations:            //元数据,自定义注解列表
+    - name: String        //元数据,自定义注解名字
+spec:                     //pod中容器的详细定义
+  containers:             //pod中的容器列表，可以有多个容器
+  - name: String
+    image: String         //容器中的镜像
+    imagesPullPolicy: [Always|Never|IfNotPresent]//获取镜像的策略
+    command: [String]     //容器的启动命令列表（不配置的话使用镜像内部的命令）
+    args: [String]        //启动参数列表
+    workingDir: String    //容器的工作目录
+    volumeMounts:         //挂载到到容器内部的存储卷设置
+    - name: String
+      mountPath: String
+      readOnly: boolean
+    ports:                //容器需要暴露的端口号列表
+    - name: String
+      containerPort: int  //容器要暴露的端口
+      hostPort: int       //容器所在主机监听的端口（容器暴露端口映射到宿主机的端口）
+      protocol: String
+    env:                  //容器运行前要设置的环境列表
+    - name: String
+      value: String
+    resources:            //资源限制
+      limits:
+        cpu: Srting
+        memory: String
+      requeste:
+        cpu: String
+        memory: String
+    livenessProbe:         //pod内容器健康检查的设置
+      exec:
+        command: [String]
+      httpGet:             //通过httpget检查健康
+        path: String
+        port: number
+        host: String
+        scheme: Srtring
+        httpHeaders:
+        - name: Stirng
+          value: String 
+      tcpSocket:           //通过tcpSocket检查健康
+        port: number
+      initialDelaySeconds: 0//首次检查时间
+      timeoutSeconds: 0     //检查超时时间
+      periodSeconds: 0      //检查间隔时间
+      successThreshold: 0
+      failureThreshold: 0
+      securityContext:      //安全配置
+        privileged: falae
+    restartPolicy: [Always|Never|OnFailure]//重启策略
+    nodeSelector: object    //节点选择
+    imagePullSecrets:
+    - name: String
+    hostNetwork: false      //是否使用主机网络模式，默认否
+  volumes:                  //在该pod上定义共享存储卷
+  - name: String
+    meptyDir: {}
+    hostPath:
+      path: string
+    secret:                 //类型为secret的存储卷
+      secretName: String
+      item:
+      - key: String
+        path: String
+    configMap:             //类型为configMap的存储卷
+      name: String
+      items:
+      - key: String
+        path: String
+```
+
+# 五、Pod 容器共享 Volume
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: first-pod-volume
+spec:
+  # 声明一个 volume
+  volumes:
+  # volume 的名字是: first-pod-volume-logs
+  - name: first-pod-volume-logs
+    # volume 是空的
+    emptyDir: {}
+  containers:
+  - name: tomact
+    image: tomcat
+    ports:
+    - containerPort: 8080
+    # 挂载 volume
+    volumeMounts:
+    # 被挂载的 volume 是: first-pod-volume-logs
+    - name: first-pod-volume-logs
+      # 挂载到容器内的路径是: /opt/tomcat/logs
+      mountPath: /opt/tomcat/logs
+```
+上面声明的是一个 emptyDir volume, 还有其他几种声明 volume 的方式
+```yaml
+volumes:
+- name: first-pod-volume-logs
+  emptyDir: {}
+
+volumes:
+- name: first-pod-volume-logs
+  hostPath:
+    path: "/data"
+
+volumes:
+- name: first-pod-volume-logs
+  gcePersistenDisk:
+    pdName: my-data-disk # my-data-disk 需要提前创建好
+    fsType: ext4
+```
+1. emptyDir 是 Pod 分配到 Node 后创建的, 他的初始内容是空的, pod 在 Node 上移除以后就自动被销毁了
+2. hostPath 是 该挂载到宿主机上的目录, 比较适用于需要永久保存的数据
+3. gcePersistenDisk 表示实用谷歌公有云提供的磁盘
+
+
+# 六、Pod 的生命周期和重启策略
+
+Pod 的 生命周期: Pod 一共有四种状态
+| 状态值 | 描述 |
+| --- | ---|
+| Pending    | API Server 已经创建该server, 但 Pod 内有一个或多个容器的镜像还未创建, 可能还在下载中    |
+| Running    | Pod 内所有的容器已经创建, 且至少有一个容器处于运行状态   |
+| Failed    | Pod 内所有的容器都已经退出, 其中至少有一个容器退出失败   |
+| Unknown    | 由于某种原因无法获取 Pod 的装填, 比如网络不通    |
+
+Pod 的 重启策略
+| 重启策略 | 描述 |
+| ---- | --- |
+| Always | 容器退出时, 自动重启 | 
+| OnFailure | 容器异常退出时, 自动重启 | 
+| Never | 永不重启 | 
+```yaml
+apiVersion: v1
+....
+spec:
+....
+  # 设置 Pod 的重启策略
+  restartPolicy: Never
+```
+
+# 七、Pod 健康检查
+Kubernetes 中, 有 2种 探针, 实现了对 Pod 的健康检查
+
+- LivenessProbe探针: 判断容器是否存活(running), 如果探针探测失败, 则标识容器也是失败
+- ReadinessProbe探针: 用于判断容器是否启动完成(ready)
+
+Probe 支持三种检查方式:
+- httpGet: 发送 Http 请求, 返回 200-400 范围状态码为成功
+- exec: 执行 Shell 命令返回状态码是 0 为成功
+- tcpSocket: 发起 TCP Socket 建立成功
+
+httpGet 的方式:
+```yaml
+$ vim livenessProbe-httpGet.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-http-get
+spec:
+  volumes:
+  - name: first-pod-volume-logs
+    emptyDir: {}
+  containers:
+  - name: nginx
+    image: nginx:1.7.9
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: first-pod-volume-logs
+      mountPath: /opt/tomcat/logs
+    livenessProbe:
+      httpGet:
+        path: index.html  # 请求路径
+        port: 80
+      initialDelaySeconds: 5 # 在容器启动 5s 后开始执行
+      periodSeconds: 2       # 每 5s 执行一次
+      timeoutSeconds: 1      # 超时时间为 1s
+  restartPolicy: Always
+```
+
+exec 的方式:
+```yaml
+$ vim livenessProbe-exec.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-exec
+spec:
+  volumes: 
+  - name: first-pod-volume-logs
+    emptyDir: {}
+  containers:
+  - name: nginx
+    image: nginx:1.7.9
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: first-pod-volume-logs
+      mountPath: /opt/tomcat/logs
+    args:
+    - /bin/sh
+    - -c 
+    - echo ok > /tmp/healthy; sleep 30; rm -rf /tmp/healthy
+    livenessProbe:
+      exec:
+        command: 
+        - cat 
+        - /tmp/healthy
+      initialDelaySeconds: 5  # 在容器启动后 5s 开始执行
+      periodSeconds: 2         # 每 2s 执行一次
+      timeoutSeconds: 1      # 超时时间为 1s
+  restartPolicy: Always
+```
+
+tcpSocket 的方式:
+```yaml
+
+```
 
 
 对于 volume 的共享, K8s 只需要把所有的 volume 的定义都设计在 Pod 层级即可, 例如下面的例子:
