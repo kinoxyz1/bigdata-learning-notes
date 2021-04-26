@@ -1,9 +1,4 @@
-README.md
-
-
-### IntelliJ IDEA ###
-.idea
 *.iws
 *.iml
 *.ipr
-.idea\workspace.xml
+.idea/workspace.xml
