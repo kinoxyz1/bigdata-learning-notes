@@ -6,3 +6,4 @@ README.md
 *.iws
 *.iml
 *.ipr
+.idea\workspace.xml
