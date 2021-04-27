@@ -135,7 +135,7 @@ spec:
   volumes:
   # volume 的名字是: first-pod-volume-logs
   - name: first-pod-volume-logs
-    # volume 是空的
+    # volume 的类型为 emptyDir(还可以设置其他类型)
     emptyDir: {}
   containers:
   - name: tomact
@@ -144,9 +144,9 @@ spec:
     - containerPort: 8080
     # 挂载 volume
     volumeMounts:
-    # 被挂载的 volume 是: first-pod-volume-logs
+    # 选择 first-pod-volume-logs volume 挂载
     - name: first-pod-volume-logs
-      # 挂载到容器内的路径是: /opt/tomcat/logs
+      # 挂载到 tomcat 容器内的 /opt/tomcat/logs
       mountPath: /opt/tomcat/logs
 ```
 上面声明的是一个 emptyDir volume, 还有其他几种声明 volume 的方式
