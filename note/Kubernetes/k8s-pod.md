@@ -272,7 +272,30 @@ spec:
 
 tcpSocket 的方式:
 ```yaml
-
+$ vim livenessProbe-tcp.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: liveness-tcp
+spec: 
+  volumes:
+  - name: first-pod-volume-logs
+    emptyDir: {}
+  containers:
+  - name: nginx
+    image: nginx:1.7.9
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: first-pod-volume-logs
+      mountPath: /opt/tomcat/logs
+    livenessProbe:
+      tcpSocket:
+        port: 80
+    initialDelaySeconds: 5
+    periodSeconds: 2
+    timeoutSeconds: 2
+  restartPolicy: Always
 ```
 
 
@@ -468,7 +491,7 @@ spec:
 Probe支持以下三种检查方式:
 - httpGet: 发送 Http 请求, 返回200-400范围状态码为成功
 - exec: 执行 Shell 命令返回状态码是0为成功
-- tcpSocket: 发起 TCP Socket 建立成功
+- tcpSocket: 通过IP 和port ,如果能够和容器建立连接则表示容器健康
 
 # 八、节点亲和性
 ```yaml

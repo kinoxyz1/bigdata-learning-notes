@@ -1,9 +1,17 @@
+# bigdata-learning-notes
+
 # 大数据学习笔记
 
-## Zookeeper 
-1. [Zookeeper3.4.5 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
-2. [Zookeeper 常用命令行操作](note/zookeeper/zookeeper常用命令行操作.md)
-3. [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
+## 大数据
+
+<details>
+<summary>Zookeeper</summary>  
+
+* [Zookeeper3.4.5 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
+* [Zookeeper 常用命令行操作](note/zookeeper/zookeeper常用命令行操作.md)
+* [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
+</details>
+
 
 
 
@@ -181,7 +189,7 @@
 * [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
 * Spark 内核
-  * [Spark 内核概述(待补充)]
+  * [Spark 内核概述(待补充)]()
   * [Spark 部署模式](note/spark/spark部署模式/spark部署模式.md)
   * [Spark 任务调度机制](note/spark/spark任务调度机制/spark任务调度机制.md)
   * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
