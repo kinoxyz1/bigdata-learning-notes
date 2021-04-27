@@ -188,17 +188,6 @@
 * [Spark Streaming 的 reduceByKeyAndWindow 窗口函数](note/spark/SparkStreaming的reduceByKeyAndWindow窗口函数.md)
 * [Spark 任务停止后自动重启](note/spark/Spark任务停止后自动重启.md)
 * [Spark源码之-CDH6下Spark2.4写Hive分区表异常](note/spark/Spark源码之-CDH6下Spark2.4写Hive分区表异常.md)
-* Spark 内核
-  * [Spark 内核概述(待补充)]()
-  * [Spark 部署模式](note/spark/spark部署模式/spark部署模式.md)
-  * [Spark 任务调度机制](note/spark/spark任务调度机制/spark任务调度机制.md)
-  * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
-  * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
-
-* Spark 性能优化和故障处理
-  * [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
-  * [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
-  * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
 * [Spark 读取HDFS失败](note/spark/Spark读取HDFS失败.md)
 * [Spark 读取JDBC数据源优化和源码解析](note/spark/Spark读取JDBC数据源优化.md)
 * [Spark 读取JDBC数据Time类型字段异常解析](note/spark/Spark读取JDBC数据Time类型字段异常解析.md)
