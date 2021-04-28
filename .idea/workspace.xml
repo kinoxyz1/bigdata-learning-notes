@@ -23,8 +23,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="提交笔记">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,62 +121,6 @@
       <workItem from="1592894954427" duration="1223000" />
       <workItem from="1592910045624" duration="27000" />
       <workItem from="1592910168547" duration="597000" />
-    </task>
-    <task id="LOCAL-00098" summary="提交笔记">
-      <created>1610188022868</created>
-      <option name="number" value="00098" />
-      <option name="presentableId" value="LOCAL-00098" />
-      <option name="project" value="LOCAL" />
-      <updated>1610188022868</updated>
-    </task>
-    <task id="LOCAL-00099" summary="提交笔记">
-      <created>1610286076694</created>
-      <option name="number" value="00099" />
-      <option name="presentableId" value="LOCAL-00099" />
-      <option name="project" value="LOCAL" />
-      <updated>1610286076694</updated>
-    </task>
-    <task id="LOCAL-00100" summary="提交笔记">
-      <created>1610286348543</created>
-      <option name="number" value="00100" />
-      <option name="presentableId" value="LOCAL-00100" />
-      <option name="project" value="LOCAL" />
-      <updated>1610286348543</updated>
-    </task>
-    <task id="LOCAL-00101" summary="提交笔记">
-      <created>1610294319983</created>
-      <option name="number" value="00101" />
-      <option name="presentableId" value="LOCAL-00101" />
-      <option name="project" value="LOCAL" />
-      <updated>1610294319984</updated>
-    </task>
-    <task id="LOCAL-00102" summary="提交笔记">
-      <created>1610350008099</created>
-      <option name="number" value="00102" />
-      <option name="presentableId" value="LOCAL-00102" />
-      <option name="project" value="LOCAL" />
-      <updated>1610350008100</updated>
-    </task>
-    <task id="LOCAL-00103" summary="提交笔记">
-      <created>1610424171436</created>
-      <option name="number" value="00103" />
-      <option name="presentableId" value="LOCAL-00103" />
-      <option name="project" value="LOCAL" />
-      <updated>1610424171436</updated>
-    </task>
-    <task id="LOCAL-00104" summary="提交笔记">
-      <created>1610448555955</created>
-      <option name="number" value="00104" />
-      <option name="presentableId" value="LOCAL-00104" />
-      <option name="project" value="LOCAL" />
-      <updated>1610448555955</updated>
-    </task>
-    <task id="LOCAL-00105" summary="提交笔记">
-      <created>1610452908670</created>
-      <option name="number" value="00105" />
-      <option name="presentableId" value="LOCAL-00105" />
-      <option name="project" value="LOCAL" />
-      <updated>1610452908670</updated>
     </task>
     <task id="LOCAL-00106" summary="提交笔记">
       <created>1610688392478</created>
@@ -465,7 +409,63 @@
       <option name="project" value="LOCAL" />
       <updated>1619366663864</updated>
     </task>
-    <option name="localTasksCounter" value="147" />
+    <task id="LOCAL-00147" summary="提交笔记">
+      <created>1619511862341</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1619511862342</updated>
+    </task>
+    <task id="LOCAL-00148" summary="提交笔记">
+      <created>1619511906519</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1619511906519</updated>
+    </task>
+    <task id="LOCAL-00149" summary="提交笔记">
+      <created>1619511938833</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1619511938833</updated>
+    </task>
+    <task id="LOCAL-00150" summary="提交笔记">
+      <created>1619512158497</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1619512158497</updated>
+    </task>
+    <task id="LOCAL-00151" summary="提交笔记">
+      <created>1619512344027</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1619512344027</updated>
+    </task>
+    <task id="LOCAL-00152" summary="提交笔记">
+      <created>1619512377307</created>
+      <option name="number" value="00152" />
+      <option name="presentableId" value="LOCAL-00152" />
+      <option name="project" value="LOCAL" />
+      <updated>1619512377308</updated>
+    </task>
+    <task id="LOCAL-00153" summary="提交笔记">
+      <created>1619512426563</created>
+      <option name="number" value="00153" />
+      <option name="presentableId" value="LOCAL-00153" />
+      <option name="project" value="LOCAL" />
+      <updated>1619512426563</updated>
+    </task>
+    <task id="LOCAL-00154" summary="提交笔记">
+      <created>1619512479050</created>
+      <option name="number" value="00154" />
+      <option name="presentableId" value="LOCAL-00154" />
+      <option name="project" value="LOCAL" />
+      <updated>1619512479050</updated>
+    </task>
+    <option name="localTasksCounter" value="155" />
     <servers />
   </component>
   <component name="TimeTrackingManager">

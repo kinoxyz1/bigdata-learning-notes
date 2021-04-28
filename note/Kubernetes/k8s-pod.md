@@ -176,17 +176,19 @@ volumes:
 Pod 的 生命周期: Pod 一共有四种状态
 | 状态值 | 描述 |
 | --- | ---|
-| Pending    | API Server 已经创建该server, 但 Pod 内有一个或多个容器的镜像还未创建, 可能还在下载中    |
-| Running    | Pod 内所有的容器已经创建, 且至少有一个容器处于运行状态   |
+| Pending    | API Server 已经创建该 Pod, 但 Pod 内有一个或多个容器的镜像还未创建, 可能还在下载镜像中    |
+| Running    | Pod 内所有的容器已经创建, 且至少有一个容器处于运行状态、正在启动状态、正在重启状态   |
+| Succeeded | Pod 内所有的容器均成功执行后退出, 且不会在重启 |
 | Failed    | Pod 内所有的容器都已经退出, 其中至少有一个容器退出失败   |
 | Unknown    | 由于某种原因无法获取 Pod 的装填, 比如网络不通    |
 
-Pod 的 重启策略
+Pod 的 重启策略(restartPolicy): 当某个**容器***异常退出*或者*健康检查*失败时, kubeclet 将根据 restartPolicy 的设置进行相应的操作
+
 | 重启策略 | 描述 |
 | ---- | --- |
-| Always | 容器退出时, 自动重启 | 
-| OnFailure | 容器异常退出时, 自动重启 | 
-| Never | 永不重启 | 
+| Always | 当**容器**失效时, 自动重启 | 
+| OnFailure | 当容器终止运行且退出码不为0时(异常退出), 自动重启 | 
+| Never | 不论如何, 永不重启 | 
 ```yaml
 apiVersion: v1
 ....
@@ -195,6 +197,20 @@ spec:
   # 设置 Pod 的重启策略
   restartPolicy: Never
 ```
+
+**容器重启的小细节:**
+
+kubelet 重启失效容器的时间间隔以 sync-frequency 乘以2n来计算, 例如1、 2、 4、 8倍等， 最长延时5min， 并且在成功重启后的10min后重置该时间
+
+Pod 的重启策略与控制方式息息相关, 当前可以用于管理 Pod 的控制器包括: ReplicationController、Job、DaemonSet 和 直接通过 kubelet 管理(静态 Pod), 每种控制器对 Pod 的重启策略要求如下:
+- RC 和 DaemonSet: 必须设置为 Always, 需要保证该容器持续运行
+- Job: OnFailure 和 Never, 确保容器执行完成后不再重启
+- kubelet: 在 Pod 失效时自动重启它, 不论将 restartPolicy 设置为什么值, 也不会对 Pod 进行健康检查
+
+一些常见的状态转换场景:
+
+![Pod状态转换场景](../../img/k8s/pod/Pod状态转换场景.png)
+
 
 # 七、Pod 健康检查
 Kubernetes 中, 有 2种 探针, 实现了对 Pod 的健康检查
@@ -228,6 +244,7 @@ spec:
       mountPath: /opt/tomcat/logs
     livenessProbe:
       httpGet:
+        # 定时发送请求到 localhost:80/index.html 来进行容器应用的健康检查
         path: index.html  # 请求路径
         port: 80
       initialDelaySeconds: 5 # 在容器启动 5s 后开始执行
@@ -306,7 +323,6 @@ kind: Pod
 metadata:
   name: two-containers
 spec:
-  restartPolicy: Never
   volumes:
   - name: shared-data
     hostPath:      
@@ -324,8 +340,171 @@ spec:
       mountPath: /pod-data
     command: ["/bin/sh"]
     args: ["-c", "echo Hello from the debian container > /pod-data/index.html"]
+  restartPolicy: Never
 ```
 在这个例子中, nginx-container 和 debian-container 都声明挂载了 shared-data 这个 volume, 而 shared-data 是 hostPath 类型, 所以, 它对应宿主机上的目录就是 /data, 而这个目录, 就同时被绑定进了这两个容器中, 这样的话 nginx-container 容器就可以从 /usr/share/nginx/html 目录中读取到 debian-container 生成的 index.html 文件了
+
+
+# 八、Pod 的镜像拉取策略
+```yaml
+$ vim pod-imagePollPolicy.yaml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: pod-image-pull-policy
+spec:
+  # 定义一个共享存储数据卷
+  volumes:
+  # 共享存储数据卷的名字是: first-pod-volume-logs
+  - name: first-pod-volume-logs
+    # 共享存储数据卷的类型是: emptyDir
+    emptyDir: {}
+  # 定义 container 相关的内容
+  containers:
+  # container 的名称
+  - name: image-pull-policy
+    # container 的 image 及 版本
+    image: tomcat:7.0-alpine
+    # 容器需要暴露的端口号列表
+    ports:
+    # 容器要暴露的端口
+    - containerPort: 8080
+      # 容器所在主机监听的端口（容器暴露端口映射到宿主机的端口）
+      hostPort: 8080
+    # 指定 container 的拉取策略
+    imagePullPolicy: IfNotPresent   # 如果镜像不存在就拉取
+    # container 使用共享存储数据卷
+    volumeMounts:
+    - name: first-pod-volume-logs
+      # 将数据卷挂载到 容器的 /var/log/tomcat 目录中
+      mountPath: /var/log/tomcat
+    # 指定 Pod 的 LivenessProbe探针(httpGet), 判断是否存活
+    livenessProbe:
+      # 探针的类型是: httpGet
+      httpGet:
+        # 探测 localhost:8080/index.jsp 是否存在
+        path: /index.jsp
+        port: 8080
+      # 探针在容器启动 5s 后开始执行
+      initialDelaySeconds: 5
+      # 探测每 3s 执行一次
+      periodSeconds: 3
+      # 探测的 超时时间 为 5s
+      timeoutSeconds: 5
+  # 指定 Pod 的重启策略
+  restartPolicy: OnFailure # 容器异常退出时, 自动重启
+```
+imagePullPolicy有三个参数可选:
+- IfNotPresent: 默认值, 镜像在宿主机上不存在时才拉取
+- Always: 每次创建 pod 都会重新拉取一次镜像
+- Never: Pod 永远不会主动拉取这个镜像, 只使用本地镜像
+
+当 imagePullPolicy 是 Always 时, 查看 初始化过程:
+```bash
+[root@k8s-master k8s]# kubectl describe pod/pod-image-pull-policy
+...
+Events:
+  Type     Reason     Age                 From                Message
+  ----     ------     ----                ----                -------
+  Normal   Scheduled  <unknown>           default-scheduler   Successfully assigned default/pod-image-pull-policy to k8s-node1
+  Normal   Pulling    4m30s               kubelet, k8s-node1  Pulling image "tomcat:7.0-alpine"
+  Normal   Pulled     112s                kubelet, k8s-node1  Successfully pulled image "tomcat:7.0-alpine"
+  Normal   Created    74s (x4 over 111s)  kubelet, k8s-node1  Created container image-pull-policy
+  Normal   Started    74s (x4 over 111s)  kubelet, k8s-node1  Started container image-pull-policy
+  Warning  Unhealthy  74s (x9 over 104s)  kubelet, k8s-node1  Liveness probe failed: HTTP probe failed with statuscode: 404
+```
+可以看到, 当 imagePullPolicy 为 IfNotPresent 时, 第一次初始化过程中是有 Pulling image 的;
+
+此时 delete 掉, 重新启动, 查看 初始化过程:
+```bash
+...
+Events:
+  Type     Reason     Age              From                Message
+  ----     ------     ----             ----                -------
+  Normal   Scheduled  <unknown>        default-scheduler   Successfully assigned default/pod-image-pull-policy to k8s-node1
+  Normal   Pulled     11s              kubelet, k8s-node1  Container image "tomcat:7.0-alpine" already present on machine
+  Normal   Created    11s              kubelet, k8s-node1  Created container image-pull-policy
+  Normal   Started    11s              kubelet, k8s-node1  Started container image-pull-policy
+  Warning  Unhealthy  2s (x2 over 5s)  kubelet, k8s-node1  Liveness probe failed: HTTP probe failed with statuscode: 404
+```
+可以看到, 此时的初始化过程并没有去 Pulling image 了, 因为 本地已经有了 tomcat 容器;
+
+**需要注意的是: 如果 image 的 tag 标签 被省略掉 或者为 latest 时, 策略走的还是 Always, 反之则为 IfNotPresent;**
+
+# 九、Pod 资源限制
+在 Kubernetes 中, 可以使用 resources 来设置各个 container 需要的最小资源;
+```yaml
+$ vim pod-resources.yaml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: pod-resources
+spec:
+  # 定义一个共享存储数据卷
+  volumes:
+  # 共享存储数据卷的名字是: first-pod-volume-logs
+  - name: first-pod-volume-logs
+    # 共享存储数据卷的类型是: emptyDir
+    emptyDir: {}
+  # 定义 container 相关的内容
+  containers:
+  # container 的名称
+  - name: pod-resources
+    # container 的 image 及 版本
+    image: tomcat:7.0-alpine
+    # 容器需要暴露的端口号列表
+    ports:
+    # 容器要暴露的端口
+    - containerPort: 8080
+      # 容器所在主机监听的端口（容器暴露端口映射到宿主机的端口）
+      hostPort: 8080
+    # 指定 container 的拉取策略
+    imagePullPolicy: IfNotPresent   # 如果镜像不存在就拉取
+    # container 使用共享存储数据卷
+    volumeMounts:
+    - name: first-pod-volume-logs
+      # 将数据卷挂载到 容器的 /var/log/tomcat 目录中
+      mountPath: /var/log/tomcat
+    # 指定 Pod 的 LivenessProbe探针(httpGet), 判断是否存活
+    livenessProbe:
+      # 探针的类型是: httpGet
+      httpGet:
+        # 探测 localhost:8080/index.jsp 是否存在
+        path: /index.jsp
+        port: 8080
+      # 探针在容器启动 5s 后开始执行
+      initialDelaySeconds: 5
+      # 探测每 3s 执行一次
+      periodSeconds: 3
+      # 探测的 超时时间 为 5s
+      timeoutSeconds: 5
+    # 设置 container 的资源限制
+    resources: 
+      # 要求 container 的 内存 和 cpu 最小有这么大
+      requests: 
+        memory: "64Mi"
+        cpu: "250m"
+      # 要求 container 的内存最大为这么大
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+  # 指定 Pod 的重启策略
+  restartPolicy: OnFailure # 容器异常退出时, 自动重启
+```
+
+# 十、Pod | label 对 Pod 的影响
+**label 概述**
+
+label 用于区分对象, 例如 Pod、Service 等, 每个对象可以有多个label, 通过 label 关联对象;
+
+label 是一个 key=value 的键值对, 其中 key 与 value 由用户自己指定;
+
+label 可以附加到各种资源对象上, 一个资源对象可以定义任意数量的 label, 可以通过 LabelSelector(标签选择器)查询和筛选对象;
+
+label 最常见的用法是使用 `metadata.labels` 字段来为对象添加 label, 通过 `spec.label` 来引用对象
+
+**label 使用**
+
 
 ## 例子一: Tomcat 和 War 包部署
 有一个 JavaWeb 应用的 War 包, 需要被放在 Tomcat 的 webapps 目录下运行起来
@@ -374,45 +553,7 @@ spec:
     inage: nginx:1.14
     imagePullPolicy: Always
 ```
-imagePullPolicy有三个参数可选:
-- IfNotPresent: 默认值, 镜像在宿主机上不存在时才拉取
-- Always: 每次创建 pod 都会重新拉取一次镜像
-- Never: Pod 永远不会主动拉取这个镜像, 只使用本地镜像
 
-当 imagePullPolicy 是 Always 时, 查看 初始化过程:
-```bash
-[root@k8s-master k8s]# kubectl apply -f nginx.yaml
-[root@k8s-master k8s]# kubectl describe pod nginx-deployment-7b67cf5cdf-54hkf
-...
-Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
-                 node.kubernetes.io/unreachable:NoExecute for 300s
-Events:
-  Type    Reason     Age    From                Message
-  ----    ------     ----   ----                -------
-  Normal  Scheduled  3m57s  default-scheduler   Successfully assigned default/nginx-deployment-7b67cf5cdf-54hkf to k8s-node2
-  Normal  Pulling    3m56s  kubelet, k8s-node2  Pulling image "nginx:1.8"
-  Normal  Pulled     3m21s  kubelet, k8s-node2  Successfully pulled image "nginx:1.8"
-  Normal  Created    3m20s  kubelet, k8s-node2  Created container nginx
-  Normal  Started    3m20s  kubelet, k8s-node2  Started container nginx
-```
-可以看到, 在初始化过程中是有 Pulling image 的;
-
-当 imagePullPolicy 是 IfNotPresent 时, 查看 初始化过程:
-```bash
-...
-Tolerations:     node.kubernetes.io/not-ready:NoExecute for 300s
-                 node.kubernetes.io/unreachable:NoExecute for 300s
-Events:
-  Type    Reason     Age   From                Message
-  ----    ------     ----  ----                -------
-  Normal  Scheduled  12s   default-scheduler   Successfully assigned default/nginx-deployment-54557f6559-rsmlc to k8s-node2
-  Normal  Pulled     11s   kubelet, k8s-node2  Container image "nginx:1.8" already present on machine
-  Normal  Created    11s   kubelet, k8s-node2  Created container nginx
-  Normal  Started    11s   kubelet, k8s-node2  Started container nginx
-```
-可以看到, 此时的初始化过程并没有去 Pulling image 了, 因为 本地已经有了 nginx 容器;
-
-需要注意的是: 如果 image 的 tag 标签, 如果省略或者为 latest, 那么策略走的还是 Always, 反之则为 IfNotPresent;
 
 # 五、Pod资源限制
 ```yaml
@@ -439,59 +580,6 @@ spec:
 - resources.requests:  要求Container的内存和cpu必须有这么大
 - resources.limits: 要求Container的内存最大为这么大
 
-# 六、Pod重启机制
-```yaml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: dns-test
-spec:
-  containers:
-    - name: busybox
-      image: busybox:1.28.4
-      args:
-      - /bin/sh
-      - -c
-      - sleep 36000
-    restartPolicy: Never
-```
-restartPolicy有三个可选的参数:
-- Always: 当容器终止退出后, 总是重启容器, 默认策略
-- OnFailure: 当容器异常退出(退出状态码非0)时, 才重启容器
-- Never: 当容器种植退出, 从不重启容器
-
-
-# 七、Pod健康检查
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    test: liveness
-  name: liveness-exec
-spec:
-  containers:
-  - name: liveness
-    image: busybox
-    args:
-    - /bin/sh
-    - -c
-    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy
-    livenessProbe(readinessProbe):
-      exec:
-        command:
-        - cat
-        - /tmp/healthy
-      initialDelaySeconds: 5  # 在容器启动 5 s 后开始执行
-      periodSeconds: 5        # 每 5 s 执行一次
-```
-- livenessProbe(存活检查): 如果检查失败, 将杀死容器, 根据 Pod 的 restartPolicy 来操作.
-- readinessProbe(就绪检查): 如果检查失败, k8s 会把该Pod从 service endpoints中剔除
-
-Probe支持以下三种检查方式:
-- httpGet: 发送 Http 请求, 返回200-400范围状态码为成功
-- exec: 执行 Shell 命令返回状态码是0为成功
-- tcpSocket: 通过IP 和port ,如果能够和容器建立连接则表示容器健康
 
 # 八、节点亲和性
 ```yaml
