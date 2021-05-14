@@ -493,17 +493,58 @@ spec:
 ```
 
 # 十、Pod | label 对 Pod 的影响
-**label 概述**
+在默认情况下, Kubernetes 会将 Pod 调度到所有可用的 Node, 不过有些情况下, 希望能将 Pod 部署到指定的 Node 上, 比如将有大量磁盘 I/O 的 Pod 部署到 配置了 SSD 的 Node; 或者 Pod 需要 GPU, 需要运行在配置了 GPU 的节点上.
 
-label 用于区分对象, 例如 Pod、Service 等, 每个对象可以有多个label, 通过 label 关联对象;
+Kubernetes 通过 label 来实现这个功能
 
-label 是一个 key=value 的键值对, 其中 key 与 value 由用户自己指定;
+[Kubernetes label](note/Kubernetes/k8s-label.md)
 
-label 可以附加到各种资源对象上, 一个资源对象可以定义任意数量的 label, 可以通过 LabelSelector(标签选择器)查询和筛选对象;
+1. 给 k8s-node1 打上一个 ssd 的 label
+```yaml
+$ kubectl label node k8s-node1 disktype=ssd
+```
+2. 查看 label
+```yaml
+$ kubectl get node --show-labels
+```
+3. 指定 Pod 在 k8s-node1 中运行
+```yaml
+$ vim pod-label.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomcat-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: tomcat
+  template:
+    metadata:
+      labels:
+        app: tomcat
+    spec:
+      nodeSelector:
+        disktype: ssd
+      containers:
+      - name: tomcat
+        image: tomcat:7.0-alpine
+        ports:
+        - containerPort: 8080
+```
+4. 验证
+```bash
+$ kubectl get pod -o wide
+NAME                                 READY   STATUS    RESTARTS   AGE   IP            NODE        NOMINATED NODE   READINESS GATES
+tomcat-deployment-54b4ff8c57-546bv   1/1     Running   0          52s   10.244.1.81   k8s-node1   <none>           <none>
+tomcat-deployment-54b4ff8c57-56r99   1/1     Running   0          52s   10.244.1.84   k8s-node1   <none>           <none>
+tomcat-deployment-54b4ff8c57-76f6d   1/1     Running   0          52s   10.244.1.82   k8s-node1   <none>           <none>
+tomcat-deployment-54b4ff8c57-t7cxb   1/1     Running   0          52s   10.244.1.83   k8s-node1   <none>           <none>
+tomcat-deployment-54b4ff8c57-wfmpl   1/1     Running   0          52s   10.244.1.80   k8s-node1   <none>           <none>
+```
+注意: 删除掉 node 上的 disktype=ssd 标签, 并不会重新部署, 所有的 Pod依旧是在 k8s-node1 上
 
-label 最常见的用法是使用 `metadata.labels` 字段来为对象添加 label, 通过 `spec.label` 来引用对象
-
-**label 使用**
+如果删掉 disktype=ssd 之后, 想要 k8s-node2 也加入工作负载中, 必须删掉当前的 deployment, 并且删除或者注释掉 nodeSelector 配置
 
 
 ## 例子一: Tomcat 和 War 包部署

@@ -27,7 +27,8 @@
 <details>
 <summary>git</summary>
 
-* [git 基操](note/git/git基操.md)
+* [git ](note/git/git基操.md)
+* [gitlab 项目迁移](note/git/gitlab项目迁移.md)
 </details>
 
 
@@ -373,6 +374,7 @@
 * [Kubernetes 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
 * [Kubernetes 常用操作命令](note/Kubernetes/k8s常用操作命令.md)
 * [Kubernetes | Pod实践](note/Kubernetes/k8s-pod.md)
+* [Kubernetes | Deployment实践](note/Kubernetes/k8s-Deployment.md)
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
