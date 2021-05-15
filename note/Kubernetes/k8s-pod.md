@@ -212,11 +212,39 @@ Pod 的重启策略与控制方式息息相关, 当前可以用于管理 Pod 的
 ![Pod状态转换场景](../../img/k8s/pod/Pod状态转换场景.png)
 
 
-# 七、Pod 健康检查
-Kubernetes 中, 有 2种 探针, 实现了对 Pod 的健康检查
+# 七、Lifecycle(钩子)
+Lifecycle(Container Lifecycle Hooks) 的作用: 在容器状态发生变化时触发一系列 "钩子"
 
-- LivenessProbe探针: 判断容器是否存活(running), 如果探针探测失败, 则标识容器也是失败
-- ReadinessProbe探针: 用于判断容器是否启动完成(ready)
+先看个官方例子:
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lifecycle-demo
+spec:
+  containers:
+  - name: lifecycle-demo-container
+    image: nginx
+    lifecycle:
+      postStart:
+        exec:
+          command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
+      preStop:
+        exec:
+          command: ["/usr/sbin/nginx","-s","quit"]
+```
+这个 yaml 文件定义了一个 nginx 镜, 在 lifecycle 配置了如下两个参数:
+- postStart: 容器启动后, 立即执行一个指定的操作
+- preStop: 容器被杀死之前, 立即执行一个指定的操作, 直到这个操作执行完成, 才允许容器被杀死
+
+这个yaml中, 在容器启动后, 执行 echo 输出了一句话, 在容器被杀死之前, 指定 nginx 的退出命令, 然后杀死容器, 实现了容器的 "优雅退出"
+
+# 八、Pod 健康检查(探针)
+Kubernetes 中, 有 3 种 探针, 实现了对 Pod 的健康检查
+
+- startupProbe 探针: 判断容器是否启动(start)
+- LivenessProbe 探针: 判断容器是否存活(running), 如果探针探测失败, 则标识容器也是失败
+- ReadinessProbe 探针: 用于判断容器是否启动完成(ready)
 
 Probe 支持三种检查方式:
 - httpGet: 发送 Http 请求, 返回 200-400 范围状态码为成功
@@ -345,7 +373,7 @@ spec:
 在这个例子中, nginx-container 和 debian-container 都声明挂载了 shared-data 这个 volume, 而 shared-data 是 hostPath 类型, 所以, 它对应宿主机上的目录就是 /data, 而这个目录, 就同时被绑定进了这两个容器中, 这样的话 nginx-container 容器就可以从 /usr/share/nginx/html 目录中读取到 debian-container 生成的 index.html 文件了
 
 
-# 八、Pod 的镜像拉取策略
+# 九、Pod 的镜像拉取策略
 ```yaml
 $ vim pod-imagePollPolicy.yaml
 apiVersion: v1
@@ -431,7 +459,7 @@ Events:
 
 **需要注意的是: 如果 image 的 tag 标签 被省略掉 或者为 latest 时, 策略走的还是 Always, 反之则为 IfNotPresent;**
 
-# 九、Pod 资源限制
+# 十、Pod 资源限制
 在 Kubernetes 中, 可以使用 resources 来设置各个 container 需要的最小资源;
 ```yaml
 $ vim pod-resources.yaml
@@ -492,7 +520,7 @@ spec:
   restartPolicy: OnFailure # 容器异常退出时, 自动重启
 ```
 
-# 十、Pod | label 对 Pod 的影响
+# 十一、Pod | label 对 Pod 的影响
 在默认情况下, Kubernetes 会将 Pod 调度到所有可用的 Node, 不过有些情况下, 希望能将 Pod 部署到指定的 Node 上, 比如将有大量磁盘 I/O 的 Pod 部署到 配置了 SSD 的 Node; 或者 Pod 需要 GPU, 需要运行在配置了 GPU 的节点上.
 
 Kubernetes 通过 label 来实现这个功能
@@ -545,6 +573,38 @@ tomcat-deployment-54b4ff8c57-wfmpl   1/1     Running   0          52s   10.244.1
 注意: 删除掉 node 上的 disktype=ssd 标签, 并不会重新部署, 所有的 Pod依旧是在 k8s-node1 上
 
 如果删掉 disktype=ssd 之后, 想要 k8s-node2 也加入工作负载中, 必须删掉当前的 deployment, 并且删除或者注释掉 nodeSelector 配置
+
+
+
+# 十二、command/args 的作用和影响
+https://kubernetes.io/zh/docs/tasks/inject-data-application/define-command-argument-container/
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-command-test
+  namespace: day10
+spec:
+  containers:
+  - name: command-test
+    image: nginx
+    command: ["/bin/bash"] # 直接覆盖容器的默认命令
+    args: ["-c", "while true; do echo $(msg); sleep 1; done"]
+    env: 
+    - name: msg
+      value: "hello msg"
+    workingDir: "/opt"
+  restartPolicy: Always
+```
+command 会覆盖容器的默认命令
+
+![command/args](../../img/k8s/pod/command-atgs.png)
+
+
+
+
+
+
 
 
 ## 例子一: Tomcat 和 War 包部署
@@ -833,32 +893,6 @@ fe00::2	ip6-allrouters
 ```
 如果要在k8s中设置 hosts 文件中的内容, 一定要通过这种方式, 否则直接修改hosts 文件的话, 在 Pod 被删除重建后, k8s 会自动覆盖掉被修改的内容
 
-# 十二、Lifecycle
-Lifecycle(Container Lifecycle Hooks) 的作用: 在容器状态发生变化时触发一系列 "钩子" 
-
-先看个官方例子:
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: lifecycle-demo
-spec:
-  containers:
-  - name: lifecycle-demo-container
-    image: nginx
-    lifecycle:
-      postStart:
-        exec:
-          command: ["/bin/sh", "-c", "echo Hello from the postStart handler > /usr/share/message"]
-      preStop:
-        exec:
-          command: ["/usr/sbin/nginx","-s","quit"]
-```
-这个 yaml 文件定义了一个 nginx 镜, 在 lifecycle 配置了如下两个参数:
-- postStart: 容器启动后, 立即执行一个指定的操作
-- preStop: 容器被杀死之前, 立即执行一个指定的操作, 直到这个操作执行完成, 才允许容器被杀死
-
-这个yaml中, 在容器启动后, 执行 echo 输出了一句话, 在容器被杀死之前, 指定 nginx 的退出命令, 然后杀死容器, 实现了容器的 "优雅退出" 
 
 # 十三、污点和污点容忍
 污点(Taint): 节点不做普通分配调度, 是node属性

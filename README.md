@@ -368,6 +368,8 @@
 
 * [部署两种模式的k8s](note/Kubernetes/k8s部署.md)
 * [扩容 K8s](note/Kubernetes/k8s扩容.md)
+* [命令自动补全](note/Kubernetes/命令自动补全.md)
+* [使用秘钥从私有仓库下载镜像](note/Kubernetes/使用秘钥从私有仓库下载镜像.md)
 * [first k8s容器化应用](note/Kubernetes/第一个k8s容器化应用.md)
 * [Kubernetes Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
 * [Kubernetes YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
