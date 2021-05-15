@@ -795,7 +795,15 @@ fe00::2	ip6-allrouters
 
 和 `九、label 对Pod调度的影响`、 `八、节点亲和性` 类似
 
-## 13.1 查看节点污染情况
+## 17.1 查看节点污染情况
+
+① 方式一
+```bash
+$ kubectl get nodes <nodename> -o go-template={{.spec.taints}}
+$ kubectl get nodes k8s-node1 -o go-template={{.spec.taints}}
+[map[effect:NoSchedule key:foo value:bar]]
+```
+② 方式二
 ```bash
 $ kubectl describe node master | grep Taint
 Taints:             node.kubernetes.io/unreachable:NoExecute
@@ -805,7 +813,7 @@ Taints:             node.kubernetes.io/unreachable:NoExecute
 - PreferNoSchedule: 尽量不被调度
 - NoExecute: 不会调度, 并且会驱除 Node 已有 Pod
 
-## 13.2 为节点添加污点
+## 17.2 为节点添加污点
 ```bash
 # 添加污点
 $ kubectl taint node k8s-master <key>=<value>:<effect>
@@ -817,15 +825,67 @@ $ kubectl describe node k8s-master | grep Taint
 Taints:             kino=test:NoSchedule
 ```
 
-## 13.3 污点容忍
+## 17.3 删除污点
+① 删除所有污点
+```bash
+[root@k8s-master ~]# kubectl patch nodes k8s-node1 -p '{"spec":{"taints":[]}}'
+```
+② 删除指定key的污点
+```bash
+[root@k8s-master ~]# kubectl taint nodes --all foo-
+[root@k8s-master ~]# kubectl taint nodes --all node-type-
+```
+③ 删除指定key, 指定value的污点
+```bash
+[root@k8s-master ~]# kubectl taint nodes --all foo:NoSchedule-
+[root@k8s-master ~]# kubectl taint nodes --all node-type:NoSchedule-
+```
+
+
+## 17.3 污点容忍
+### ① 等值判断
 ```yaml
-spec: 
-  tolerations:
-  - key: "ey"
-    operator: "Equal"
-    value: "value"
-    effect: "NoSchedule"
-  containers:
-  - name: webdemo
-    image: nginx
+tolerations:
+- key: "key1"
+  operator: "Equal" #判断条件为 Equal
+  value: "value1"
+  effect: "NoExecute"
+  tolerationSeconds: 3600
+```
+### ② 存在性判断
+```yaml
+tolerations: 
+- key: "key1"
+  operator: "Exists"#存在性判断，只要污点键存在，就可以匹配
+  effect: "NoExecute"
+  tolerationSeconds: 3600
+apiVersion: v1
+kind: Deployment
+metadata: 
+  name: myapp-deploy
+  namespace: default
+spec:
+  replicas: 3
+  selector: 
+    matchLabels: 
+      app: myapp
+      release: canary
+  template:
+    metadata:
+      labels:
+        app: myapp
+        release: canary
+    spec:
+      containers:
+      - name: myapp
+      image: ikubernetes/myapp:v1
+      ports:
+      - name:http
+        containerPort: 80
+      tolerations:
+      - key:"node-type"
+        operator: "Equal"
+        value:"production":
+        effect: "NoExecute"
+        tolerationSeconds: 3600
 ```

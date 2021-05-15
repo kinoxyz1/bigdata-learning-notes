@@ -373,7 +373,6 @@
 * [first k8s容器化应用](note/Kubernetes/第一个k8s容器化应用.md)
 * [Kubernetes Token过期的问题](note/Kubernetes/解决K8S-Token过期的问题.md)
 * [Kubernetes YAML文件配置详解](note/Kubernetes/k8s-YAML文件配置详解.md)
-* [Kubernetes 污点及容忍度](note/Kubernetes/k8s污点及容忍度.md)
 * [Kubernetes 常用操作命令](note/Kubernetes/k8s常用操作命令.md)
 * [Kubernetes | Pod实践](note/Kubernetes/k8s-pod.md)
 * [Kubernetes | Deployment实践](note/Kubernetes/k8s-Deployment.md)
