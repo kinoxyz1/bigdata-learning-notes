@@ -601,62 +601,7 @@ command 会覆盖容器的默认命令
 ![command/args](../../img/k8s/pod/command-atgs.png)
 
 
-
-
-
-
-
-
-## 例子一: Tomcat 和 War 包部署
-有一个 JavaWeb 应用的 War 包, 需要被放在 Tomcat 的 webapps 目录下运行起来
-
-我们可以把 Tomcat 和 War 包分别做成两个镜像, 然后把这两个镜像作为一个容器
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: javaweb-2
-spec:
-  initContainers:
-  - image: geektime/sample:v2
-    name: war
-    command: ["cp", "/sample.war", "/app"]
-    volumeMounts:
-    - mountPath: /app
-      name: app-volume
-  containers:
-  - image: geektime/tomcat:7.0
-    name: tomcat
-    command: ["sh","-c","/root/apache-tomcat-7.0.42-v2/bin/start.sh"]
-    volumeMounts:
-    - mountPath: /root/apache-tomcat-7.0.42-v2/webapps
-      name: app-volume
-    ports:
-    - containerPort: 8080
-      hostPort: 8001 
-  volumes:
-  - name: app-volume
-    emptyDir: {}
-```
-`spec.initContainers`: 会比 spec.containers 定义的用户容器先启动, 并且 Init Container 容器会按顺序逐一启动, 直到所有的 Init Container 容器全部启动完成后, 用户容器才会启动
-
-这个例子声明了一个名为 app-volume 的 volume, 声明了两个容器: war 和 tomcat 都挂载声明的 volume, 首先将 war 容器初始化, 并且将 宿主机根目录下的 /sample.war cp 到容器的 /app 目录下; 然后初始化 tomcat 容器, 执行 command 中的命令, 并且暴露 8080 端口
-
-# 四、Pos镜像拉取策略
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mypod
-spec: 
-  comtainers:
-    - name: nginx
-    inage: nginx:1.14
-    imagePullPolicy: Always
-```
-
-
-# 五、Pod资源限制
+# 十三、Pod资源限制
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -669,7 +614,6 @@ spec:
     env:
     - name: MYSQL_ROOT_PASSWORD
       value: "password"
-    
     resources:
       requests:
         memory: "64Mi"
@@ -681,8 +625,7 @@ spec:
 - resources.requests:  要求Container的内存和cpu必须有这么大
 - resources.limits: 要求Container的内存最大为这么大
 
-
-# 八、节点亲和性
+# 十四、节点亲和性
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -721,58 +664,9 @@ spec:
     - Gt
     - Lt
     - DoesNotExists
-    
-# 九、label 对 Pod 调度的影响
-[对节点创建 label](k8s-label.md)
-
-```bash
-# 对 Node 创建 label
-$ kubectl label node k8s-node1 env_role=dev
-
-# yaml 示例
-apiVersion: apps/v1
-kind: Deployment 
-metadata: 
-  name: nginx-deployment 
-spec: 
-  selector: 
-    matchLabels: 
-      app: nginx 
-  replicas: 4 
-  template: 
-    metadata: 
-      labels: 
-        app: nginx 
-    spec: 
-      nodeSelector:      # 定义有指定 label标签的 node 节点
-        env_role: dev    # 指定 label的具体值
-      containers: 
-      - name: nginx 
-        image: nginx:1.8 
-        ports: 
-        - containerPort: 80
-        volumeMounts: 
-          - mountPath: "/usr/share/nginx/html"
-            name: nginx-vol
-      volumes: 
-      - name: nginx-vol 
-        hostPath: 
-          path: "/var/data"
-
-# 查看 pod 详细信息
-$ kubectl get pod -o wide
-NAME                                READY   STATUS    RESTARTS   AGE   IP            NODE        NOMINATED NODE   READINESS GATES
-nginx-deployment-5bb8bccc44-f4frb   1/1     Running   0          67s   10.244.1.21   k8s-node1   <none>           <none>
-nginx-deployment-5bb8bccc44-fsb4n   1/1     Running   0          9s    10.244.1.23   k8s-node1   <none>           <none>
-nginx-deployment-5bb8bccc44-xb44p   1/1     Running   0          9s    10.244.1.22   k8s-node1   <none>           <none>
-nginx-deployment-5bb8bccc44-xjdhj   1/1     Running   0          9s    10.244.1.24   k8s-node1   <none>           <none>
-```
-这个配置意味着, 这个 Pod 永远只能运行在携带了 "env_role: dev" 标签(label) 的节点上, 否则将调度失效
-
-上面设置了 副本是为4, 所有的 pod 均运行在标识有 label=env_role: dev 的节点(k8s-node1)上
 
 
-# 十、NodeName 
+# 十五、NodeName(强制约束pod节点)
 pod.spec.nodeName 用于强制约束将Pod调度到指定的Node节点上, 一旦 Pod 的这个字段被赋值, k8s 就会认为这个 Pod 已经经过了调度, 调度的结果就是赋值的节点名字, 所以这个字段一般由调度器负责设置, 但是用户也可以设置它来 骗过 调度器, 这里说是“调度”，但其实指定了nodeName的Pod会直接跳过Scheduler的调度逻辑，直接写入PodList列表，该匹配规则是强制匹配。
 
 ```yaml
@@ -823,7 +717,9 @@ tomcat7-deployment-66cc45dd88-m76xw   1/1     Running   0          19s   10.244.
 ```
 还可以在浏览器中通过 `masterIP:31348` 访问tomcat
 
-# 十一、hostAliases
+
+
+# 十六、hostAliases(容器hosts文件)
 定义了 Pod 的 hosts 文件(如 /etc/hosts) 里的内容
 ```yaml
 $ vim hostAliases.yaml
@@ -894,7 +790,7 @@ fe00::2	ip6-allrouters
 如果要在k8s中设置 hosts 文件中的内容, 一定要通过这种方式, 否则直接修改hosts 文件的话, 在 Pod 被删除重建后, k8s 会自动覆盖掉被修改的内容
 
 
-# 十三、污点和污点容忍
+# 十七、污点和污点容忍
 污点(Taint): 节点不做普通分配调度, 是node属性
 
 和 `九、label 对Pod调度的影响`、 `八、节点亲和性` 类似
@@ -933,20 +829,3 @@ spec:
   - name: webdemo
     image: nginx
 ```
-
-# 十四、Pod 的生命周期
-Pod 生命周期的变化, 主要体现在 Pod API 对象的 STATUS 部分
-```bash
-$ kubectl get pod
-NAME                                  READY   STATUS    RESTARTS   AGE
-tomcat7-deployment-76744f6846-7v5lr   1/1     Running   0          72m
-tomcat7-deployment-76744f6846-hxd88   1/1     Running   0          72m
-tomcat7-deployment-76744f6846-vv47b   1/1     Running   0          72m
-```
-
-该 STATUS 有如下几种情况:
-1. `Pending`: 表示 Pod 的 YAML 文件已经提交给 k8s, API 对象已经被创建并保存在 Etcd 中, 但是这个 Pod 里有些容器因为某种原因而不能被顺利创建, 比如调度不成功
-2. `Running`: 表示 Pod 调度已经成功, 跟一个具体的节点绑定, 它包含的容器都已经创建, 并且至少有一个正在运行
-3. `Succeeded`: 表示 Pod 中的所有容器都正常运行完毕, 并且已经退出了, 这种情况在一次性任务最常见
-4. `Failed`: 表示 Pod 中至少有一个容器以不正常状态(非0的返回码)退出, 这个转状态的出现, 意味着得想办法 debug 这个容器的应用, 比如查看 Pod 和 Events 和 日志
-5. `Unknown`: 异常状态, 表示 Pod 的状态不能被持续的被 kubelet 汇报给 kube-apiserver, 这很有可能是主从节点间的通信出现了问题 
