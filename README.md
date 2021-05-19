@@ -379,7 +379,6 @@
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
-* [Kubernetes 容器健康检查和恢复机制](note/Kubernetes/k8s-容器健康检查和恢复机制.md)
 * [Kubernetes PodPreset预设置](note/Kubernetes/k8s-PodPreset预设置.md)
 * [Kubernetes 副本机制和水平扩展&滚动更新](note/Kubernetes/k8s-副本机制和水平扩展&滚动更新.md)
 * [Kubernetes Controller](note/Kubernetes/k8s-Controller.md)

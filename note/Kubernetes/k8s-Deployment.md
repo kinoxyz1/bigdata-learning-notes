@@ -717,3 +717,97 @@ $ kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /b
 ```
 分别监控 replicaset、hpa、pod
 ![hpa](../../img/k8s/deployment/hpa.png)
+
+
+
+# 七、Canary(金丝雀部署)
+## 7.1 蓝绿部署
+![蓝绿部署](../../img/k8s/deployment/蓝绿部署.gif)
+
+
+
+## 7.2 金丝雀部署
+![金丝雀部署](../../img/k8s/deployment/金丝雀部署.gif)
+
+案例:
+```yaml
+# k8s-canary-deployment-v1.yaml
+$ vim k8s-canary-deployment-v1.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  k8s-canary-deployment-v1
+  namespace: day11
+spec:
+  selector:
+    matchLabels:
+      app: canary-nginx
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: canary-nginx
+        version: v1
+    spec:
+      containers:
+        - name: nginx-v1
+          image: registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/nginx-test:env-msg
+          env:
+            - name: msg
+              value: v1111111
+          ports:
+            - containerPort: 80
+      restartPolicy: Always
+
+
+# k8s-canary-deployment-v2.yaml
+$ vim k8s-canary-deployment-v2.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  k8s-canary-deployment-v2
+  namespace: day11
+spec:
+  selector:
+    matchLabels:
+      app: canary-nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: canary-nginx
+        version: v2
+    spec:
+      containers:
+        - name: nginx-v2
+          image: nginx
+          ports:
+            - containerPort: 80
+      restartPolicy: Always
+
+# k8s-canary-service.yaml
+$ vim k8s-canary-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-test
+  namespace: day11
+spec:
+  selector:
+    app: canary-nginx
+  type: NodePort   # 浏览器能直接访问
+  ports:
+    - name: canary-test
+      port: 80           # 访问service 的端口
+      targetPort: 80     # 访问 pod 的端口
+      nodePort: 31118    # 机器上开的端口给浏览器访问
+```
+依次部署 k8s-canary-deployment-v1.yaml、k8s-canary-deployment-v2.yaml、k8s-canary-service.yaml
+
+在浏览器中访问: http://<ip>:31118  即v1和v2版本的nginx都可以被访问到(以轮询的方式)
+
+
+
+# 八、Deployment 排错
+
+https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/#deployment-status
