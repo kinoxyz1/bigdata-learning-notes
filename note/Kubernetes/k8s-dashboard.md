@@ -57,10 +57,14 @@ spec:
   ports:
     - port: 443
       targetPort: 8443
-  selector:
-    k8s-app: kubernetes-dashboard
+      name: dashboard-service
+      protocol: TCP
+      nodePort: 31672
   # Service 的 Type 使用 NodePort 对外暴露端口提供服务
   type: NodePort
+  selector:
+    k8s-app: kubernetes-dashboard
+
 ---
 
 apiVersion: v1
@@ -304,8 +308,8 @@ spec:
             initialDelaySeconds: 30
             timeoutSeconds: 30
           volumeMounts:
-          - mountPath: /tmp
-            name: tmp-volume
+            - mountPath: /tmp
+              name: tmp-volume
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -366,10 +370,31 @@ kubernetes-dashboard   service/dashboard-metrics-scraper    ClusterIP   10.104.8
 kubernetes-dashboard   service/kubernetes-dashboard         NodePort    10.106.68.223   <none>            443:32525/TCP            8m43s
 ```
 
+```yaml
+$ vim dashboard-admin.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kubernetes-dashboard
+  namespace: kubernetes-dashboard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: kubernetes-dashboard
+    namespace: kubernetes-dashboard
+
+$ kubectl delete -f dashboard-admin.yaml
+$ kubectl apply -f dashboard-admin.yaml
+```
+
+
 # 四、访问
 https://主机IP:32525
 
 # 五、获取 Token
 ```bash
-$ kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
+kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
 ```
