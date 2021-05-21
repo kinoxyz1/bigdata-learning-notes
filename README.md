@@ -379,7 +379,7 @@
 * [Kubernetes 工作负载 | Pod实践](note/Kubernetes/k8s-pod.md)
 * [Kubernetes 工作负载 | Deployment实践](note/Kubernetes/k8s-Deployment.md)
 * [Kubernetes 工作负载 | Service实践](note/Kubernetes/k8s-Service.md)
-* [Kubernetes 工作负载 | RS&RC实践](note/Kubernetes/k8s-RS&RC.md)
+* [Kubernetes 工作负载 | RS、RC、DaemonSet、StatefulSet、Job、CronJob实践](note/Kubernetes/k8s-RS&RC.md)
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)

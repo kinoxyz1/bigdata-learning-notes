@@ -19,47 +19,47 @@ Kubernetes 网络解决了四类问题:
 
 ## 1.1 Kubernetes 网络架构图
 
-![Kubernetes网络架构图](../../img\k8s\service\Kubernetes架构图.png)
+![Kubernetes网络架构图](../../img/k8s/service/Kubernetes架构图.png)
 
 ## 1.2 访问流程
 
-![访问流程](../../img\k8s\service\访问流程.png)
+![访问流程](../../img/k8s/service/访问流程.png)
 
 ## 1.3 网络连通原理
 
 ## 1.3.1 容器 和 容器 互通
 
-![容器与容器互通](../../img\k8s\service\容器与容器互通.png)
+![容器与容器互通](../../img/k8s/service/容器与容器互通.png)
 
 ### 1.3.2 Pod 和 Pod 互通
 
 1. 同节点
 
-   ![pod&pod同节点](D:\work\bigdata-learning-notes\img\k8s\service\pod&pod同节点.png)
+   ![pod&pod同节点](../../img/k8s/service/pod&pod同节点.png)
 
 2. 跨节点
 
-   ![pod&pod跨节点](D:\work\bigdata-learning-notes\img\k8s\service\pod&pod跨节点.png)
+   ![pod&pod跨节点](../../img/k8s/service/pod&pod跨节点.png)
 
 ### 1.3.3 Pod 和 Service 通信
 
-![pod和service通信](D:\work\bigdata-learning-notes\img\k8s\service\pod和service通信.png)
+![pod和service通信](../../img/k8s/service/pod和service通信.png)
 
 ### 1.3.4 service 和 Pod 通信
 
-![service和pod通信](D:\work\bigdata-learning-notes\img\k8s\service\service和pod通信.png)
+![service和pod通信](../../img/k8s/service/service和pod通信.png)
 
 ### 1.3.5 Pod 和 Internet
 
-![pod和internet](D:\work\bigdata-learning-notes\img\k8s\service\pod和internet.png)
+![pod和internet](../../img/k8s/service/pod和internet.png)
 
 ### 1.3.6 Internet 和 Pod（LoadBalancer--四层网络协议）
 
-![Internet和pod](../../img\k8s\service\Internet和pod.png)
+![Internet和pod](../../img/k8s/service/Internet和pod.png)
 
 ### 1.3.7 Internet 和 Pod（LoadBalancer--七层网络协议）
 
-![Internet和pod(七层网络协议)](../../img\k8s\service\Internet和pod(七层网络协议).png)
+![Internet和pod(七层网络协议)](../../img/k8s/service/Internet和pod(七层网络协议).png)
 
 
 
@@ -382,9 +382,9 @@ spec:
     working. Further configuration is required.</p>
     
     <p>For online documentation and support please refer to
-    <a href="http://nginx.org/">nginx.org</a>.<br/>
+    <a href="http:/nginx.org/">nginx.org</a>.<br/>
     Commercial support is available at
-    <a href="http://nginx.com/">nginx.com</a>.</p>
+    <a href="http:/nginx.com/">nginx.com</a>.</p>
     
     <p><em>Thank you for using nginx.</em></p>
     </body>
