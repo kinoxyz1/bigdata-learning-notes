@@ -213,6 +213,8 @@
 <details>
 <summary>Flink</summary>
 
+* [Flink Connectors](note/flink/Connectors.md)
+
 * [Flink 简介](note/flink/flink简介.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
 * [Flink 部署和运行](note/flink/flink部署和运行.md)
@@ -232,6 +234,7 @@
 * [Flink Sink](note/flink/flinkSink.md)
 * [Flink Window](note/flink/flinkWindow.md)
 * [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
+* [Docker 部署 单机Flink](note/flink/Docker部署单机Flink.md)
 </details>
 
 
@@ -297,6 +300,7 @@
 <summary>Redis</summary>
 
 * [centos7 安装redis](note/redis/安装.md)
+* [redis 三主三从搭建](note/redis/三主三从搭建.md)
 * [Redis 安装(docker)](note/docker/Docker常用安装.md)
 * [redis 数据类型](note/redis/数据类型.md)
 * [redis conf详解](note/redis/conf.md)
