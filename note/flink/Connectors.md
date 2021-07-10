@@ -248,7 +248,13 @@ Transform 是 Flink 中进行算子转换的, 转换算子可以把一个或者�
 
 [Flink1.3 所有算子](https://ci.apache.org/projects/flink/flink-docs-release-1.13/zh/docs/dev/datastream/operators/overview/#%e7%ae%97%e5%ad%90)
 
+说明: 在 Flink1.3 中
+
 ## 2.1 map
+`DataStream` -> `DataStream`
+
+取一个元素并产生一个元素。将输入流的值加倍的映射函数:
+
 示例一: lambda 表达式
 ```java
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -359,8 +365,133 @@ MyRichMapFunction.close
 3. getRuntimeContext() 方法提供了函数的 RuntimeContext 的一些信息, 如并行度、任务名、state状态等。
 
 ## 2.2 flatMap
+`DataStream `-> `DataStream`
 
+取一个元素并产生零个、一个或多个元素。将句子拆分为单词的 flatmap 函数:
 
+示例一: lambda 表达式:
+```java
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.Collector;
 
+public class FlatMapTransform1 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .flatMap((Integer  value, Collector<Integer > out) -> {
+               out.collect(value * value);
+               out.collect(value * value * value);
+           }).returns(Types.INT)
+           .print("FlatMapTransform1");
+
+        env.execute();
+    }
+}
+```
+示例二: 重写 FlatMapFunction
+```java
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.util.Collector;
+
+public class FlatMapTransform2 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .flatMap(new MyFlatMapFunction())
+           .print(FlatMapTransform2.class.getSimpleName());
+
+        env.execute();
+    }
+
+    private static class MyFlatMapFunction implements FlatMapFunction<Integer, String> {
+        @Override
+        public void flatMap(Integer value, Collector<String> collector) throws Exception {
+            collector.collect(String.valueOf(value * value));
+            collector.collect(String.valueOf(value * value * value));
+        }
+    }
+}
+```
+
+## 2.3 filter
+`DataStream` -> `DataStream`
+
+为每个元素计算一个布尔函数，并**保留那些函数返回 true 的元素**。过滤掉零值的过滤器:
+
+示例一: lambda 表达式:
+```java
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+public class FilterTransform1 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .filter(line -> (line > 3))
+           .print(FilterTransform1.class.getSimpleName());
+
+        env.execute();
+    }
+}
+```
+示例二: 重写 FilterFunction
+```java
+import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+public class FilterTransform2 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .filter(new MyFilterFunction())
+           .print(FilterTransform2.class.getSimpleName());
+
+        env.execute();
+    }
+
+    static class MyFilterFunction implements FilterFunction<Integer> {
+        @Override
+        public boolean filter(Integer value) throws Exception {
+            return value > 3;
+        }
+    }
+}
+```
+
+## 2.4 KeyBy
+`DataStream` -> `KeyedStream`
+
+在逻辑上将流划分为不相交的分区。所有具有**相同键的记录都分配到同一个分区**。在内部，**keyBy()是通过哈希分区实现的**。
+
+注意: 什么值不可以作为KeySelector的Key:
+- 没有覆写hashCode方法的POJO, 而是依赖Object的hashCode. 因为这样分组没有任何的意义: 每个元素都会得到一个独立无二的组.  实际情况是:可以运行, 但是分的组没有意义.
+- 任何类型的数组
+
+示例一: lambda 表达式:
+```java
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+public class KeyByTransform1 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .keyBy(line -> (line % 2 == 0 ? "even" : "odd"))
+           .print(KeyByTransform1.class.getSimpleName());
+
+        env.execute();
+    }
+}
+```
 
 # 三、Sink
