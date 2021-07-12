@@ -326,6 +326,11 @@
 * [Idea 常用配置](note/idea/idea常用配置.md)
 </details>
 
+<details>
+<summary>设计模式</summary>
+
+* [设计模式之工厂模式](note/设计模式/工厂模式.md)
+</details>
 
 ## 运维
 <details>

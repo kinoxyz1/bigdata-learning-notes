@@ -494,4 +494,220 @@ public class KeyByTransform1 {
 }
 ```
 
+示例二: 实现 KeySelector:
+```java
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+public class KeyByTransform2 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .keyBy(new MyKeyByFunction())
+           .print(KeyByTransform2.class.getSimpleName());
+
+        env.execute();
+    }
+
+    private static class MyKeyByFunction implements KeySelector<Integer, String> {
+        @Override
+        public String getKey(Integer integer) throws Exception {
+            return integer % 2 == 0 ? "even" : "odd";
+        }
+    }
+}
+```
+
+## 2.5 shuffle
+`DataStream` -> `DataStream`
+
+把流中的元素随机打乱. 对同一个组数据, 每次只需得到的结果都不同.
+
+```java
+public class ShuffleTransform {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        env.fromElements(1,2,3,4,5)
+           .shuffle()
+           .print(ShuffleTransform.class.getSimpleName());
+
+        env.execute();
+    }
+}
+```
+
+## 2.6 connect
+连接两个流, 两个流被 connect 之后, 只是被放在了同一个流里面, 内部任然保持各自的数据和形式不发生任何变化, 两个流式互相独立的。
+
+`DataStream[A]`, `DataStream[B]` -> `DataStream[A,B]`
+
+示例:
+```java
+import org.apache.flink.streaming.api.datastream.ConnectedStreams;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+
+public class ConnectTransform {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        DataStreamSource<Integer> ds1 = env.fromElements(1, 2, 3, 4, 5);
+        DataStreamSource<Integer> ds2 = env.fromElements(6, 7, 8, 9, 10);
+
+        ConnectedStreams<Integer, Integer> connect = ds1.connect(ds2);
+        connect.getFirstInput().print("first");
+        connect.getSecondInput().print("second");
+
+        env.execute();
+    }
+}
+```
+注意:
+1. 两个流中存储的数据类型可以不同
+2. 只是机械的合并在一起, 内部仍然是分离的2个流
+3. 只能2个流进行connect, 不能有第3个参与
+
+## 2.7 union
+对两个或者两个以上的DataStream进行union操作，产生一个包含所有DataStream元素的新DataStream
+
+```java
+public class UnionTransform {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        DataStreamSource<Integer> ds1 = env.fromElements(1, 2, 3, 4, 5);
+        DataStreamSource<Integer> ds2 = env.fromElements(6, 7, 8, 9, 10, 11, 12);
+        DataStreamSource<Integer> ds3 = env.fromElements(13, 14, 15, 16, 17, 18, 19, 20, 21);
+
+        ds1
+           .union(ds2)
+           .union(ds3)
+           .print(UnionTransform.class.getSimpleName());
+
+        env.execute();
+    }
+}
+```
+connect与 union 区别:
+1. union之前两个流的类型必须是一样，connect可以不一样
+2. connect只能操作两个流，union可以操作多个。
+
+
+## 2.8 sum/min/max/minBy/maxBy
+KeyedStream的每一个支流做聚合。执行完成后，会将聚合的结果合成一个流返回，所以结果都是DataStream
+
+说明:
+1. 如果流中存储的是POJO或者scala的样例类, 参数使用字段名
+2. 如果流中存储的是元组, 参数就是位置(基于0...)
+
+`KeyedStream` -> `SingleOutputStreamOperator`
+
+示例:
+```java
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironme;
+
+public class OtherTransform {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        KeyedStream<Integer, String> keyedStream = env.fromElements(1, 2, 3, 4, 5)
+           .keyBy(line -> (line % 2 == 0 ? "even" : "odd"));
+
+        keyedStream.sum(0).print("sum");
+        keyedStream.min(0).print("min");
+        keyedStream.max(0).print("max");
+        // minBy 和 maxBy 可以指定出现相同值的时候, 其他字段是否取第一个, true: 取第一个, false: 取最后一个
+        keyedStream.maxBy(0, false).print("maxBy");
+        keyedStream.minBy(0, true).print("minBy");
+
+        env.execute();
+    }
+}
+```
+
+## 2.9 reduce
+一个 KeyedStream 的聚合操作, 合并当前的元素和上次聚合的结果, 产生一个新的值, 返回的流中包含每一次聚合的结果, 而不是只返回最后一次聚合的最终结果
+
+`KeyedStream` -> `SingleOutputStreamOperator`
+
+示例一:
+```java
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import java.util.ArrayList;
+
+public class ReduceTransform1 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        ArrayList<User> users = new ArrayList<>();
+        users.add(new User("abcdefg", 12345.11, 24));
+        users.add(new User("ffffaa", 14321.12, 24));
+        users.add(new User("fewaff", 5312.67, 23));
+        users.add(new User("htehtff", 54365.73, 23));
+        env.fromCollection(users)
+           .keyBy(User::getAge)
+           .reduce((user, t1) -> {
+               return new User(user.getUuid(), user.getSalary() + t1.getSalary(), user.getAge() + t1.getAge());
+           })
+           .print();
+
+        env.execute();
+    }
+}
+```
+
+示例二:
+```java
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.streaming.api.datastream.KeyedStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import java.util.ArrayList;
+
+public class ReduceTransform {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        ArrayList<User> users = new ArrayList<>();
+        users.add(new User("abcdefg", 12345.11, 24));
+        users.add(new User("ffffaa", 14321.12, 24));
+        users.add(new User("fewaff", 5312.67, 23));
+        users.add(new User("htehtff", 54365.73, 23));
+        KeyedStream<User, Integer> keyedStream = env.fromCollection(users)
+           .keyBy(User::getAge);
+
+        keyedStream.reduce(new ReduceFunction<User>() {
+            @Override
+            public User reduce(User user, User t1) throws Exception {
+                return new User(user.getUuid(), user.getSalary() + t1.getSalary(), user.getAge() + t1.getAge());
+            }
+        }).print();
+        env.execute();
+    }
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+class User {
+    String uuid;
+    Double salary;
+    int age;
+}
+```
+
+
+
 # 三、Sink
