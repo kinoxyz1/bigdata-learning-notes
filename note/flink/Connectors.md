@@ -149,15 +149,25 @@ public class SocketSource {
 ```xml
 <dependency>
     <groupId>org.apache.flink</groupId>
-    <artifactId>flink-connector-kafka_2.11</artifactId>
-    <version>1.12.0</version>
+    <artifactId>flink-connector-kafka-0.11_2.11</artifactId>
+    <version>1.11.0</version>
 </dependency>
 ```
-示例:
+Kafka 中存储的是二进制数据, Flink 需要对 Kafka 中的数据进行 序列化/反序列化
+
+Flink 从 Kafka 中读取数据, 需要 `new FlinkKafkaConsumer011`, 该方法有三个参数:
+1. Kafka Topic
+2. KafkaDeserializationSchema 实现类 或者 DeserializationSchema 实现类
+3. Kafka 配置信息
+
+### 1.4.1 DeserializationSchema 实现类 - SimpleStringSchema
+SimpleStringSchema 可以将 消息反序列化为字符串。如果消息被反序列化失败, 会出现以下两种情况:
+1. Flink 从 deserialize() 方法中抛出异常, 会导致 job 失败, 然后 job 会重启;
+2. 在 deserialize() 方法出现失败的时候, Flink Kafka Consumer 会忽略这条消息, 如果配置了 checkpoint 为 enable, 由于 Consumer 的失败容忍机制, 失败的消息还是会被继续消费, 因此会继续失败, 这就会导致 job 被不断自动重启.
 ```java
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 import java.util.Properties;
 
 public class KafkaSource {
@@ -170,8 +180,42 @@ public class KafkaSource {
         properties.setProperty("group.id", "flink_source_kafka_01");
         properties.setProperty("auto.offset.reset", "latest");
         env
-           .addSource(new FlinkKafkaConsumer<String>("flink", new SimpleStringSchema(), properties))
+           .addSource(new FlinkKafkaConsumer011<String>("flink", new SimpleStringSchema(), properties))
            .print("kafka source");
+        env.execute();
+    }
+}
+```
+
+### 1.4.2 DeserializationSchema - JSONKeyValueDeserializationSchema
+如果 kafka 的消息是 JSON 串, 则可以将序列化的 JSON 转换成 ObjectNode 对象, 可以通过 objNode.get("field") 获取对应的值
+```java
+package com.kino.flink.connectors;
+
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
+
+import java.util.Properties;
+
+public class KafkaConnector {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "cdh-host-01:9092");
+        properties.setProperty("group.id", "flink_source_kafka_01");
+        properties.setProperty("auto.offset.reset", "latest");
+
+        env.addSource(new FlinkKafkaConsumer011<>("event_topic", new JSONKeyValueDeserializationSchema(false), properties)).map(x -> {
+            System.out.print(x.get("value").get("id"));
+            System.out.println(x.get("value").get("name"));
+            return x;
+        }).print("kafka source");
+
         env.execute();
     }
 }
@@ -711,3 +755,167 @@ class User {
 
 
 # 三、Sink
+## 3.1 Kafka Sink
+```java
+package com.kino.flink.connectors;
+
+import akka.remote.serialization.ProtobufSerializer;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer011;
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
+
+import java.util.Properties;
+
+public class KafkaConnector {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "cdh-host-01:9092");
+        properties.setProperty("group.id", "flink_source_kafka_01");
+        properties.setProperty("auto.offset.reset", "latest");
+        
+        SingleOutputStreamOperator<String> map = env.addSource(new FlinkKafkaConsumer011<>("event_topic", new JSONKeyValueDeserializationSchema(false), properties)).map(x -> {
+            System.out.println(x.get("value").get("id"));
+            System.out.println(x.get("value").get("name"));
+            return x.toString();
+        });
+
+        map.addSink(new FlinkKafkaProducer011<>("event_topic_sink", new SimpleStringSchema(), properties));
+
+        env.execute();
+    }
+}
+```
+
+## 3.2 Redis Sink
+```java
+package com.kino.flink.connectors;
+
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.connectors.redis.RedisSink;
+import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
+import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
+import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
+import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
+
+import java.util.Properties;
+
+public class RedisConnector {
+    public static void main(String[] args) {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "cdh-host-01:9092");
+        properties.setProperty("group.id", "flink_source_kafka_01");
+        properties.setProperty("auto.offset.reset", "latest");
+
+        DataStreamSource<ObjectNode> event_topic = env.addSource(new FlinkKafkaConsumer011<>("event_topic", new JSONKeyValueDeserializationSchema(false), properties));
+
+        FlinkJedisPoolConfig redisConfig = new FlinkJedisPoolConfig.Builder()
+                .setHost("cdh-host-01")
+                .setPort(6379)
+                .setMaxTotal(100)
+                .setTimeout(1000 * 10)
+                .build();
+
+        event_topic.addSink(new RedisSink<>(redisConfig, new RedisMapper<ObjectNode>() {
+            @Override
+            public RedisCommandDescription getCommandDescription() {
+                // 返回存在Redis中的数据类型  存储的是Hash, 第二个参数是外面的key
+                return new RedisCommandDescription(RedisCommand.HSET, "FlinkRedis");
+            }
+
+            @Override
+            public String getKeyFromData(ObjectNode data) {
+                // 从数据中获取Key: Hash的Key
+                return data.get("id").toString();
+            }
+
+            @Override
+            public String getValueFromData(ObjectNode data) {
+                // 从数据中获取Value: Hash的value
+                return data.get("value").toString();
+            }
+        }));
+    }
+}
+```
+
+## 3.3 自定义 Sink
+```java
+package com.kino.flink.connectors;
+
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
+import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.util.Properties;
+
+public class CustomerConnectors<IN> extends RichSinkFunction<IN> {
+
+    private Connection conn;
+    private PreparedStatement ps;
+
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "cdh-host-01:9092");
+        properties.setProperty("group.id", "flink_source_kafka_01");
+        properties.setProperty("auto.offset.reset", "latest");
+
+        DataStreamSource<ObjectNode> event_topic = env.addSource(new FlinkKafkaConsumer011<>("event_topic", new JSONKeyValueDeserializationSchema(false), properties));
+        event_topic.addSink(new CustomerConnectors<>());
+
+        env.execute();
+    }
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        // 初始化需要的东西
+        final String url = "";
+        final String user = "";
+        final String pass = "";
+        final String sql = "";
+        conn = DriverManager.getConnection(url, user, pass);
+        ps = conn.prepareStatement(sql);
+    }
+
+    @Override
+    public void invoke(IN value, Context context) throws Exception {
+        ps.setString(1, value.toString());
+    }
+
+    @Override
+    public void close() throws Exception {
+        if(conn != null)
+            conn.close();
+        if (ps != null)
+            ps.close();
+    }
+}
+```
+
+## 3.4 其他 Connectors
+https://ci.apache.org/projects/flink/flink-docs-release-1.13/docs/connectors/datastream/overview/
