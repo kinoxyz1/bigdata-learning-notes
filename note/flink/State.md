@@ -578,3 +578,16 @@ public class MapStateTest {
 
 env.setStateBackend(new RocksDBStateBackend("hdfs://hadoop102:8020/flink/checkpoints/rocksdb"));
 ```
+
+# 七、Flink 的容错机制
+在最上面, 说到了 端到端的State一致性, 往简单想的实现思路大概可以是, Flink 从 Queue 读取一条数据, 进行 Transform处理, Sink 写出, 写出后 Source 停止读取, 把 State 存储起来, 再开始处理下一条数据, 这种实现方式弊端不少, 在 Flink 内部是如何实现这种 端到端的精确一致性的?
+
+在 Flink 这种分布式系统中引入状态, 自然要比这种简单实现复杂的多
+
+## 7.1 状态一致性的级别
+在最上面也有大致说过, 一共分为三个级别:
+
+1. at-most-once(最多一次): 数据有可能被丢失造成漏消费
+2. at-last-once(最少一次): 数据有有可能重复造成重复计算, 但是一定不会造成数据丢失
+3. exactly-once(精准一次): 数据不多不少刚刚好
+
