@@ -580,14 +580,66 @@ env.setStateBackend(new RocksDBStateBackend("hdfs://hadoop102:8020/flink/checkpo
 ```
 
 # 七、Flink 的容错机制
-在最上面, 说到了 端到端的State一致性, 往简单想的实现思路大概可以是, Flink 从 Queue 读取一条数据, 进行 Transform处理, Sink 写出, 写出后 Source 停止读取, 把 State 存储起来, 再开始处理下一条数据, 这种实现方式弊端不少, 在 Flink 内部是如何实现这种 端到端的精确一致性的?
-
-在 Flink 这种分布式系统中引入状态, 自然要比这种简单实现复杂的多
-
 ## 7.1 状态一致性的级别
-在最上面也有大致说过, 一共分为三个级别:
+在流处理中, 状态的一致性可以分为三个级别:
+1. at-most-once(最多一次)
+   当 作业故障之后, 计算的结果可能造成数据丢失;
+2. at-last-once(最少一次)
+   当 作业故障后, 数据有有可能重复造成**重复计算**, 但是一定**不会造成数据丢失**
+3. exactly-once(精准一次)
+   当 作业故障回复后, 得到的结果即不多不少刚刚是正确的
+   
+其实在分布式系统中, 最难的两个问题就是:
+1. Exactly Once Message processing
+2. 保证消息的顺序处理
 
-1. at-most-once(最多一次): 数据有可能被丢失造成漏消费
-2. at-last-once(最少一次): 数据有有可能重复造成重复计算, 但是一定不会造成数据丢失
-3. exactly-once(精准一次): 数据不多不少刚刚好
+https://zhuanlan.zhihu.com/p/77677075
 
+因此在曾经很长一段时间内, at-last-once(最少一次)非常流行, 例如: Apache Storm, 因为 保证 exactly-once 的系统实现起来非常复杂。就例如我们上面说的, 保证exactly-once, 我们简单的实现就是一批数据在处理的时候, source 停止接受数据, 等待这一批数据被所有算子处理完成, 再让 source 开始接受数据, 这样就导致延迟很高, 如果使程序具有幂等性来保证 exactly-once, 实现起来非常复杂。
+
+**Flink 之所以比其他 流处理 引擎优秀的原因, 一个是 Flink 可以基于 EventTime 的有状态计算, 另一个就是 Flink 既保证了 exactly-once, 又保证了 低延迟和高吞吐 的能力**
+
+## 7.2 端到端的状态一致性
+在 [Flink 官网](https://ci.apache.org/projects/flink/flink-docs-release-1.13/docs/learn-flink/overview/#stream-processing) 中有说到：
+>In Flink, applications are composed of streaming dataflows that may be transformed by user-defined operators. These dataflows form directed graphs that start with one or more sources, and end in one or more sinks.
+
+![Flink 组成](../../img/flink/Flink%20State/Flink%20组成.png)
+
+因为一个 Flink 程序由  Source/Transaction/Sink 三部分组成, 所以端到端的一致性, 最关切的就是这三部分谁的一致性最难保证(木桶原理)。
+
+Flink 的 Source 段可以从外部源读取数据, 要想保证 Source 端的一致性, 就需要外部源可以重设数据的读取位置(需要能重复的重指定位置读), Flink 流式处理程序的 Source 大多都是 Kafka Source, Kafka 可以在读取的时候指定 offset。
+
+Flink 的 Transaction（用户业务逻辑部分）, 有 State 和 CheckPoint 机制保证其一致性。
+
+Flink 的 Sink 在作业故障恢复时, 数据不会重复写到外部系统, 目前 Sink 有两种实现方式:
+1. 幂等写入(Idempotent)
+   幂等操作就是说, 可以重复执行很多次程序, 但是指挥导致一次结果的更改, 更改后后面的重复操作就不生效了；
+2. 事务性写入(Transactional)
+   这种方式需要写 事务 来写入外部系统, 事务和CheckPoint绑定, 等 CheckPoint 真正完成的时候, 才把所有对应的记过写入到 Sink 系统中, 对于这样的事务性写入, 又有两种实现方式:
+   - 预写日志(WAL)
+   - 两阶段提交(2PC)
+
+   ![Flink exactly-once](../../img/flink/Flink%20State/Flink%20exactly-once.png)
+
+
+
+## 7.3 CheckPoint 
+还是我们上面说的, 一个 Flink 程序要想保证一致性, 在做 CheckPoint 的时候, 简单的办法就是暂停应用, 处理完成 再做 CheckPoint, 完成后再恢复应用。
+
+[再 Flink 中 CheckPoint 的 机制原理来自"Chandy-Lamport algorithm"算法(分布式快照算)的一种变体: 异步 barrier 快照（asynchronous barrier snapshotting）](https://ci.apache.org/projects/flink/flink-docs-release-1.13/docs/learn-flink/fault_tolerance/#how-does-state-snapshotting-work)
+
+当检查点协调器（作业管理器的一部分）指示任务管理器开始检查点时，它会让所有源记录它们的偏移量并将编号的 checkpoint barriers 插入到它们的流中。这些 barriers 流经作业图，指示每个检查点前后的流部分(意思是说, barriers 会像 watermark 那样, 一直向下游传递), 在 Flink 中, 同一时间可以有多个不同快照的 barriers, 这意味着, 可以并发的出现不同的快照
+
+
+
+
+## 7.4 SavePoint
+
+
+
+
+## 7.5 CheckPoint 和 SavePoint 的区别
+
+
+
+## 7.6 故障恢复(手动和自动)
