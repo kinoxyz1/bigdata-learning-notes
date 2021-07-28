@@ -453,20 +453,311 @@ public class TumblingWindowTest {
 作用于 不是 keyedStream 上面的 Window, 其并行度只能是1, 如果设置了多并行度, 最终也只会在其中一个 Task 上执行
 
 
+# 五、WaterMark
+在实际生产中, 处理的基本都会是乱序数据, 例如在计算 近一小时的销售总额 的时候, 只定义一小时的窗口, 并不能保证在一小时结束的时候事件全部都收到了, 很多情况下数据都会有延迟, 这样 Flink 程序就不能确定 EventTime 的进展了, WaterMark 的出现就是 Flink 衡量 EventTime 进展的。
+
+当上游接收到一个事件, 生成一个 WaterMark, 这个 WaterMark 就会往后流动
+
+## 5.1 有序事件的 WaterMark
+![有序WaterMark](../../img/flink/window/有序WaterMark.png)
+在有序事件流中, WaterMark 就显得不是很重要
+
+## 5.2 乱序事件的 WaterMark
+![乱序WaterMark](../../img/flink/window/乱序WaterMark.png)
+在乱序事件流中, 设置 WaterMark 能容忍 3s 的延迟, 当接收14那条数据的时候, 就生成 WaterMark 为 11, 表示 11之前的数据都已经收录到了, 后续不会出现 11 之前的数据了, 再收到 17 的时候, WaterMark 变成 14 向后传递, 再收到 12 的时候, WaterMark 还是 14, 12 这条数据是延迟来到的数据继续被收录到窗口中
 
 
 
+## 5.1 WaterMark 的使用
+Flink 内置了两个 WaterMark 生成器, 如果不满足业务, 可以进行自定义 WaterMark 生成器
+1. 单调递增的WaterMark
+2. 固定延迟的WaterMark
+
+### 5.1.1 单调递增的 WaterMark
+```java
+// 定义 单调递增的 WaterMark
+WatermarkStrategy<Tuple2<String, Integer>> adLogWatermarkStrategy = WatermarkStrategy
+    .<Tuple2<String, Integer>>forMonotonousTimestamps()
+    .withTimestampAssigner(new SerializableTimestampAssigner<Tuple2<String, Integer>>() {
+        @Override
+        public long extractTimestamp(Tuple2<String, Integer> element, long recordTimestamp) {
+            return element.f1 * 1000;
+        }
+    });
+
+// Window 使用 定义的 WaterMark
+env.socketTextStream("localhost", 9999)
+        .map(line -> {
+        String[] split = line.split(",");
+        return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+        })
+        .assignTimestampsAndWatermarks(adLogWatermarkStrategy)  // 指定水印和时间戳
+        .keyBy(k -> k.f0)
+        .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+        .......
+```
+
+### 5.1.2 固定延迟的 WaterMark
+```java
+// 定义 固定延迟的 WaterMark
+WatermarkStrategy<Tuple2<String, Integer>> wms = WatermarkStrategy
+                .<Tuple2<String, Integer>>forBoundedOutOfOrderness(Duration.ofSeconds(3)) // // 最大容忍的延迟时间
+                .withTimestampAssigner(new SerializableTimestampAssigner<Tuple2<String, Integer>>() { // 指定时间戳
+                    @Override
+                    public long extractTimestamp(Tuple2<String, Integer> element, long recordTimestamp) {
+                        return element.f1 * 1000;
+                    }
+                });
+
+// Window 使用 定义的 WaterMark
+env.socketTextStream("localhost", 9999)
+        .map(line -> {
+        String[] split = line.split(",");
+        return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+        })
+        .assignTimestampsAndWatermarks(wms)  // 指定水印和时间戳
+        .keyBy(k -> k.f0)
+        .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+```
+### 5.1.3 自定义 WaterMark
+WaterMark 有2种风格的生成方式: periodic(周期性) and punctuated(间歇性).都需要继承接口: WatermarkGenerator
 
 
 
+# 六、多 Task 的 WaterMark 传递
+![WaterMark传递](../../img/flink/window/WaterMark传递.png)
+
+WaterMark 的向下传递以最小的那个 WaterMark 为准（木桶原理）
+
+# 七、Window 允许迟到数据
+如果设置了 WaterMark, 还是有数据没有来齐, 还可以再等一会, 可以通过 `.allowedLateness` 设置等待时间
+
+当 WaterMark 触发窗口计算后, 此时窗口不会被关闭, 会再等待 `.allowedLateness()` 设置的时间, 如果在等待的时间中有时间来到, 则来一条计算一条, 等 WaterMark + `.allowedLateness()` 时间到达后, 窗口才会真的关闭。
+
+```java
+env.socketTextStream("localhost", 9999)
+        .map(line -> {
+            String[] split = line.split(",");
+            return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+        })
+        .assignTimestampsAndWatermarks(wms)  // 指定水印和时间戳
+        .keyBy(k -> k.f0)
+        .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+        // watermark 触发窗口计算, 此时不会关闭窗口, 会再等待 3s, 以后每来一条事件, 触发计算一次, watermark + 等待事件 结束后, 窗口关闭
+        // 只能用在 EventTime 时间语义上
+        .allowedLateness(Time.seconds(3))
+```
+
+# 八、侧输出流
+如果 WaterMark + `.allowedLateness()` 还是有数据为收录到, 还可以用侧输出流的方式, 将漏掉的数据进行操作
+
+```java
+env.socketTextStream("localhost", 9999)
+        .map(line -> {
+            String[] split = line.split(",");
+            return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+        })
+        .assignTimestampsAndWatermarks(wms)  // 指定水印和时间戳
+        .keyBy(k -> k.f0)
+        .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+        // watermark 触发窗口计算, 此时不会关闭窗口, 会再等待 3s, 以后每来一条事件, 触发计算一次, watermark + 等待事件 结束后, 窗口关闭
+        // 只能用在 EventTime 时间语义上
+        .allowedLateness(Time.seconds(3))
+        // 等待了, 但是还是延迟了的数据, 在这里被处理
+        .sideOutputLateData(new OutputTag<Tuple2<String, Integer>>("side") {})
+        ........
+
+// 将 等待还是迟到了的数据进行相应的逻辑处理, 这里仅打印
+result.getSideOutput(new OutputTag<Tuple2<String, Integer>>("side"){}).print("side");
+```
+
+## 8.1 侧输出流分流操作
+```java
+package com.kino.flink.windows.watermark;
+
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
+
+import java.time.Duration;
+
+public class WaterMarkTest1 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
+
+        // Monotonously Increasing Timestamps(时间戳单调增长:其实就是允许的延迟为0)
+        WatermarkStrategy<Tuple2<String, Integer>> adLogWatermarkStrategy = WatermarkStrategy
+                .<Tuple2<String, Integer>>forMonotonousTimestamps()
+                .withTimestampAssigner(new SerializableTimestampAssigner<Tuple2<String, Integer>>() {
+                    @Override
+                    public long extractTimestamp(Tuple2<String, Integer> element, long recordTimestamp) {
+                        return element.f1 * 1000;
+                    }
+                });
+
+        // Fixed Amount of Lateness(允许固定时间的延迟)
+        WatermarkStrategy<Tuple2<String, Integer>> wms = WatermarkStrategy
+                .<Tuple2<String, Integer>>forBoundedOutOfOrderness(Duration.ofSeconds(3)) // // 最大容忍的延迟时间
+                .withTimestampAssigner(new SerializableTimestampAssigner<Tuple2<String, Integer>>() { // 指定时间戳
+                    @Override
+                    public long extractTimestamp(Tuple2<String, Integer> element, long recordTimestamp) {
+                        return element.f1 * 1000;
+                    }
+                });
+
+        SingleOutputStreamOperator<String> result = env.socketTextStream("localhost", 9999)
+                .map(line -> {
+                    String[] split = line.split(",");
+                    return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+                })
+                .assignTimestampsAndWatermarks(wms)  // 指定水印和时间戳
+                .keyBy(k -> k.f0)
+                .window(TumblingEventTimeWindows.of(Time.seconds(5)))
+                // watermark 触发窗口计算, 此时不会关闭窗口, 会再等待 3s, 以后每来一条事件, 触发计算一次, watermark + 等待事件 结束后, 窗口关闭
+                // 只能用在 EventTime 时间语义上
+                .allowedLateness(Time.seconds(3))
+                // 等待了, 但是还是延迟了的数据, 在这里被处理
+                .sideOutputLateData(new OutputTag<Tuple2<String, Integer>>("side") {})
+                .process(new ProcessWindowFunction<Tuple2<String, Integer>, String, String, TimeWindow>() {
+                    @Override
+                    public void process(String s, Context context, Iterable<Tuple2<String, Integer>> elements, Collector<String> out) throws Exception {
+                        String msg = "当前key: " + s + "窗口: [" + context.window().getStart() / 1000 + "," + context.window().getEnd() / 1000
+                                + ") 一共有 " + elements.spliterator().estimateSize() + "条数据 ";
+                        if (elements.spliterator().estimateSize() > 1000){
+                            // 这里还可以用 侧输出流 进行分流
+                            context.output(new OutputTag<String>("分流"){}, s);
+                        }
+                        out.collect(msg);
+                    }
+                });
+        result.print("主流");
+        // 将 等待还是迟到了的数据进行相应的逻辑处理, 这里仅打印
+        result.getSideOutput(new OutputTag<Tuple2<String, Integer>>("side"){}).print("side");
+        result.getSideOutput(new OutputTag<Tuple2<String, Integer>>("分流"){}).print("分流");
+        env.execute();
+    }
+}
+```
+
+# 九、定时器
+不论是基于 ProcessTime 还是 EventTime 处理一条事件, 都可以注册一个定时器, 可以再设置好的时间后触发对应的业务逻辑(类似于闹钟)
+
+## 9.1 ProcessTime 定时器
+```java
+package com.kino.flink.windows.timetimer;
+
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
+
+public class TimeTimerTest {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
+
+        env.socketTextStream("localhost", 9999)
+                .map(line -> {
+                    String[] split = line.split(",");
+                    return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+                })
+                .keyBy(k -> k.f0)
+                .process(new KeyedProcessFunction<String, Tuple2<String, Integer>, String>() {
+                    // 定时器被触发之后, 回调这个方法
+                    // 参数1: 触发器被触发的时间
+                    @Override
+                    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
+                        ctx.output(new OutputTag<String>("timer"){}, "被触发了。。。");
+                    }
+
+                    @Override
+                    public void processElement(Tuple2<String, Integer> value, Context ctx, Collector<String> out) throws Exception {
+                        // 处理时间 过后5s后触发定时器
+                        ctx.timerService().registerProcessingTimeTimer(ctx.timerService().currentProcessingTime() * 1000);
+                        out.collect(value.toString());
+                    }
+                });
+
+        env.execute();
+    }
+}
+```
 
 
+## 9.2 EventTime 定时器
+```java
+package com.kino.flink.windows.timetimer;
 
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
+import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
+import java.time.Duration;
 
+public class TimeTimerTest2 {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
+        SingleOutputStreamOperator<Tuple2<String, Integer>> inputStream = env.socketTextStream("localhost", 9999)
+                .map(line -> {
+                    String[] split = line.split(",");
+                    return new Tuple2<String, Integer>(split[0], Integer.parseInt(split[1]));
+                });
 
+        WatermarkStrategy<Tuple2<String, Integer>> tuple2WatermarkStrategy = WatermarkStrategy
+                .<Tuple2<String, Integer>>forBoundedOutOfOrderness(Duration.ofSeconds(5))
+                .withTimestampAssigner(new SerializableTimestampAssigner<Tuple2<String, Integer>>() {
+                    @Override
+                    public long extractTimestamp(Tuple2<String, Integer> element, long recordTimestamp) {
+                        return element.f1 * 1000;
+                    }
+                });
 
+        inputStream
+                .assignTimestampsAndWatermarks(tuple2WatermarkStrategy)
+                .keyBy(t -> t.f0)
+                .process(new KeyedProcessFunction<String, Tuple2<String, Integer>, String>() {
+                    @Override
+                    public void processElement(Tuple2<String, Integer> value, Context ctx, Collector<String> out) throws Exception {
+                        // 注册定时器
+                        ctx.timerService().registerProcessingTimeTimer(ctx.timestamp() + 5000);
+                        out.collect(value.toString());
+                    }
+
+                    @Override
+                    public void onTimer(long timestamp, OnTimerContext ctx, Collector<String> out) throws Exception {
+                        out.collect("被触发了。。。");
+                    }
+                })
+                .print();
+
+        env.execute();
+    }
+}
+```
+
+两种时间语义的 定时器 都需要实现 `processElement` 方法, 不同的是 `processElement` 的参数是 `Context` 还是 `OnTimerContext`
+
+这两种 Context 都有同样的对象:
+	currentProcessingTime(): Long 返回当前处理时间
+	currentWatermark(): Long 返回当前watermark的时间戳
+	registerProcessingTimeTimer(timestamp: Long): Unit 会注册当前key的processing time的定时器。当processing time到达定时时间时，触发timer。
+	registerEventTimeTimer(timestamp: Long): Unit 会注册当前key的event time 定时器。当水位线大于等于定时器注册的时间时，触发定时器执行回调函数。
+	deleteProcessingTimeTimer(timestamp: Long): Unit 删除之前注册处理时间定时器。如果没有这个时间戳的定时器，则不执行。
+	deleteEventTimeTimer(timestamp: Long): Unit 删除之前注册的事件时间定时器，如果没有此时间戳的定时器，则不执行。
 
 
 
