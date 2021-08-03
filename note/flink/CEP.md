@@ -414,12 +414,12 @@ pattern.where(new SimpleCondition<Event>() {
 pattern.where(new SimpleCondition<Event>() {
     @Override
     public boolean filter(Event value) {
-        return value.age > 30;
+        return value.val > 30;
     }
 }).oneOrMore().until(new IterativeCondition<Event>() {
     @Override
     public boolean filter(Event value, Context ctx) throws Exception {
-        return ... // alternative condition
+        return value.sum > 50 // alternative condition
     }
 });
 ```
