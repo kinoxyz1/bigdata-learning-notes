@@ -140,6 +140,10 @@ $ sbin/nginx -s reload
 $ sbin/nginx -c /usr/local/nginx/conf/nginx.conf
 ```
 
+## 3.6 热部署
+```bash
+```
+
 # 四、Nginx 配置文件
 ## 4.1 配置文件路径
 ```bash
