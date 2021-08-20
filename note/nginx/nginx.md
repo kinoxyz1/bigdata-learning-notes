@@ -25,32 +25,64 @@ $ make && make install
 $ pcre-config --version
 8.35
 ```
-## 2.3 下载 Nginx 安装包
+
+## 2.3 编译安装 nginx
 [Nginx 下载地址](http://nginx.org/)
-## 2.4 安装 Nginx
+
 ```bash
-$ cd /opt/software
-$ tar -zxvf nginx-1.19.6.tar.gz
-$ cd nginx-1.19.6
-$ ./configure 
+# 查看编译的帮助文档
+$ ./configure --help
+
+  # 如果下面几个参数没有设置, 默认都放在 --prefix 指定的路径下
+  --prefix=PATH                      set installation prefix
+  --sbin-path=PATH                   set nginx binary pathname
+  --modules-path=PATH                set modules path
+  --conf-path=PATH                   set nginx.conf pathname
+  --error-log-path=PATH              set error log pathname
+  --pid-path=PATH                    set nginx.pid pathname
+  --lock-path=PATH                   set nginx.lock pathname
+
+ # --with 和 --without 是确认需要使用什么模块和不使用哪些模块
+ # --with: 默认不会被编译进 nginx 中, 编译需要手动指定
+ --with-*****
+ # --without: 默认会被编译进 nginx 中, 不编译需要手动指定
+ --without-*****
+ 
+# 使用默认编译
+$ ./configure --prefix=/app/nginx/    # 将nginx 编译到 /app/nginx 目录下
+# 编译完成后会输出如下信息: 
+...
+Configuration summary
+  + using system PCRE library
+  + OpenSSL library is not used
+  + using system zlib library
+
+  nginx path prefix: "/app/nginx/"
+  nginx binary file: "/app/nginx//sbin/nginx"
+  nginx modules path: "/app/nginx//modules"
+  nginx configuration prefix: "/app/nginx//conf"
+  nginx configuration file: "/app/nginx//conf/nginx.conf"
+  nginx pid file: "/app/nginx//logs/nginx.pid"
+  nginx error log file: "/app/nginx//logs/error.log"
+  nginx http access log file: "/app/nginx//logs/access.log"
+  nginx http client request body temporary files: "client_body_temp"
+  nginx http proxy temporary files: "proxy_temp"
+  nginx http fastcgi temporary files: "fastcgi_temp"
+  nginx http uwsgi temporary files: "uwsgi_temp"
+  nginx http scgi temporary files: "scgi_temp"
+  
+# 编译完成后, 会在 nginx/objs/ 目录(中间文件)下生成 ngx_modules.c 文件, 这个文件包含了编译时会被编译进去的模块
+$ cat objs/ngx_modules.c
+...
+
 $ make && make install
-$ cd /usr/local/nginx/
-$ sbin/nginx
-$ ps -ef | grep nginx
-root      17989      1  0 18:49 ?        00:00:00 nginx: master process sbin/nginx
-nobody    17990  17989  0 18:49 ?        00:00:00 nginx: worker process
-root      17992  11127  0 18:49 pts/0    00:00:00 grep --color=auto nginx
+
+$ cd /app/nginx && ll
+drwxr-xr-x. 2 root root 4096 8月  20 18:56 conf
+drwxr-xr-x. 2 root root   40 8月  20 18:56 html
+drwxr-xr-x. 2 root root    6 8月  20 18:56 logs
+drwxr-xr-x. 2 root root   19 8月  20 18:56 sbin
 ```
-在浏览器中数据Centos IP即可访问Nginx页面（如果有防火墙的话，就放行80端口, 如下操作）
-```bash
-$ firewall-cmd --add-service=http --permanent
-success
-$ firewall-cmd --add-port=80/tcp --permanent
-success
-$ firewall-cmd --reload
-success
-```
-![安装](../../img/nginx/安装.png)
 
 # 三、Nginx 常用命令
 ```bash

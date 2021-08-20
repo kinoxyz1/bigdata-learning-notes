@@ -26,7 +26,7 @@ FlinkCEP 可以用来在无穷无尽的流中检测出特定的数据, 比如 �
 2. 应用到Stream上
 3. 获取匹配结果
 
-## 2.3 定义规则模式
+## 2.3 步骤一 定义规则模式
 ```java
 Pattern<Test, Test> orderEventPattern = Pattern.<Test>begin("events")
                 .where(new SimpleCondition<Test>() {
@@ -44,12 +44,12 @@ Pattern<Test, Test> orderEventPattern = Pattern.<Test>begin("events")
                 }).within(Time.seconds(5));
 ```
 
-## 2.4 应用到Stream上
+## 2.4 步骤二 应用到Stream上
 ```java
 PatternStream<Test> patternStream = CEP.pattern(orderEventStringKeyedStream, orderEventPattern);
 ```
 
-## 2.5 获取匹配结果
+## 2.5 步骤三 获取匹配结果
 ```java
 SingleOutputStreamOperator<String> result = patternStream.select(
                 new OutputTag<String>("No Pay") {
@@ -424,8 +424,89 @@ pattern.where(new SimpleCondition<Event>() {
 });
 ```
 
+## 3.3 组合模式(模式序列)
+在上面介绍了 单例模式 和 循环模式, 一个规则可以出现一次或循环依次出现多次, 但是实际可能不全然如此, 例如需要计算用户点击购买之后是否在30分钟内支付了, 如果只是做连续匹配, 就会出现问题, 因为在点击购买之后支付之前, 一样可以进行其他事件的操作。
+
+### 3.3.1 严格连续
+严格连续是说, 期望用户定义的多个规则事件都是严格连续一个接一个的出现的, 中间不会出现任何其他的事件
+```java
+pattern.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.age > 30;
+    }
+}).next("end").where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.Income > 300000;
+        }
+    });
+```
 
 
+```java
+// notNext 表示 事件A 之后一定不能是 事件B
+pattern.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.age > 30;
+    }
+}).notNext("end").where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.Income > 300000;
+        }
+    });
+```
 
 
+### 3.3.2 松散连续
+松散连续是说, 事件A 和 事件B 中间, 可以有事件C, A 和 B 事件不是一定要连续
+```java
+pattern.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.age > 30;
+    }
+}).followedBy("end").where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.Income > 300000;
+        }
+    });
+```
+
+
+```java
+// notFollowedBy 是说, 不期望一个事件在 A 和 B 之间发生
+pattern.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.age > 30;
+    }
+}).notFollowedBy("end").where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.Income > 300000;
+        }
+    });
+```
+
+### 3.3.3 非确定的松散连续
+当事件为: {a, c, b, b} 时:
+1. followedBy: 匹配的结果为: {a, b}
+2. followedByAny: 匹配的结果为: {a, b}, {a, b}
+```java
+pattern.where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.age > 30;
+    }
+}).followedByAny("end").where(new SimpleCondition<Event>() {
+    @Override
+    public boolean filter(Event value) {
+        return value.Income > 300000;
+        }
+    });
+```
 
