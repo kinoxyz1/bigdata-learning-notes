@@ -162,12 +162,19 @@ $ solr:x:990:988:Solr:/var/lib/solr:/bin/bash # /sbin/nologin -> /bin/bash
 $ su - solr
 ```
 ## 5.6 执行如下 3条命令
+在安装 solr 的节点执行
 ```bash
-$ /opt/cloudera/parcels/CDH/lib/solr/bin/solr create -c vertex_index -d /opt/cloudera/parcels/CDH/lib/solr/atlas_conf -shards 3 -replicationFactor 2
-  
+$ /opt/cloudera/parcels/CDH/lib/solr/bin/solr create -c vertex_index -p 8983 -d /opt/cloudera/parcels/CDH/lib/solr/atlas_conf -shards 3 -replicationFactor 2
+INFO  - 2021-10-25 18:23:28.091; org.apache.solr.util.configuration.SSLCredentialProviderFactory; Processing SSL Credential Provider chain: env;sysprop
+Created collection 'vertex_index' with 3 shard(s), 2 replica(s) with config-set 'vertex_index'
+
 $ /opt/cloudera/parcels/CDH/lib/solr/bin/solr create -c edge_index -d /opt/cloudera/parcels/CDH/lib/solr/atlas_conf -shards 3 -replicationFactor 2
-  
+INFO  - 2021-10-25 18:23:43.906; org.apache.solr.util.configuration.SSLCredentialProviderFactory; Processing SSL Credential Provider chain: env;sysprop
+Created collection 'edge_index' with 3 shard(s), 2 replica(s) with config-set 'edge_index'
+
 $ /opt/cloudera/parcels/CDH/lib/solr/bin/solr create -c fulltext_index -d /opt/cloudera/parcels/CDH/lib/solr/atlas_conf -shards 3 -replicationFactor 2
+INFO  - 2021-10-25 18:23:51.357; org.apache.solr.util.configuration.SSLCredentialProviderFactory; Processing SSL Credential Provider chain: env;sysprop
+Created collection 'fulltext_index' with 3 shard(s), 2 replica(s) with config-set 'fulltext_index'
 ```
 - shards 3：表示该集合分片数为3
 - replicationFactor 2：表示每个分片数都有2个备份
