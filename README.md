@@ -338,6 +338,14 @@
 * [设计模式之单例模式](note/设计模式/单例模式.md)
 </details>
 
+<details>
+<summary>数据结构和算法</summary>
+
+*[数组](note/数据结构和算法/数组.md)
+*[队列](note/数据结构和算法/队列.md)
+*[链表](note/数据结构和算法/链表.md)
+</details>
+
 ## 运维
 <details>
 <summary>软件部署</summary>
