@@ -368,6 +368,12 @@
 * [Zabbix: 添加被监控主机、创建主机、监控项、触发器、图形和模板](note/zabbix/Zabbix添加被监控主机、创建主机、监控项、触发器、图形和模板.md)
 * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
 </details>
+
+<details>
+<summary>Prometheus & Grafana</summary>
+
+* [Prometheus & Grafana 部署监控](note/prometheus/prometheus.md)
+</details>
   
 <details>
 <summary>Docker</summary>
