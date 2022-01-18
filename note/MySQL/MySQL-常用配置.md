@@ -63,4 +63,10 @@ $ vim /etc/my.cnf
 [mysqld]
 ...
 max_connections=1000
+
+# 查看最大连接数
+show variables like '%max_connections%';
+
+# 查看当前连接数
+show status like 'Threads%';
 ```

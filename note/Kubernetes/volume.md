@@ -170,14 +170,14 @@ allow.textmode=true
 how.nice.to.look=fairlyNice
 
 # 创建 configmap
-$ kubectl create configmap game-config --from-file=./ -n aaa
-$ kubectl get cm -n aaa
+$ kubectl create configmap game-config --from-file=./ -n storage
+$ kubectl get cm -n storage
 NAME              DATA   AGE
 game-config       2      8s
 nginx-configmap   2      4d12h
-$ kubectl describe cm/game-config -n aaa
+$ kubectl describe cm/game-config -n storage
 Name:         game-config
-Namespace:    aaa
+Namespace:    storage
 Labels:       <none>
 Annotations:  <none>
 
@@ -201,7 +201,7 @@ how.nice.to.look=fairlyNice
 
 Events:  <none>
 
-$ kubectl get cm/game-config -n aaa -o yaml
+$ kubectl get cm/game-config -n storage -o yaml
 apiVersion: v1
 data:
   game.properties: |-
@@ -458,4 +458,199 @@ immutable: true
 # 发布修改后的 configMap, 发现已经不可以修改了
 $ kubectl apply -f configmap.yaml 
 The ConfigMap "game-demo" is invalid: data: Forbidden: field is immutable when `immutable` is set
+```
+
+## 4.5 configMap 实操1
+创建一个 nginx 容器, 增加 两个文件: index.html(自定义首页)/index1.html(自定义页面), 并且增加环境变量GOOD=kino
+```bash
+# 在文件夹中创建三个文件
+echo "<h1>status: 200 no.1</h1>" > index.html
+echo "<h1>status: 200 no.2</h1>" > index1.html
+
+# 创建 configMap
+kubectl create configmap nginx-config-1 --from-file=./ -n storage
+或者
+kubectl create configmap nginx-config-1 --from-file=index.html --from-file=index1.html -n storage
+
+# 编辑 nginx 的 yaml 文件
+vim configmap-01.yaml
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config-2
+  namespace: storage
+data:
+  name: kino
+  color.good: purple
+  color.bad: yellow
+  allow.textmode: true
+  how.nice.to.look: fairlyNice
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx
+  namespace: storage
+spec:
+  selector:
+    matchLabels:
+      app: my-nginx
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      containers:
+      - name: my-nginx
+        image: nginx
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        env:
+        - name: GOOD
+          valueFrom:
+            configMapKeyRef:
+              name: nginx-config-2
+              key: name
+        ports:
+        - containerPort:  80
+          name:  my-nginx
+        volumeMounts:
+        - name: my-nginx-config1
+          mountPath: /usr/share/nginx/html/
+      volumes:
+        - name: my-nginx-config-1
+          configMap:
+            name: nginx-config-1
+      restartPolicy: Always
+
+# apply 
+kubectl apply -f configmap-01.yaml
+# 查看pod、cm
+kubectl get pod,cm -n storage -o wide                                                                                                                                         Mon Jan 17 23:26:26 2022
+
+NAME                            READY   STATUS    RESTARTS   AGE     IP           NODE      NOMINATED NODE   READINESS GATES
+pod/my-nginx-784c7f4666-njn4l   1/1     Running   0          3m45s   10.244.1.8   flink02   <none>           <none>
+
+NAME                       DATA   AGE
+configmap/nginx-config-1   2      6m45s
+configmap/nginx-config-2   5      3m45s
+
+# 访问 两个 html 页面
+curl 10.244.1.8
+<h1>status: 200 no.1</h1>
+
+curl 10.244.1.8/index1.html
+<h1>status: 200 no.2</h1>
+
+# 查看 GOOD 变量
+kubectl exec -it pod/my-nginx-784c7f4666-njn4l -n storage bash
+kubectl exec [POD] [COMMAND] is DEPRECATED and will be removed in a future version. Use kubectl kubectl exec [POD] -- [COMMAND] instead.
+root@my-nginx-784c7f4666-njn4l:/# echo $GOOD
+kino
+```
+
+## 4.6 configMap 实操2
+自定义 my.cnf 文件, 修改字符集、连接数, 部署运行 mysql
+```bash
+vim mysql.yaml
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: mysql-config
+  namespace: storage
+data:
+  my.cnf: |-
+    [mysql]
+    default-character-set=utf8
+
+    [client]
+    default-character-set=utf8
+
+    [mysqld]
+    # 字符集
+    init_connect='SET NAMES utf8'
+    # 最大连接数
+    max_connections=1000
+    # binlog
+    log-bin=mysql-bin
+    binlog-format=ROW
+    # 忽略大小写
+    lower_case_table_names=2
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: storage
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "123456"
+        ports:
+        - containerPort:  80
+          name:  mysql
+        volumeMounts:
+        - name: config
+          mountPath: /etc/mysql/conf.d
+      volumes:
+        - name: config
+          configMap:
+            name: mysql-config
+      restartPolicy: Always
+
+# 登录mysql
+mysql> SHOW VARIABLES LIKE 'character%';
++--------------------------+--------------------------------+
+| Variable_name            | Value                          |
++--------------------------+--------------------------------+
+| character_set_client     | utf8mb3                        |
+| character_set_connection | utf8mb3                        |
+| character_set_database   | utf8mb4                        |
+| character_set_filesystem | binary                         |
+| character_set_results    | utf8mb3                        |
+| character_set_server     | utf8mb4                        |
+| character_set_system     | utf8mb3                        |
+| character_sets_dir       | /usr/share/mysql-8.0/charsets/ |
++--------------------------+--------------------------------+
+8 rows in set (0.00 sec)
+
+mysql> show variables like '%max_connections%';
++------------------------+-------+
+| Variable_name          | Value |
++------------------------+-------+
+| max_connections        | 1000  |
+| mysqlx_max_connections | 100   |
++------------------------+-------+
+2 rows in set (0.00 sec)
 ```

@@ -35,7 +35,16 @@
   
 ---
 
+# 一、Pod 相关
 
+
+
+# 二、deploy 相关
+## 2.1 根据 deploy 暴露 NodePort
+```bash
+kubectl create deployment nginx --image=nginx
+$ kubectl expose deployment nginx --port=80 --type=NodePort
+```
 
 
 # create

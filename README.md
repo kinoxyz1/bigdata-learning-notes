@@ -352,6 +352,7 @@
 <summary>软件部署</summary>
 
 - [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
+- [centos7 nfs](note/软件部署/centos/nfs.md)
 </details>
 
 <details>
@@ -373,7 +374,7 @@
 <summary>Prometheus & Grafana</summary>
 
 * [Prometheus & Grafana 部署监控](note/prometheus/prometheus.md)
-</details>
+  </details>
   
 <details>
 <summary>Docker</summary>

@@ -336,14 +336,28 @@ server_host=kino-cdh01  # 改成主节点的ip或hosts
 ## 4.4 在MySQL中建库
 
 ```bash
-[root@kino-cdh01 yum.repos.d]# mysql -uroot -p
+[root@kino-cdh01 yum.repos.d]# mysql -uroot -pjZms2022!
+
+create user 'scm'@'%' IDENTIFIED BY 'jZms2022!Scm';
+create user 'amon'@'%' IDENTIFIED BY 'jZms2022!amon';
+create user 'hue'@'%' IDENTIFIED BY 'jZms2022!Hue';
+create user 'hive'@'%' IDENTIFIED BY 'jZms2022!Hive';
+create user 'sentry'@'%' IDENTIFIED BY 'jZms2022!Sentry';
+create user 'oozie'@'%' IDENTIFIED BY 'jZms2022!Oozie';
 
 CREATE DATABASE scm DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE amon DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE hue DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
-CREATE DATABASE hive DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+CREATE DATABASE metastore DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE sentry DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
 CREATE DATABASE oozie DEFAULT CHARACTER SET utf8 DEFAULT COLLATE utf8_general_ci;
+
+GRANT ALL ON scm.* TO 'scm'@'%';
+GRANT ALL ON amon.* TO 'amon'@'%';
+GRANT ALL ON hue.* TO 'hue'@'%';
+GRANT ALL ON metastore.* TO 'hive'@'%';
+GRANT ALL ON sentry.* TO 'sentry'@'%';
+GRANT ALL ON oozie.* TO 'oozie'@'%';
 ```
 ## 4.5 为CM配置数据库
 
