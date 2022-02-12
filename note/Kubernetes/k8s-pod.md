@@ -240,18 +240,22 @@ spec:
 这个yaml中, 在容器启动后, 执行 echo 输出了一句话, 在容器被杀死之前, 指定 nginx 的退出命令, 然后杀死容器, 实现了容器的 "优雅退出"
 
 # 八、Pod 健康检查(探针)
-Kubernetes 中, 有 3 种 探针, 实现了对 Pod 的健康检查
 
-- startupProbe 探针: 判断容器是否启动(start)
-- LivenessProbe 探针: 判断容器是否存活(running), 如果探针探测失败, 则标识容器也是失败
-- ReadinessProbe 探针: 用于判断容器是否启动完成(ready)
+Kubernetes 中, 有 3 种 探针, 实现了对 Pod 的健康检查：
+
+- 启动探针(startupProbe 探针): 判断容器是否启动(start)， 控制容器在启动后再进行就绪、存活检查。**启动探针为一次性的**。
+- 就绪探针(livenessProbe 探针): 判断容器是否准备好接受请求流量, 在未准备好时, 会从 Service 的负载均衡器中剔除，在就绪探针失败时，会重启容器。
+- 存活探针(readinessProbe 探针): 用于判断容器是否启动完成(ready)，如果捕捉到死锁，会重启容器。
+
+**以上三种探针, 在探测失败后, 都会重启容器。**
 
 Probe 支持三种检查方式:
 - httpGet: 发送 Http 请求, 返回 200-400 范围状态码为成功
 - exec: 执行 Shell 命令返回状态码是 0 为成功
 - tcpSocket: 发起 TCP Socket 建立成功
 
-httpGet 的方式:
+## 8.1 httpGet 的方式:
+
 ```yaml
 $ vim livenessProbe-httpGet.yaml
 apiVersion: v1
@@ -281,7 +285,8 @@ spec:
   restartPolicy: Always
 ```
 
-exec 的方式:
+## 8.2 exec 的方式:
+
 ```yaml
 $ vim livenessProbe-exec.yaml
 apiVersion: v1
@@ -315,7 +320,8 @@ spec:
   restartPolicy: Always
 ```
 
-tcpSocket 的方式:
+## 8.3 tcpSocket 的方式:
+
 ```yaml
 $ vim livenessProbe-tcp.yaml
 apiVersion: v1
@@ -371,6 +377,26 @@ spec:
   restartPolicy: Never
 ```
 在这个例子中, nginx-container 和 debian-container 都声明挂载了 shared-data 这个 volume, 而 shared-data 是 hostPath 类型, 所以, 它对应宿主机上的目录就是 /data, 而这个目录, 就同时被绑定进了这两个容器中, 这样的话 nginx-container 容器就可以从 /usr/share/nginx/html 目录中读取到 debian-container 生成的 index.html 文件了
+
+
+
+对于 HTTP 或者 TCP 存活检测可以使用命名的 [ContainerPort](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#containerport-v1-core)
+
+```bash
+ports:
+- name: liveness-port
+  containerPort: 8080
+  hostPort: 8080
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: liveness-port
+```
+
+
+
+
 
 
 # 九、Pod 的镜像拉取策略

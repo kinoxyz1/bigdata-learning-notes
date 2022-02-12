@@ -431,3 +431,4 @@ $ kubectl get pod,svc
 
 
 
+https://blog.csdn.net/a749227859/article/details/118732605

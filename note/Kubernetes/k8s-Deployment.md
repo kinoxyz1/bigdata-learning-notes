@@ -369,7 +369,22 @@ $ kubectl rollout undo deployment deployment-test -n day11
 $ kubectl rollout undo deployment deployment-test -n day11 -to-revision=1
 ```
 
-# 五、比例缩放
+# 五、deployment 更新策略
+
+当升级 deployment 时，可以使用 `.spec.strategy` 指定新 Pod 替换旧 Pod 的策略。
+
+`.spec.strategy.type` 可以是 `Recreate` 或 `RollingUpdate`。`RollingUpdate` 是默认值。
+
+
+
+## 5.1 Recreate 重新创建
+
+如果 `.spec.strategy.type==Recreate`，在创建新 Pods 之前，所有现有的 Pods 会被杀死。
+
+## 5.2 RollingUpdate 滚动更新
+
+`.spec.strategy.type==RollingUpdate` 有两个参数:  `maxSurge`, `maxUnavailable`
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment

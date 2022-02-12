@@ -23,12 +23,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="提交笔记">
+      <change afterPath="$PROJECT_DIR$/note/Kubernetes/常用服务部署.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s常用操作命令.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s常用操作命令.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-Deployment.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-Deployment.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-Service.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-Service.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/note/Kubernetes/volume.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/volume.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/note/MySQL/MySQL-常用配置.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/MySQL/MySQL-常用配置.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/cdh/Centos7.7-CDH6.2.1安装教程.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/cdh/Centos7.7-CDH6.2.1安装教程.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -125,13 +127,6 @@
       <workItem from="1592894954427" duration="1223000" />
       <workItem from="1592910045624" duration="27000" />
       <workItem from="1592910168547" duration="597000" />
-    </task>
-    <task id="LOCAL-00107" summary="提交笔记">
-      <created>1610690401523</created>
-      <option name="number" value="00107" />
-      <option name="presentableId" value="LOCAL-00107" />
-      <option name="project" value="LOCAL" />
-      <updated>1610690401523</updated>
     </task>
     <task id="LOCAL-00108" summary="提交笔记">
       <created>1610888572376</created>
@@ -469,7 +464,14 @@
       <option name="project" value="LOCAL" />
       <updated>1637771271653</updated>
     </task>
-    <option name="localTasksCounter" value="156" />
+    <task id="LOCAL-00156" summary="提交笔记">
+      <created>1642523469557</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1642523469558</updated>
+    </task>
+    <option name="localTasksCounter" value="157" />
     <servers />
   </component>
   <component name="TimeTrackingManager">

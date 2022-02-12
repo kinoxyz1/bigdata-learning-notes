@@ -70,3 +70,17 @@ show variables like '%max_connections%';
 # 查看当前连接数
 show status like 'Threads%';
 ```
+
+
+
+# 四、修改密码
+
+```mysql
+SET PASSWORD FOR 'root'@'localhost'= "Kino123.";
+```
+
+# 五、强制修改密码
+
+```bash
+```
+

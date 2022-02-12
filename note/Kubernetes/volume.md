@@ -654,3 +654,385 @@ mysql> show variables like '%max_connections%';
 +------------------------+-------+
 2 rows in set (0.00 sec)
 ```
+
+
+# 五、NFS
+[centos7 nfs安装部署](../../note/软件部署/centos/nfs.md)
+
+## 5.1 使用 nfs 挂载
+```bash
+vim nginx-nfs.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: storage
+  labels:
+    app: nginx
+spec:
+  selector:
+    matchLabels:
+      app: nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort:  80
+          name: nginx
+        volumeMounts:
+        - name: nfs-volume
+          mountPath: /usr/share/nginx/html/
+      volumes:
+        - name: nfs-volume
+          nfs:
+            server: 192.168.156.60
+            path: /app/nfs
+      restartPolicy: Always
+ 
+ kubectl apply -f nginx-nfs.yaml
+ 
+ # 在 /app/nfs 目录下创建 index.html 文件
+ echo "hello nfs volume" > index.html
+ 
+ 
+ # 访问 nginx 
+ kubectl get pod -n storage -o wide
+ pod/nginx-5d59d8d7fd-v744j      1/1     Running            0          3m44s   10.244.2.11   flink03   <none>           <none>
+
+curl 10.244.2.11
+hello nfs volume
+```
+
+
+# 六、PV、PVC
+[官方 PV、PVC 实战](https://kubernetes.io/zh/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
+
+[PV、PVC 的官方文档](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#access-modes)
+
+## 6.1 持久卷（PersistentVolume ）
+
+- 持久卷（PersistentVolume，PV）是集群中的一块存储，可以由管理员事先供应，或者 使用[存储类（Storage Class）](https://kubernetes.io/zh/docs/concepts/storage/storage-classes/)来动态供应。
+- 持久卷是集群资源，就像节点也是集群资源一样。PV 持久卷和普通的 Volume 一样，也是使用 卷插件来实现的，只是它们拥有独立于使用他们的Pod的生命周期。
+- 此 API 对象中记述了存储的实现细节，无论其背后是 NFS、iSCSI 还是特定于云平台的存储系统。
+
+### 6.1.1 示例
+```bash
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-0001
+  namespace: storage
+spec:
+  capacity:
+    storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: slow
+  nfs:
+    path: /app/nfs
+    server: 192.168.156/60
+```
+参数说明:
+1. capacity.storage: [该 PV 的容量](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#capacity)
+2. volumeMode: [卷模式, 默认为 Filesystem](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#volume-mode)
+3. accessModes: [访问模式](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#access-modes)
+    - ReadWriteOnce: 可以被一个节点以只读的方式挂载;
+    - ReadOnlyMany: 可以被多个节点以只读的方式挂载;
+    - ReadWriteMany: 可以被多个节点以读写的方式挂载;
+    - ReadWriteOncePod: 卷可以被单个 Pod 以只读的方式挂载。如果需要集群中只有一个 Pod 可以读写该 PVC, 就需要用此访问模式.
+4. persistentVolumeReclaimPolicy: [回收策略](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#reclaim-policy)
+5. storageClassName: [用于和 PVC 匹配](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#class)
+
+
+## 6.2 持久卷申请（PersistentVolumeClaim，PVC）
+
+- 表达的是用户对存储的请求
+- 概念上与 Pod 类似。 Pod 会耗用节点资源，而 PVC 申领会耗用 PV 资源。
+- Pod 可以请求特定数量的资源（CPU 和内存）；同样 PVC 申领也可以请求特定的大小和访问模式 （例如，可以要求 PV 卷能够以 ReadWriteOnce、ReadOnlyMany 或 ReadWriteMany 模式之一来挂载，参见[访问模式](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#access-modes)）。
+
+### 6.2.1 示例
+```bash
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 8Gi
+  storageClassName: slow
+```
+
+## 6.3 PV、PVC 实操
+使用 PV、PVC、ConfigMap 部署一个单机版的 MySQL
+```bash
+# 1. 创建 my.cnf 文件并 create 为 configmap
+cat >> my.cnf << EOF
+[mysql]
+default-character-set=utf8
+
+[client]
+default-character-set=utf8
+
+[mysqld]
+# 字符集
+default-character-set=utf8
+init_connect='SET NAMES utf8'
+# 最大连接数
+max_connections=1000
+# binlog
+log-bin=mysql-bin
+binlog-format=ROW
+# 忽略大小写
+lower_case_table_names=2
+EOF
+
+kubectl create configmap mysql-config --from-file=my.cnf -n storage
+
+# 2. 创建 PV
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-mysql-1
+  namespace: storage
+spec:
+  capacity:
+    storage: 50Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: my-nfs
+  nfs:
+    path: /app/nfs
+    server: 192.168.156/60
+    
+# 3. 创建 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-mysql-1
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: my-nfs
+
+# 4. 创建 deploy 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-pv
+  namespace: storage
+  labels:
+    app: mysql-pv
+spec:
+  selector:
+    matchLabels:
+      app: mysql-pv
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  mysql-pv
+    spec:
+      containers:
+      - name: mysql-pv
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "123456"
+        ports:
+        - containerPort:  80
+          name: mysql-pv
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: my-config
+          mountPath: /etc/mysql/conf.d
+        - name: time-zone
+          mountPath: /etc/localtime
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: pvc-mysql-1
+        - name: my-config
+          configMap: 
+            name: mysql-config
+        - name: time-zone
+          hostPath: 
+            path: /etc/localtime
+      restartPolicy: Always
+
+```
+
+## 6.4 存储类（Storage Class）
+
+- 尽管 PersistentVolumeClaim 允许用户消耗抽象的存储资源，常见的情况是针对不同的 问题用户需要的是具有不同属性（如，性能）的 PersistentVolume 卷。
+- 集群管理员需要能够提供不同性质的 PersistentVolume，并且这些 PV 卷之间的差别不 仅限于卷大小和访问模式，同时又不能将卷是如何实现的这些细节暴露给用户。
+- 为了满足这类需求，就有了 *存储类（StorageClass）* 资源。
+
+[官方部署文档](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)
+
+### 6.4.1 部署
+```bash
+# 创建存储类
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: managed-nfs-storage
+# provisioner: 指定供应商的名字
+provisioner: k8s-sigs.io/nfs-subdir-external-provisioner # or choose another name, must match deployment's env PROVISIONER_NAME'
+parameters:
+  archiveOnDelete: "false"
+  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfs-client-provisioner
+  labels:
+    app: nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: nfs-client-provisioner
+      containers:
+        - name: nfs-client-provisioner
+          image: k8s.gcr.io/sig-storage/nfs-subdir-external-provisioner:v4.0.2
+          volumeMounts:
+            - name: nfs-client-root
+              mountPath: /persistentvolumes
+          env:
+            - name: PROVISIONER_NAME
+              value: k8s-sigs.io/nfs-subdir-external-provisioner
+            # 改成自己的 NFS 地址
+            - name: NFS_SERVER
+              value: 192.168.156.60
+            - name: NFS_PATH
+              value: /app/nfs
+      volumes:
+        - name: nfs-client-root
+          nfs:
+            server: 192.168.156.60
+            path: /app/nfs
+            
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nfs-client-provisioner-runner
+rules:
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: run-nfs-client-provisioner
+subjects:
+  - kind: ServiceAccount
+    name: nfs-client-provisioner
+    # replace with namespace where provisioner is deployed
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: nfs-client-provisioner-runner
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: leader-locking-nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: leader-locking-nfs-client-provisioner
+  # replace with namespace where provisioner is deployed
+  namespace: default
+subjects:
+  - kind: ServiceAccount
+    name: nfs-client-provisioner
+    # replace with namespace where provisioner is deployed
+    namespace: default
+roleRef:
+  kind: Role
+  name: leader-locking-nfs-client-provisioner
+  apiGroup: rbac.authorization.k8s.io
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
