@@ -1074,10 +1074,60 @@ spec:
         runAsUser: 2000
 ```
 
+## 3.2 ingress 案例
+### 3.2.1 基本配置
+```yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress01
+  namespace: ingress
+spec:
+  rules:
+  - host: kino.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:  ## 指定需要响应的后端服务
+          service:
+            name: my-nginx-svc  ## kubernetes集群的svc名称
+            port:
+              number: 80  ## service的端口号
+```
+
+- [pathType 详细](https://kubernetes.io/zh/docs/concepts/services-networking/ingress/#path-types)：
+  - `Prefix`：基于以 `/` 分隔的 URL 路径前缀匹配。匹配区分大小写，并且对路径中的元素逐个完成。 路径元素指的是由 `/` 分隔符分隔的路径中的标签列表。 如果每个 *p* 都是请求路径 *p* 的元素前缀，则请求与路径 *p* 匹配。
+  - `Exact`：精确匹配 URL 路径，且区分大小写。
+  - `ImplementationSpecific`：对于这种路径类型，匹配方法取决于 IngressClass。 具体实现可以将其作为单独的 `pathType` 处理或者与 `Prefix` 或 `Exact` 类型作相同处理。
 
 
-
-
+### 3.2.2 defaultBackend
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress02
+  namespace: ingress
+spec:
+  defaultBackend:  ## 指定所有未匹配的默认后端
+    service:
+      name: php-apache
+      port: 
+        number: 80
+  rules:
+  - host: kino.com
+    http:
+      paths:
+      - path: /abc
+        pathType: Prefix
+        backend:
+          service:
+            name: my-nginx-svc
+            port:
+              number: 80
+```
 
 
 

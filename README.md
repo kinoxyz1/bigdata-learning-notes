@@ -298,6 +298,7 @@
 - [nginx常用操作](note/nginx/nginx常用操作.md)
 - [alias和root的区别](note/nginx/alias和root的区别.md)
 - [nginx转发带有下划线的header异常](note/nginx/nginx转发带有下划线的header异常.md)
+- [nginx转发80端口到443](note/nginx/nginx转发80端口到443.md)
 </details>
 
 
