@@ -1129,11 +1129,391 @@ spec:
               number: 80
 ```
 
+### 3.2.3 rewrite
+> Rewrite 功能，经常被用于前后分离的场景
+> 
+> - 前端给服务器发送 / 请求映射前端地址。
+> - 后端给服务器发送 /api 请求来到对应的服务。但是后端服务没有 /api的起始路径，所以需要ingress-controller自动截串
+
+https://kubernetes.github.io/ingress-nginx/examples/rewrite/
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:  ## 写好annotion
+  #https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/
+    nginx.ingress.kubernetes.io/rewrite-target: /$2  ### 只保留哪一部分
+  name: ingress03
+  namespace: ingress
+spec:
+  rules:  ## 写好规则
+  - host: kino.com
+    http:
+      paths:
+      - backend:
+          service: 
+            name: php-apache
+            port: 
+              number: 80
+        path: /api(/|$)(.*)
+        pathType: Prefix
+```
+
+### 3.2.4 SSL
+https://kubernetes.github.io/ingress-nginx/user-guide/tls/
+
+生成证书
+```yaml
+$ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${KEY_FILE:tls.key} -out ${CERT_FILE:tls.cert} -subj "/CN=${HOST:kino.com}/O=${HOST:kino.com}"
+
+$ kubectl create secret tls ${CERT_NAME:kino-tls} --key ${KEY_FILE:tls.key} --cert ${CERT_FILE:tls.cert}
 
 
+## 示例命令如下
+$ openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.cert -subj "/CN=kino.com/O=kino.com"
+
+$ kubectl create secret tls kino-tls --key tls.key --cert tls.cert
+```
+配置域名使用证书
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-04
+  namespace: ingress
+spec:
+  tls:
+   - hosts:
+     - kino.com
+     secretName: kino-tls
+  rules:
+  - host: kino.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-nginx-svc
+            port:
+              number: 80
+```
 
 
+### 3.2.5 Rate Limiting(限速)
+https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#rate-limiting
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-05
+  namespace: ingress
+  annotations:  ##注解
+    nginx.ingress.kubernetes.io/limit-rps: "1"   ### 限流的配置
+spec:
+  defaultBackend: ## 只要未指定的映射路径
+    service:
+      name: php-apache
+      port:
+        number: 80
+  rules:
+  - host: kino.com
+    http:
+      paths:
+      - path: /action
+        pathType: Prefix
+        backend:
+          service:
+            name: nginx-svc
+            port:
+              number: 80
+```
+
+### 3.2.6 Canary
+https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#canary
+
+service 版本的金丝雀流程
+
+![service 版本的金丝雀流程](../../img/k8s/service/ingress-canary-service.png)
+
+缺点：
+- 不能自定义灰度逻辑，比如指定用户进行灰度
+
+ingress 版本的金丝雀流程
+
+![ingress 版本的金丝雀流程](../../img/k8s/service/ingress-canary-ingress.png)
+
+```yaml
+## 使用如下文件部署两个service版本。v1版本返回nginx默认页，v2版本返回 11111
+apiVersion: v1
+kind: Service
+metadata:
+  name: v1-service
+  namespace: ingress
+spec:
+  selector:
+    app: v1-pod
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  v1-deploy
+  namespace: ingress
+  labels:
+    app:  v1-deploy
+spec:
+  selector:
+    matchLabels:
+      app: v1-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  v1-pod
+    spec:
+      containers:
+      - name:  nginx
+        image:  nginx
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-v2-service
+  namespace: ingress
+spec:
+  selector:
+    app: canary-v2-pod
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  canary-v2-deploy
+  namespace: ingress
+  labels:
+    app:  canary-v2-deploy
+spec:
+  selector:
+    matchLabels:
+      app: canary-v2-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  canary-v2-pod
+    spec:
+      containers:
+      - name:  nginx
+        image:  registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/nginx-test:env-msg
+```
 
 
+### 3.2.7 Session Affinity
+https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#session-affinity
 
+> Cookie affinity
+>
+> 第一次访问，ingress-nginx会返回给浏览器一个Cookie，以后浏览器带着这个Cookie，保证访问总是抵达之前的Pod；
+  ```yaml
+  ## 部署一个三个Pod的Deployment并设置Service
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: session-affinity
+    namespace: ingress
+  spec:
+    selector:
+      app: session-affinity
+    type: ClusterIP
+    ports:
+    - name: session-affinity
+      port: 80
+      targetPort: 80
+      protocol: TCP
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name:  session-affinity
+    namespace: ingress
+    labels:
+      app:  session-affinity
+  spec:
+    selector:
+      matchLabels:
+        app: session-affinity
+    replicas: 3
+    template:
+      metadata:
+        labels:
+          app:  session-affinity
+      spec:
+        containers:
+        - name:  session-affinity
+          image:  nginx
 
+### 利用每次请求携带同样的cookie，来标识是否是同一个会话
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: session-test
+  namespace: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "kino-session"
+spec:
+  rules:
+  - host: kino.com
+    http:
+      paths:
+      - path: /   ### 如果以前这个域名下的这个路径相同的功能有配置过，以最后一次生效
+        pathType: Prefix
+        backend:
+          service:
+            name: session-affinity   ###
+            port:
+              number: 80
+  ```
+
+# 四、NetworkPolicy
+
+https://kubernetes.io/zh/docs/concepts/services-networking/network-policies/
+
+在 k8s 中, 不同 namespace 之间, 网络默认是互通的, NetworkPolicy 可以指定 Pod 之间的隔离策略。
+
+Pod 之间互通，是通过如下三个标识符的组合来辩识的：
+
+1. 其他被允许的 Pods（例外：Pod 无法阻塞对自身的访问）
+2. 被允许的名称空间
+3. IP 组块（例外：与 Pod 运行所在的节点的通信总是被允许的， 无论 Pod 或节点的 IP 地址）
+
+![networkpolicy](../../img/k8s/service/networkpolicy.png)
+
+## 4.1 Pod 的隔离和非隔离
+- 默认情况下，Pod网络都是非隔离的（non-isolated），可以接受来自任何请求方的网络请求。
+
+- 如果一个 NetworkPolicy 的标签选择器选中了某个 Pod，则该 Pod 将变成隔离的（isolated），并将拒绝任何不被 NetworkPolicy 许可的网络连接。
+
+## 4.2 示例
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: networkpolicy
+spec:
+  podSelector:  ## 选中指定Pod
+    matchLabels:
+      role: db
+  policyTypes:  ## 定义上面Pod的入站出站规则
+  - Ingress
+  - Egress
+  ingress:    ## 定义入站白名单
+  - from:   
+    # 此选择器将选择特定的 IP CIDR 范围以用作入站流量来源或出站流量目的地。 这些应该是集群外部 IP，因为 Pod IP 存在时间短暂的且随机产生。
+    - ipBlock:  
+        cidr: 172.17.0.0/16
+        except:
+        - 172.17.1.0/24
+    # 此选择器将选择特定的名字空间，应将所有 Pod 用作其 入站流量来源或出站流量目的地。
+    - namespaceSelector:
+        matchLabels:
+          project: myproject
+    # 此选择器将在与 NetworkPolicy 相同的名字空间中选择特定的 Pod，应将其允许作为入站流量来源或出站流量目的地。
+    - podSelector:
+        matchLabels:
+          role: frontend
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress:  ## 定义出站白名单
+  - to: 
+    - ipBlock: 
+        cidr: 10.0.0.0/24
+    ports:
+    - protocol: TCP
+      port: 5978
+```
+
+- **基本信息：** 同其他的 Kubernetes 对象一样，`NetworkPolicy` 需要 `apiVersion`、`kind`、`metadata` 字段
+- spec：`NetworkPolicy`的spec字段包含了定义网络策略的主要信息：
+  - **podSelector：** 同名称空间中，符合此标签选择器 `.spec.podSelector` 的 Pod 都将应用这个 `NetworkPolicy`。上面的 Example中的 podSelector 选择了 `role=db` 的 Pod。如果该字段为空，则将对名称空间中所有的 Pod 应用这个 `NetworkPolicy`
+  - **policyTypes：** `.spec.policyTypes` 是一个数组类型的字段，该数组中可以包含 `Ingress`、`Egress` 中的一个，也可能两个都包含。该字段标识了此 `NetworkPolicy` 是否应用到 入方向的网络流量、出方向的网络流量、或者两者都有。如果不指定 `policyTypes` 字段，该字段默认将始终包含 `Ingress`，当 `NetworkPolicy` 中包含出方向的规则时，`Egress` 也将被添加到默认值。
+  - ingress：ingress是一个数组，代表入方向的白名单规则。每一条规则都将允许与`from`和`ports`匹配的入方向的网络流量发生。例子中的`ingress`包含了一条规则，允许的入方向网络流量必须符合如下条件：
+    - Pod 的监听端口为 `6379`
+    - 请求方可以是如下三种来源当中的任意一种：
+      - ipBlock 为 `172.17.0.0/16` 网段，但是不包括 `172.17.1.0/24` 网段
+      - namespaceSelector 标签选择器，匹配标签为 `project=myproject`
+      - podSelector 标签选择器，匹配标签为 `role=frontend`
+  - egress：`egress`是一个数组，代表出方向的白名单规则。每一条规则都将允许与`to`和`ports`匹配的出方向的网络流量发生。例子中的`egress`允许的出方向网络流量必须符合如下条件：
+    - 目标端口为 `5978`
+    - 目标 ipBlock 为 `10.0.0.0/24` 网段
+
+因此，例子中的 `NetworkPolicy` 对网络流量做了如下限制：
+
+1. 隔离了 `default` 名称空间中带有 `role=db` 标签的所有 Pod 的入方向网络流量和出方向网络流量
+2. Ingress规则（入方向白名单规则）：
+   - 当请求方是如下三种来源当中的任意一种时，允许访问`default`名称空间中所有带`role=db`标签的 Pod 的6379端口：
+     - ipBlock 为 `172.17.0.0/16` 网段，但是不包括 `172.17.1.0/24` 网段
+     - namespaceSelector 标签选择器，匹配标签为 `project=myproject`
+     - podSelector 标签选择器，匹配标签为 `role=frontend`
+3. Egress规则（出方向白名单规则）：
+   - 当如下条件满足时，允许出方向的网络流量：
+     - 目标端口为 `5978`
+     - 目标 ipBlock 为 `10.0.0.0/24` 网段
+
+## 4.3 to 和 from 选择器的行为
+
+NetworkPolicy 的 `.spec.ingress.from` 和 `.spec.egress.to` 字段中，可以指定 4 种类型的标签选择器：
+
+- **podSelector** 选择与 `NetworkPolicy` 同名称空间中的 Pod 作为入方向访问控制规则的源或者出方向访问控制规则的目标
+- **namespaceSelector** 选择某个名称空间（其中所有的Pod）作为入方向访问控制规则的源或者出方向访问控制规则的目标
+- **namespaceSelector** 和 **podSelector** 在一个 `to` / `from` 条目中同时包含 `namespaceSelector` 和 `podSelector` 将选中指定名称空间中的指定 Pod。此时请特别留意 YAML 的写法，如下所示：
+
+```yaml
+ ...
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          user: alice
+      podSelector:
+        matchLabels:
+          role: client
+  ...
+```
+该例子中，podSelector 前面没有 `-` 减号，namespaceSelector 和 podSelector 是同一个 from 元素的两个字段，将选中带 `user=alice` 标签的名称空间中所有带 `role=client` 标签的 Pod。但是，下面的这个 NetworkPolicy 含义是不一样的：
+
+```yaml
+  ...
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          user: alice
+    - podSelector:
+        matchLabels:
+          role: client
+  ...
+```
+后者，podSelector 前面带 `-` 减号，说明 namespaceSelector 和 podSelector 是 from 数组中的两个元素，他们将选中 NetworkPolicy 同名称空间中带 `role=client` 标签的对象，以及带 `user=alice` 标签的名称空间的所有 Pod。
+> 前者是交集关系（且），后者是并集关系（或）
+
+- ipBlock** 可选择 IP CIDR 范围作为入方向访问控制规则的源或者出方向访问控制规则的目标。这里应该指定的是集群外部的 IP，因为集群内部 Pod 的 IP 地址是临时分配的，且不可预测。
+
+集群的入方向和出方向网络机制通常需要重写网络报文的 source 或者 destination IP。kubernetes 并未定义应该在处理 `NetworkPolicy` 之前还是之后再修改 source / destination IP，因此，在不同的云供应商、使用不同的网络插件时，最终的行为都可能不一样。这意味着：
+
+- 对于入方向的网络流量，某些情况下，你可以基于实际的源 IP 地址过滤流入的报文；在另外一些情况下，NetworkPolicy 所处理的 "source IP" 可能是 LoadBalancer 的 IP 地址，或者其他地址
+- 对于出方向的网络流量，**基于 ipBlock 的策略可能有效，也可能无效**
