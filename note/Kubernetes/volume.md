@@ -891,7 +891,7 @@ spec:
 
 ```
 
-## 6.4 存储类（Storage Class）
+## 6.4 动态存储类（Storage Class）
 
 - 尽管 PersistentVolumeClaim 允许用户消耗抽象的存储资源，常见的情况是针对不同的 问题用户需要的是具有不同属性（如，性能）的 PersistentVolume 卷。
 - 集群管理员需要能够提供不同性质的 PersistentVolume，并且这些 PV 卷之间的差别不 仅限于卷大小和访问模式，同时又不能将卷是如何实现的这些细节暴露给用户。
@@ -1025,9 +1025,118 @@ roleRef:
 ```
 
 
+### 6.4.2 设置默认
+方式一:
+```bash
+## 创建了一个存储类
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  # 设置为默认存储类
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+```
 
+方式二: 
+```bash
+kubectl patch storageclass managed-nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
+```
 
+### 6.4.3 案例
+```yaml
 
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: mysql-config
+  namespace: storage
+data:
+  my.cnf: |
+    [mysql]
+    default-character-set=utf8
+    [client]
+    default-character-set=utf8
+    [mysqld]
+    default-character-set=utf8
+    init_connect='SET NAMES utf8'
+    max_connections=1000
+    log-bin=mysql-bin
+    binlog-format=ROW
+    lower_case_table_names=2
+---
+# 3. 创建 PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Gi
+  # storageClassName: my-nfs
+
+# 4. 创建 deploy 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql-pv
+  namespace: storage
+  labels:
+    app: mysql-pv
+spec:
+  selector:
+    matchLabels:
+      app: mysql-pv
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app:  mysql-pv
+    spec:
+      containers:
+      - name: mysql-pv
+        image: mysql:8
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "123456"
+        ports:
+        - containerPort:  80
+          name: mysql-pv
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: my-config
+          mountPath: /etc/mysql/conf.d
+        - name: time-zone
+          mountPath: /etc/localtime
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+        - name: my-config
+          configMap: 
+            name: mysql-config
+        - name: time-zone
+          hostPath: 
+            path: /etc/localtime
+      restartPolicy: Always
+```
+查看 pv/pvc 
+```bash
+$ kubectl get pv,pvc -A -owide
+NAME                                                        CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS   CLAIM               STORAGECLASS          REASON   AGE    VOLUMEMODE
+persistentvolume/pvc-bc727051-8426-4249-8e13-8414eb5279f0   50Gi       RWO            Delete           Bound    storage/mysql-pvc   managed-nfs-storage            4m4s   Filesystem
+
+NAMESPACE   NAME                              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS          AGE    VOLUMEMODE
+storage     persistentvolumeclaim/mysql-pvc   Bound    pvc-bc727051-8426-4249-8e13-8414eb5279f0   50Gi       RWO            managed-nfs-storage   4m4s   Filesystem
+
+```
 
 
 
