@@ -84,3 +84,20 @@ SET PASSWORD FOR 'root'@'localhost'= "Kino123.";
 ```bash
 ```
 
+
+# 六、max_allowed_packet 
+`max_allowed_packet` 是指 mysql server 和 client 在一次传送数据包的过程中最大允许的数据包大小.
+
+```bash
+# 临时修改
+set global max_allowed_packet = 64 * 1024 * 1024;
+
+
+# 永久修改
+vim my.ini
+[mysqld]
+max_allowed_packet = 64M 
+
+# 查询
+show VARIABLES like '%max_allowed_packet%';
+```

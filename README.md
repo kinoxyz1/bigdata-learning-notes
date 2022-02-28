@@ -242,8 +242,6 @@
 </details>
 
 
-
-
 <details>
 <summary>Canal</summary>
 
@@ -347,6 +345,8 @@
 * [链表](note/数据结构和算法/链表.md)
 
 </details>
+
+* [Java 泛型](note/java/泛型.md)
 
 ## 运维
 <details>
