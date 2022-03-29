@@ -223,14 +223,8 @@
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
 * [Flink 部署和运行](note/flink/flink部署和运行.md)
 * [CDH6.3.2 集成FLink](note/flink/CDH6.3.2集成FLink.md)
-* [Flink 运行时架构之运行时组件](note/flink/flink运行时架构之运行时组件.md)
-* [Flink 运行时架构之作业提交流程](note/flink/flink运行时架构之作业提交流程.md)
-* [Flink 运行时架构之任务调度原理(一)](note/flink/flink运行时架构之任务调度原理(一).md)
-* [Flink 运行时架构之任务调度原理(二)](note/flink/flink运行时架构之任务调度原理(二).md)
-* [Flink 运行时架构之任务调度原理(三)](note/flink/flink运行时架构之任务调度原理(三).md)
-* [Flink 运行时架构之任务调度原理(四)](note/flink/flink运行时架构之任务调度原理(四).md)
-* [Flink 运行时架构之任务调度原理(五)](note/flink/flink运行时架构之任务调度原理(五).md)
-* [Flink 运行时环境和处理过程](note/flink/flink执行环境和处理过程.md)
+* [Flink 构成和提交流程](note/flink/flink架构和提交流程.md)
+* [Flink 并行度的划分](note/flink/flink并行度.md)
 * [Flink Source](note/flink/flinkSource.md)
 * [Flink Transform](note/flink/flinkTransform.md)
 * [Flink 支持的数据类型](note/flink/flink支持的数据类型.md)
@@ -238,7 +232,6 @@
 * [Flink Sink](note/flink/flinkSink.md)
 * [Flink Window](note/flink/flinkWindow.md)
 * [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
-* [Docker 部署 单机Flink](note/flink/Docker部署单机Flink.md)
 </details>
 
 

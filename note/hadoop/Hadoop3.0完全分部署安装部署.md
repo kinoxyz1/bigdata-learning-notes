@@ -1,25 +1,9 @@
 
-* [一、集群规划](#%E4%B8%80%E9%9B%86%E7%BE%A4%E8%A7%84%E5%88%92)
-* [二、下载安装包](#%E4%BA%8C%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85%E5%8C%85)
-* [三、解压安装、配置](#%E4%B8%89%E8%A7%A3%E5%8E%8B%E5%AE%89%E8%A3%85%E9%85%8D%E7%BD%AE)
-  * [3\.1 解压到指定目录](#31-%E8%A7%A3%E5%8E%8B%E5%88%B0%E6%8C%87%E5%AE%9A%E7%9B%AE%E5%BD%95)
-  * [3\.2 修改核心配置文件](#32-%E4%BF%AE%E6%94%B9%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
-  * [3\.3 Hadoop3\.0 用root用户启动需增加如下配置](#33-hadoop30-%E7%94%A8root%E7%94%A8%E6%88%B7%E5%90%AF%E5%8A%A8%E9%9C%80%E5%A2%9E%E5%8A%A0%E5%A6%82%E4%B8%8B%E9%85%8D%E7%BD%AE)
-* [四、分发 hadoop3\.0](#%E5%9B%9B%E5%88%86%E5%8F%91-hadoop30)
-* [五、启动 hadoop](#%E4%BA%94%E5%90%AF%E5%8A%A8-hadoop)
-  * [5\.2 启动集群](#52-%E5%90%AF%E5%8A%A8%E9%9B%86%E7%BE%A4)
-  * [5\.3 在 WebUI 中查看](#53-%E5%9C%A8-webui-%E4%B8%AD%E6%9F%A5%E7%9C%8B)
 
 ---
-# 一、集群规划
-节点  | IP| 服务 
----- | ---- | ----
-hadoop1 | 192.168.220.30 | namenode、datanode、NodeManager
-hadoop2 | 192.168.220.31 | datanode、ResourceManager、NodeManager
-hadoop3 | 192.168.220.32 | datanode、SecondaryNameNode、NodeManager
 
 
-# 二、下载安装包
+# 一、下载安装包
 https://archive.apache.org/dist/hadoop/common/
 
 
@@ -33,69 +17,161 @@ https://archive.apache.org/dist/hadoop/common/
 ```bash
 [root@hadoop1 hadoop-3.1.1]# cd /usr/bigdata/hadoop-3.1.1/etc/hadoop/
 [root@hadoop1 hadoop]# vim core-site.xml
-<!-- 指定HDFS中NameNode的地址 -->
-<property>
-    <name>fs.defaultFS</name>
-    <value>hdfs://hadoop1:9000</value>
-</property>
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
-<!-- 指定Hadoop运行时产生文件的存储目录 -->
-<property>
-	<name>hadoop.tmp.dir</name>
-	<value>/usr/bigdata/hadoop-3.1.1/data/tmp</value>
-</property>
+<configuration>
+	<!-- 指定NameNode的地址 -->
+    <property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hadoop1:8020</value>
+	</property>
+	<!-- 指定hadoop数据的存储目录 -->
+    <property>
+        <name>hadoop.tmp.dir</name>
+        <value>/app/hadoop-3.1.3/data</value>
+	</property>
+
+	<!-- 配置HDFS网页登录使用的静态用户为root -->
+    <property>
+        <name>hadoop.http.staticuser.user</name>
+        <value>root</value>
+	</property>
+
+	<!-- 配置该 root(superUser)允许通过代理访问的主机节点 -->
+    <property>
+        <name>hadoop.proxyuser.root.hosts</name>
+        <value>*</value>
+	</property>
+	<!-- 配置该 root(superUser)允许通过代理用户所属组 -->
+    <property>
+        <name>hadoop.proxyuser.root.groups</name>
+        <value>*</value>
+	</property>
+	<!-- 配置该root(superUser)允许通过代理的用户-->
+    <property>
+        <name>hadoop.proxyuser.root.users</name>
+        <value>*</value>
+	</property>
+</configuration>
 ```
 ② 配置 `hadoop-env.sh`
 ```bash
 [root@hadoop1 hadoop]# vim hadoop-env.sh
-export JAVA_HOME=/usr/java/jdk1.8.0_131
+export JAVA_HOME=/usr/local/java/jdk1.8.0_131
 ```
 ③ 配置 `hdfs-site.xml`
 ```bash
 [root@hadoop1 hadoop]# vim hdfs-site.xml
+<configuration>
 <property>
     <name>dfs.replication</name>
     <value>1</value>
 </property>
-<!-- 指定Hadoop辅助名称节点主机配置 -->
+<!-- nn web端访问地址-->
+<property>
+    <name>dfs.namenode.http-address</name>
+    <value>hadoop1:9870</value>
+</property>
+<!-- 2nn web端访问地址-->
 <property>
     <name>dfs.namenode.secondary.http-address</name>
-    <value>hadoop3:50090</value>
+    <value>hadoop3:9868</value>
 </property>
+</configuration>
 ```
 ④ 配置 `yarn-env.sh`
 ```bash
 [root@hadoop1 hadoop]# vim yarn-env.sh
-export JAVA_HOME=/usr/java/jdk1.8.0_131
+export JAVA_HOME=/usr/local/java/jdk1.8.0_131
 ```
 ⑤ 配置 `yarn-site.xml`
 ```bash
-<!-- Reducer获取数据的方式 -->
+<configuration>
+<!-- 指定MR走shuffle -->
 <property>
     <name>yarn.nodemanager.aux-services</name>
     <value>mapreduce_shuffle</value>
 </property>
-<!-- 指定YARN的ResourceManager的地址 -->
+<!-- 指定ResourceManager的地址-->
 <property>
     <name>yarn.resourcemanager.hostname</name>
     <value>hadoop1</value>
 </property>
+<!-- 环境变量的继承 -->
+<property>
+    <name>yarn.nodemanager.env-whitelist</name>
+    <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
+</property>
+<!-- yarn容器允许分配的最大最小内存 -->
+<property>
+    <name>yarn.scheduler.minimum-allocation-mb</name>
+    <value>2048</value>
+</property>
+<property>
+    <name>yarn.scheduler.maximum-allocation-mb</name>
+    <value>4096</value>
+</property>
+
+<!-- yarn容器允许管理的物理内存大小 -->
+<property>
+    <name>yarn.nodemanager.resource.memory-mb</name>
+    <value>8092</value>
+</property>
+
+<!-- 关闭yarn对物理内存和虚拟内存的限制检查 -->
+<property>
+    <name>yarn.nodemanager.pmem-check-enabled</name>
+    <value>false</value>
+</property>
+<property>
+    <name>yarn.nodemanager.vmem-check-enabled</name>
+    <value>false</value>
+</property>
+<!-- 开启日志聚集功能 -->
+<property>
+        <name>yarn.log-aggregation-enable</name>
+        <value>true</value>
+</property>
+<!-- 设置日志聚集服务器地址 -->
+<property>  
+        <name>yarn.log.server.url</name>  
+        <value>http://hadoop1:19888/jobhistory/logs</value>
+</property>
+<!-- 设置日志保留时间为7天 -->
+<property>
+        <name>yarn.log-aggregation.retain-seconds</name>
+        <value>604800</value>
+</property>
+</configuration>
 ```
 ⑥ 配置 `mapred-env.sh`
 ```bash
 [root@hadoop1 hadoop]# vim mapred-env.sh
-export JAVA_HOME=/usr/java/jdk1.8.0_131
+export JAVA_HOME=/usr/local/java/jdk1.8.0_131
 ```
 ⑦ 配置 `mapred-site.xml`
 ```bash
 [root@hadoop1 hadoop]# cp mapred-site.xml.template mapred-site.xml
 
 [root@hadoop1 hadoop]# vim mapred-site.xml
+<configuration>
 <!-- 指定MR运行在Yarn上 -->
 <property>
     <name>mapreduce.framework.name</name>
     <value>yarn</value>
 </property>
+<!-- 历史服务器端地址 -->
+<property>
+        <name>mapreduce.jobhistory.address</name>
+        <value>hadoop1:10020</value>
+</property>
+<!-- 历史服务器web端地址 -->
+<property>
+        <name>mapreduce.jobhistory.webapp.address</name>
+        <value>hadoop1:19888</value>
+</property>
+</configuration>
 ```
 ⑧ 配置 `workers` 
 ```bash
@@ -155,3 +231,8 @@ YARN_NODEMANAGER_USER=root
 
 ## 5.3 在 WebUI 中查看
 http://192.168.220.30:9870
+
+## 5.4 启动 historyserver
+```bash
+./sbin/mr-jobhistory-daemon.sh start historyserver
+```

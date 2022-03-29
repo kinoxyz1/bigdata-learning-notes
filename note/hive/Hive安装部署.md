@@ -229,5 +229,37 @@ Time taken: 0.099 seconds, Fetched: 1 row(s)
 ## 9.1 启动 hiveserver2
 ```bash
 [root@hadoop1 lib]# hiveserver2
+```
+## 9.2 连接
+```bash
+[root@hadoop1 lib]# beeline -u "jdbc:hive2://hadop1:10000/default" -n hdfs
+```
+
+# 十、Hive On Spark
+## 10.1 upload spark jar
+下载 spark 原生 安装包
+```bash
+$ tar -zxvf spark-3.0.0-bin-without-hadoop.tgz 
+$ cd spark-3.0.0-bin-without-hadoo
+$ hdfs dfs -mkdir /spark-jars
+$ hdfs dfs -put jars/* /spark-jars
+```
+## 10.2 修改 hive-site.xml 文件
+```bash
+<!--Spark依赖位置（注意：端口号8020必须和namenode的端口号一致）-->
+<property>
+    <name>spark.yarn.jars</name>
+    <value>hdfs://hadoop1:8020/spark-jars/*</value>
+</property>
+<!--Hive执行引擎-->
+<property>
+    <name>hive.execution.engine</name>
+    <value>spark</value>
+</property>
+```
+
+## 10.3 测试
+```bash
+[root@hadoop1 lib]# beeline -u "jdbc:hive2://hadop1:10000/default" -n hdfs
 
 ```
