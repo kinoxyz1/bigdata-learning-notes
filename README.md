@@ -218,11 +218,9 @@
 * [Flink Window](note/flink/Window.md)
 * [Flink CEP](note/flink/CEP.md)
 * [Flink 实时同步Oracle数据到Hive](note/flink/Flink实时同步Oracle数据到Hive.md)
-
 * [Flink 简介](note/flink/flink简介.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
-* [Flink 部署和运行](note/flink/flink部署和运行.md)
-* [CDH6.3.2 集成FLink](note/flink/CDH6.3.2集成FLink.md)
+* [Flink 安装部署](note/flink/flink安装部署.md) 
 * [Flink 构成和提交流程](note/flink/flink架构和提交流程.md)
 * [Flink 并行度的划分](note/flink/flink并行度.md)
 * [Flink Source](note/flink/flinkSource.md)
@@ -232,6 +230,10 @@
 * [Flink Sink](note/flink/flinkSink.md)
 * [Flink Window](note/flink/flinkWindow.md)
 * [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
+
+---
+
+* [Flinkx1.12 on K8s 部署](note/flink/flinkx_on_k8s安装部署.md)
 </details>
 
 
@@ -423,6 +425,7 @@
 * [Kubernetes NFS-PV-PVC](note/Kubernetes/k8s-NFS-PV-PVC.md)
 * [Kubernetes 部署Java](note/Kubernetes/k8s-部署Java.md)
 * [Kubernetes 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
+* [Kubernetes 常见问题](note/Kubernetes/k8s常见问题.md)
 </details>
 
 
