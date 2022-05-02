@@ -442,6 +442,86 @@ public class TumblingWindowTest {
 }
 ```
 
+### 3.3 增量聚合函数和全窗口函数合并
+```java
+package com.kino.window;
+
+import com.kino.source.Event;
+import com.kino.transform.ClickSource;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.AggregateFunction;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+
+public class UrlViewCountExample {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        SingleOutputStreamOperator<Event> stream = env.addSource(new ClickSource())
+            .assignTimestampsAndWatermarks(
+                WatermarkStrategy.<Event>forMonotonousTimestamps()
+                    .withTimestampAssigner(new SerializableTimestampAssigner<Event>() {
+                        @Override
+                        public long extractTimestamp(Event element, long recordTimestamp) {
+                            return element.timestamp;
+                        }
+                    })
+            );
+
+        stream
+            .keyBy(t -> t.url)
+            .window(SlidingEventTimeWindows.of(Time.seconds(10), Time.seconds(2)))
+            .aggregate(new UrlViewCountAgg(), new UrlViewCountResult())
+            .print();
+
+        env.execute();
+    }
+    public static class UrlViewCountAgg implements AggregateFunction<Event, Long, Long> {
+
+        // 初始化累加器
+        @Override
+        public Long createAccumulator() {
+            return 0L;
+        }
+
+        // 来一条数据累加器做一次累加
+        @Override
+        public Long add(Event value, Long accumulator) {
+            return accumulator + 1;
+        }
+
+        // 返回累加器
+        @Override
+        public Long getResult(Long accumulator) {
+            return accumulator;
+        }
+
+        @Override
+        public Long merge(Long a, Long b) {
+            return null;
+        }
+    }
+
+    public static class UrlViewCountResult extends ProcessWindowFunction<Long, UrlViewCount, String, TimeWindow> {
+        @Override
+        public void process(String s, ProcessWindowFunction<Long, UrlViewCount, String, TimeWindow>.Context context, Iterable<Long> elements, Collector<UrlViewCount> out) throws Exception {
+            // 结合窗口信息, 包装输入内容
+            long start = context.window().getStart();
+            long end = context.window().getEnd();
+            // 迭代器中只有一个元素，就是增量聚合函数的计算结果
+            out.collect(new UrlViewCount(s, elements.iterator().next(), start, end));
+        }
+    }
+}
+```
+
 # 四、KeyBy 对 Window 的影响
 在选择 Window 之前, 还需要考虑是否有做 .keyBy() 操作, 如果没有做 .keyBy(), 则只能选择 .windowAll() 方法, 如果做了 .keyBy(), 则可以选择 .window() 方法
 ```java
@@ -521,7 +601,51 @@ env.socketTextStream("localhost", 9999)
 ```
 ### 5.1.3 自定义 WaterMark
 WaterMark 有2种风格的生成方式: periodic(周期性) and punctuated(间歇性).都需要继承接口: WatermarkGenerator
+```java
+// 插入水位线的逻辑
+.assignTimestampsAndWatermarks(
+     // 自定义 watermark 生成规则
+     // https://nightlies.apache.org/flink/flink-docs-release-1.13/docs/dev/datastream/event-time/generating_watermarks/
+     new WatermarkStrategy<Event>() {
+         // 重写 watermark 的生成规则
+         @Override
+         public WatermarkGenerator<Event> createWatermarkGenerator(WatermarkGeneratorSupplier.Context context) {
+             return new WatermarkGenerator<Event>() {
+                 // 延迟时间
+                 private Long delayTime = 5000L;
+                 // 观察到的最大时间戳
+                 private Long maxTs = Long.MIN_VALUE + delayTime + 1L;
+                 // 来一条数据后，对应的 watermark 处理方法
+                 @Override
+                 public void onEvent(Event event, long eventTimestamp, WatermarkOutput output) {
+                     maxTs = Math.max(event.timestamp, maxTs); // 更新最大的时间戳
+                 }
+                 // 发射水位线，默认 200ms 调用一次
+                 @Override
+                 public void onPeriodicEmit(WatermarkOutput output) {
+                     output.emitWatermark(new Watermark(maxTs - delayTime -1L));
+                 }
+             };
+         }
+         // 重写 Timestamp 的分配规则
+         @Override
+         public TimestampAssigner<Event> createTimestampAssigner(TimestampAssignerSupplier.Context context) {
+             return new SerializableTimestampAssigner<Event>(){
+                 @Override
+                 public long extractTimestamp(Event element, long recordTimestamp) {
+                     return element.timestamp; // 告诉程序数据源里面的时间戳是哪一个字段
+                 }
+             };
+         }
+     }
 
+     // 固定延迟的watermark，针对乱序流插入 watermark, 延迟设置为5s
+     WatermarkStrategy
+             .<Event>forBoundedOutOfOrderness(Duration.ofSeconds(5))
+             .withTimestampAssigner(
+                     (SerializableTimestampAssigner<Event>) (event, l) -> event.timestamp
+             )
+```
 
 
 # 六、多 Task 的 WaterMark 传递
@@ -642,6 +766,166 @@ public class WaterMarkTest1 {
         // 将 等待还是迟到了的数据进行相应的逻辑处理, 这里仅打印
         result.getSideOutput(new OutputTag<Tuple2<String, Integer>>("side"){}).print("side");
         result.getSideOutput(new OutputTag<Tuple2<String, Integer>>("分流"){}).print("分流");
+        env.execute();
+    }
+}
+```
+
+# 九、触发器(Trigger)
+触发器主要是用来控制窗口什么时候触发计算。所谓的“触发计算”，本质上就是执行窗口函数，所以可以认为是计算得到结果并输出的过程。
+```java
+stream.keyBy(...)
+      .window(...)
+      .trigger(new MyTrigger())
+```
+Trigger 是一个抽象类，自定义时必须实现下面四个抽象方法：
+- onElement()：窗口中每到来一个元素，都会调用这个方法。
+- onEventTime()：当注册的事件时间定时器触发时，将调用这个方法。
+- onProcessingTime ()：当注册的处理时间定时器触发时，将调用这个方法。
+- clear()：当窗口关闭销毁时，调用这个方法。一般用来清除自定义的状态。
+
+```java
+package com.kino.window;
+
+import com.kino.source.Event;
+import com.kino.transform.ClickSource;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.api.common.typeinfo.Types;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.triggers.Trigger;
+import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
+
+public class TriggerExample {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        SingleOutputStreamOperator<Event> stream = env.addSource(new ClickSource())
+            .assignTimestampsAndWatermarks(
+                WatermarkStrategy.<Event>forMonotonousTimestamps()
+                    .withTimestampAssigner(new SerializableTimestampAssigner<Event>() {
+                        @Override
+                        public long extractTimestamp(Event element, long recordTimestamp) {
+                            return element.timestamp;
+                        }
+                    })
+            );
+        stream.keyBy(data -> data.url)
+                .window(TumblingEventTimeWindows.of(Time.seconds(10)))
+                .trigger(new  MyTrigger())
+                .process(new WindowResult())
+                .print();
+
+        env.execute();
+    }
+
+    public static class WindowResult extends ProcessWindowFunction<Event, UrlViewCount, String, TimeWindow> {
+        @Override
+        public void process(String s, ProcessWindowFunction<Event, UrlViewCount, String, TimeWindow>.Context context, Iterable<Event> elements, Collector<UrlViewCount> out) throws Exception {
+            out.collect(
+                new UrlViewCount(s,elements.spliterator().getExactSizeIfKnown(), context.window().getStart(), context.window().getEnd())
+            );
+        }
+    }
+
+    public static class MyTrigger extends Trigger<Event, TimeWindow> {
+
+        @Override
+        public TriggerResult onElement(Event element, long timestamp, TimeWindow window, TriggerContext ctx) throws Exception {
+            ValueState<Boolean> isFirstEvent = ctx.getPartitionedState(
+                new ValueStateDescriptor<Boolean>("first-event", Types.BOOLEAN)
+            );
+            if (isFirstEvent.value() == null) {
+                for (long i = window.getStart(); i < window.getEnd(); i = i + 1000L) {
+                    ctx.registerEventTimeTimer(i);
+                }
+                isFirstEvent.update(true);
+            }
+            return TriggerResult.CONTINUE;
+        }
+
+        @Override
+        public TriggerResult onProcessingTime(long time, TimeWindow window, TriggerContext ctx) throws Exception {
+            return TriggerResult.FIRE;
+        }
+
+        @Override
+        public TriggerResult onEventTime(long time, TimeWindow window, TriggerContext ctx) throws Exception {
+            return TriggerResult.CONTINUE;
+        }
+
+        @Override
+        public void clear(TimeWindow window, TriggerContext ctx) throws Exception {
+            ValueState<Boolean> isFirstEvent = ctx.getPartitionedState(
+                new ValueStateDescriptor<Boolean>("first-event", Types.BOOLEAN)
+            );
+            isFirstEvent.clear();
+        }
+    }
+}
+```
+TriggerResult 的枚举类型:
+- CONTINUE（继续）：什么都不做
+- FIRE（触发）：触发计算，输出结果
+- PURGE（清除）：清空窗口中的所有数据，销毁窗口
+- FIRE_AND_PURGE（触发并清除）：触发计算输出结果，并清除窗口
+
+# 十、迟到数据处理
+设置了 Watermark 还没到达的数据，还可以使用测输出流将这类数据进行处理。
+```java
+package com.kino.window;
+
+import com.kino.source.Event;
+import com.kino.transform.ClickSource;
+import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.util.OutputTag;
+
+import java.time.Duration;
+
+public class ProcessLateDataExample {
+    public static void main(String[] args) throws Exception {
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setParallelism(1);
+
+        SingleOutputStreamOperator<Event> stream = env.addSource(new ClickSource())
+            .assignTimestampsAndWatermarks(
+                // 设置 watermark 延迟 2s
+                WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(2))
+                    .withTimestampAssigner(new SerializableTimestampAssigner<Event>() {
+                        @Override
+                        public long extractTimestamp(Event element, long recordTimestamp) {
+                            return element.timestamp;
+                        }
+                    })
+            );
+
+        OutputTag<Event> outputTag = new OutputTag<Event>("late"){};
+        SingleOutputStreamOperator<UrlViewCount> result = stream.keyBy(data -> data.url)
+            .window(TumblingEventTimeWindows.of(Time.seconds(10)))
+            // 允许窗口处理迟到的数据, 设置 1 分钟的等待时间
+            .allowedLateness(Time.milliseconds(1))
+            // 将最后的迟到数据输出到侧输出流
+            .sideOutputLateData(outputTag)
+            .aggregate(new UrlViewCountExample.UrlViewCountAgg(), new UrlViewCountExample.UrlViewCountResult());
+
+        result.print("result");
+        result.getSideOutput(outputTag).print("late");
+
+        stream.print("input");
         env.execute();
     }
 }

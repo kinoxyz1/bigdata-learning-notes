@@ -213,26 +213,23 @@
 <details>
 <summary>Flink</summary>
 
-* [Flink Connectors](note/flink/Connectors.md)
-* [Flink State](note/flink/State.md)
-* [Flink Window](note/flink/Window.md)
-* [Flink CEP](note/flink/CEP.md)
-* [Flink 实时同步Oracle数据到Hive](note/flink/Flink实时同步Oracle数据到Hive.md)
-* [Flink 简介](note/flink/flink简介.md)
-* [Flink HelloWorld](note/flink/flink-HelloWorld.md)
-* [Flink 安装部署](note/flink/flink安装部署.md) 
+* [Flink 安装部署](note/flink/flink安装部署.md)
 * [Flink 构成和提交流程](note/flink/flink架构和提交流程.md)
 * [Flink 并行度的划分](note/flink/flink并行度.md)
-* [Flink Source](note/flink/flinkSource.md)
-* [Flink Transform](note/flink/flinkTransform.md)
-* [Flink 支持的数据类型](note/flink/flink支持的数据类型.md)
-* [Flink UDF函数](note/flink/flink—UDF函数.md)
-* [Flink Sink](note/flink/flinkSink.md)
-* [Flink Window](note/flink/flinkWindow.md)
-* [Flink 时间语义与 Watermark](note/flink/flink时间语义与Wartermark.md)
+* [Flink HelloWorld](note/flink/flink-HelloWorld.md)
+* [Flink Connectors](note/flink/Connectors.md)
+* [Flink Window&时间语义和Watermark](note/flink/Window&时间语义和Watermark.md)
+* [Flink ProcessFunction](note/flink/ProcessFunction.md)
+* [Flink 多流转换](note/flink/flink多流转换.md)
+* [Flink State](note/flink/State.md)
+* [Flink CEP](note/flink/CEP.md)
+* [Flink 实时同步Oracle数据到Hive](note/flink/Flink实时同步Oracle数据到Hive.md)
 
 ---
+* [FLink CDC](note/flink/flinkcdc.md)
+* [Flink CDC 集成 Iceberg 入湖](note/flink/flinkcdc-iceberg入湖.md)
 
+---
 * [Flinkx1.12 on K8s 部署](note/flink/flinkx_on_k8s安装部署.md)
 </details>
 
@@ -474,6 +471,18 @@
 </details> 
 
 
+
+# Mac
+<details>
+<summary>Mac</summary>
+
+* [mac iterm2 安装 lrzsz](note/mac/install—lrzsz.md)
+* [mac 自动登录服务器](note/mac/自动登录服务器.md)
+</details>
+
+
+
+
 ## 科学上网
 <details>
 <summary>科学上网</summary>
@@ -481,11 +490,3 @@
 * [科学上网指南](note/科学上网/科学上网指南.md)
 * [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
 </details>  
-
----
-## 欢迎加我微信一起交流
-<details>
-<summary>我的微信</summary>
-
-![我的微信](img/wechat/MyWechat.jpg)
-  </details>  
