@@ -265,11 +265,13 @@
 <details>
 <summary>MySQL</summary>
 
-1. [MySQL RMP 安装](note/MySQL/MySQL-RMP安装.md)
-2. [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
-3. [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
-4. [MySQL binlog](note/MySQL/binlog.md)
-5. [MySQL 优化](note/MySQL/MySQL优化.md)
+* [MySQL RMP 安装](note/MySQL/MySQL-RMP安装.md)
+* [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
+* [MySQL 基础](note/MySQL/MySQL基础.md)
+* [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
+* [MySQL binlog](note/MySQL/binlog.md)
+* [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
+* [MySQL 优化](note/MySQL/MySQL优化.md)
 </details>
 
 ## Java
@@ -339,6 +341,13 @@
 </details>
 
 * [Java 泛型](note/java/泛型.md)
+
+<details>
+<summary>JVM</summary>
+
+* [JVM](note/JVM/JVM.md)
+
+</details>
 
 ## 运维
 <details>
