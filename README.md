@@ -316,6 +316,7 @@
 <summary>Doris</summary>
 
 * [Doris 编译安装(填坑)](note/doris/Doris编译安装.md)
+* [Doris 备份还原](note/doris/Doris备份还原.md)
 </details>
 
 <details>
@@ -345,7 +346,7 @@
 <details>
 <summary>JVM</summary>
 
-* [JVM](note/JVM/JVM.md)
+* [内存与垃圾回收-类加载子系统](note/JVM/内存与垃圾回收/类加载子系统.md)
 
 </details>
 
