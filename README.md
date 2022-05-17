@@ -274,6 +274,17 @@
 * [MySQL 优化](note/MySQL/MySQL优化.md)
 </details>
 
+
+<details>
+<summary>Iceberg</summary>
+
+*[Iceberg - 01 基本入门](note/iceberg/iceberg-01-install.md)
+*[Iceberg - 02 cdc 入湖](note/iceberg/iceberg-02-cdc.md)
+*[Iceberg - 03 spark](note/iceberg/iceberg-03-spark.md)
+*[Iceberg - 04 基于 Hadoop 的数据存储结构(Flink)](note/iceberg/iceberg-04-数据存储格式.md)
+*[Iceberg - 05 合并小文件](note/iceberg/iceberg-05-合并小文件.md)
+</details>
+
 ## Java
 <details>
 <summary>GitLab</summary>
