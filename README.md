@@ -444,6 +444,10 @@
 * [Kubernetes 部署Java](note/Kubernetes/k8s-部署Java.md)
 * [Kubernetes 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
 * [Kubernetes 常见问题](note/Kubernetes/k8s常见问题.md)
+
+
+
+* [Kubernetes 链路整合](note/Kubernetes/install-all.md)
 </details>
 
 
