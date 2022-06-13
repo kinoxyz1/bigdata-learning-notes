@@ -2,7 +2,7 @@
 
 
 
-
+[官方-使用 OverlayFS 存储驱动程序](https://docs.docker.com/storage/storagedriver/overlayfs-driver/)
 
 
 # 一、镜像是如何存储的
@@ -46,10 +46,10 @@ $ docker image inspect nginx
 ...
 ```
 这里可以看到, Nginx 镜像分成了4个目录存放, 分别是:
-- LowerDir: 底层目录(包含小型 Linux 系统 和 装好的软件)
-- MergedDir: 合并目录(容器最终的完整工作目录全内容都在合并层, 数据卷在容器层产生, 所有的增删改都在容器层)
-- UpperDir: 上层目录
-- WorkDir: 工作目录(临时层)
+- LowerDir: 镜像层(只读层)
+- MergedDir: 统一视图(可以看到 upper 和 lower 中所有数据的整合, exec -it 到容器中 ls 看见的就是这里的内容)
+- UpperDir: 采用写时复制机制(改动某个文件时, 才会从 Lower 层把文件拷贝上来, 之后所有的修改都在这)
+- WorkDir: 中间层(upper层中所有的修改, 会先放到WorkDir中, 再从 WorkDir 移到 Upper 里面去, overlay 的工作机制)
 
 ## 1.1 LowerDir
 在 LowerDir 中, 一共有四个文件夹, 分别如下:
