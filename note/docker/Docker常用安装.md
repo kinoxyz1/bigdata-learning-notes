@@ -1380,3 +1380,7 @@ docker run -it -p 9088:9088 ibmcom/informix-developer-database:12.10.FC9W1DE -d
 $ docker run --name postgres-test -v /app/postgresql/data:/var/lib/postgresql/data -e POSTGRES_PASSWORD=123456 -p 29092:5432 -d --privileged=true postgres:9.6
 psql -U postgres -d postgres -h localhost -p 5432 -W 123456
 ```
+
+
+# 六、部署 maven 私服
+[部署 maven 私服](https://blog.csdn.net/BThinker/article/details/123688143)

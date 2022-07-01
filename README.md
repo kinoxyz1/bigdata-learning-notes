@@ -288,6 +288,17 @@
 
 ## Java
 <details>
+<summary>构建工具</summary>
+
+* [Maven maven-shade-plugin](note/maven/maven-shade-plugin.md)
+* [Gradle 安装整合Idea](note/gradle/gradle.md)
+</details>
+
+
+
+
+
+<details>
 <summary>GitLab</summary>
 
 - [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
@@ -428,7 +439,9 @@
 * [Kubernetes 工作负载 | 服务网络和负载均衡](note/Kubernetes/k8s-Service.md)
 * [Kubernetes 工作负载 | RS、RC、DaemonSet、StatefulSet、Job、CronJob实践](note/Kubernetes/k8s-RS&RC.md)
 * [Kubernetes 存储 | 卷的实践](note/Kubernetes/volume.md)
+* [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes 常用服务部署](note/Kubernetes/常用服务部署.md)
+----
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
@@ -440,7 +453,6 @@
 * [Kubernetes job](note/Kubernetes/k8s-job.md)
 * [Kubernetes cronjob](note/Kubernetes/k8s-cronjob.md)
 * [Kubernetes Ingress](note/Kubernetes/k8s-Ingress.md)
-* [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes NFS-PV-PVC](note/Kubernetes/k8s-NFS-PV-PVC.md)
 * [Kubernetes 部署Java](note/Kubernetes/k8s-部署Java.md)
 * [Kubernetes 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
@@ -452,7 +464,7 @@
 </details>
 
 
-## Linux 相关
+
 <details>
 <summary>Linux</summary>
 
@@ -488,7 +500,6 @@
 * [集群批量执行脚本](note/linux/集群批量执行脚本.md)
 </details>  
 
-## 内网穿透
 <details>
 <summary>内网穿透</summary>
 
@@ -496,6 +507,12 @@
 * [内网穿透-frp开启web服务](note/内网穿透/frp开启web服务.md)
 </details> 
 
+<details>
+<summary>科学上网</summary>
+
+* [科学上网指南](note/科学上网/科学上网指南.md)
+* [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
+</details>  
 
 
 # Mac
@@ -506,13 +523,3 @@
 * [mac 自动登录服务器](note/mac/自动登录服务器.md)
 </details>
 
-
-
-
-## 科学上网
-<details>
-<summary>科学上网</summary>
-
-* [科学上网指南](note/科学上网/科学上网指南.md)
-* [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
-</details>  
