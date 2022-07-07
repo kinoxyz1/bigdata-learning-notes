@@ -23,14 +23,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="提交笔记">
-      <change afterPath="$PROJECT_DIR$/note/Kubernetes/常用服务部署.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/1.jvm内存结构.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/2.类加载器与类的加载过程.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/3.ClassLoader加载示例.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/4.类的加载过程.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/note/JVM/内存与垃圾回收/1.类加载机制.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-Deployment.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-Deployment.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-Service.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-Service.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/k8s-pod.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/Kubernetes/volume.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/Kubernetes/volume.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/MySQL/MySQL-常用配置.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/MySQL/MySQL-常用配置.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/git/git基操.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/git/git常用操作.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,6 +45,11 @@
     <option name="delegatedBuild" value="true" />
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="11" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitSEFilterConfiguration">
@@ -54,6 +59,9 @@
       <filtered-out-file-type name="TAG" />
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="MavenImportPreferences">
     <option name="generalSettings">
@@ -88,11 +96,15 @@
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="DatabaseDriversLRU" value="mysql" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
+    <property name="go.format.on.save.advertiser.fired" value="true" />
+    <property name="go.formatter.settings.were.checked" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
     <property name="jdk.selected.JAVA_MODULE" value="1.8" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="node.js.detected.package.eslint" value="true" />
@@ -103,10 +115,12 @@
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/img/iceberg/数据存储格式" />
       <recent name="D:\work\bigdata-learning-notes\package\k8s\k8s部署java项目" />
       <recent name="D:\Work\idea\bigdata-learning-notes" />
     </key>
@@ -127,62 +141,38 @@
       <workItem from="1592894954427" duration="1223000" />
       <workItem from="1592910045624" duration="27000" />
       <workItem from="1592910168547" duration="597000" />
-    </task>
-    <task id="LOCAL-00108" summary="提交笔记">
-      <created>1610888572376</created>
-      <option name="number" value="00108" />
-      <option name="presentableId" value="LOCAL-00108" />
-      <option name="project" value="LOCAL" />
-      <updated>1610888572376</updated>
-    </task>
-    <task id="LOCAL-00109" summary="提交笔记">
-      <created>1610889186055</created>
-      <option name="number" value="00109" />
-      <option name="presentableId" value="LOCAL-00109" />
-      <option name="project" value="LOCAL" />
-      <updated>1610889186055</updated>
-    </task>
-    <task id="LOCAL-00110" summary="提交笔记">
-      <created>1610889231492</created>
-      <option name="number" value="00110" />
-      <option name="presentableId" value="LOCAL-00110" />
-      <option name="project" value="LOCAL" />
-      <updated>1610889231492</updated>
-    </task>
-    <task id="LOCAL-00111" summary="提交笔记">
-      <created>1610890756881</created>
-      <option name="number" value="00111" />
-      <option name="presentableId" value="LOCAL-00111" />
-      <option name="project" value="LOCAL" />
-      <updated>1610890756881</updated>
-    </task>
-    <task id="LOCAL-00112" summary="提交笔记">
-      <created>1611726894012</created>
-      <option name="number" value="00112" />
-      <option name="presentableId" value="LOCAL-00112" />
-      <option name="project" value="LOCAL" />
-      <updated>1611726894013</updated>
-    </task>
-    <task id="LOCAL-00113" summary="提交笔记">
-      <created>1612420976851</created>
-      <option name="number" value="00113" />
-      <option name="presentableId" value="LOCAL-00113" />
-      <option name="project" value="LOCAL" />
-      <updated>1612420976851</updated>
-    </task>
-    <task id="LOCAL-00114" summary="提交笔记">
-      <created>1612665336392</created>
-      <option name="number" value="00114" />
-      <option name="presentableId" value="LOCAL-00114" />
-      <option name="project" value="LOCAL" />
-      <updated>1612665336394</updated>
-    </task>
-    <task id="LOCAL-00115" summary="提交笔记">
-      <created>1613636108123</created>
-      <option name="number" value="00115" />
-      <option name="presentableId" value="LOCAL-00115" />
-      <option name="project" value="LOCAL" />
-      <updated>1613636108124</updated>
+      <workItem from="1651817370479" duration="1221000" />
+      <workItem from="1651838487096" duration="1227000" />
+      <workItem from="1652235002173" duration="6313000" />
+      <workItem from="1652260236443" duration="2518000" />
+      <workItem from="1652327025706" duration="1795000" />
+      <workItem from="1652681157514" duration="7438000" />
+      <workItem from="1652855977876" duration="5067000" />
+      <workItem from="1653025824180" duration="13218000" />
+      <workItem from="1653278986505" duration="6004000" />
+      <workItem from="1653458900080" duration="6607000" />
+      <workItem from="1653637754091" duration="943000" />
+      <workItem from="1653906566271" duration="6000" />
+      <workItem from="1653965779817" duration="3005000" />
+      <workItem from="1654487030934" duration="7282000" />
+      <workItem from="1654588940591" duration="16000" />
+      <workItem from="1654595582204" duration="914000" />
+      <workItem from="1654662659456" duration="598000" />
+      <workItem from="1654667977722" duration="484000" />
+      <workItem from="1654764717150" duration="714000" />
+      <workItem from="1654771880876" duration="405000" />
+      <workItem from="1654774030181" duration="5660000" />
+      <workItem from="1655011211851" duration="2190000" />
+      <workItem from="1655115239583" duration="564000" />
+      <workItem from="1655198708669" duration="679000" />
+      <workItem from="1655547634089" duration="2777000" />
+      <workItem from="1655705274823" duration="1432000" />
+      <workItem from="1656064392143" duration="966000" />
+      <workItem from="1656311187658" duration="17001000" />
+      <workItem from="1656645123955" duration="5608000" />
+      <workItem from="1656659759265" duration="3569000" />
+      <workItem from="1656665345957" duration="16581000" />
+      <workItem from="1657074240630" duration="3719000" />
     </task>
     <task id="LOCAL-00116" summary="提交笔记">
       <created>1613998888102</created>
@@ -471,14 +461,70 @@
       <option name="project" value="LOCAL" />
       <updated>1642523469558</updated>
     </task>
-    <option name="localTasksCounter" value="157" />
+    <task id="LOCAL-00157" summary="提交笔记">
+      <created>1652242281845</created>
+      <option name="number" value="00157" />
+      <option name="presentableId" value="LOCAL-00157" />
+      <option name="project" value="LOCAL" />
+      <updated>1652242281846</updated>
+    </task>
+    <task id="LOCAL-00158" summary="提交笔记">
+      <created>1652784640066</created>
+      <option name="number" value="00158" />
+      <option name="presentableId" value="LOCAL-00158" />
+      <option name="project" value="LOCAL" />
+      <updated>1652784640067</updated>
+    </task>
+    <task id="LOCAL-00159" summary="提交笔记">
+      <created>1653637980809</created>
+      <option name="number" value="00159" />
+      <option name="presentableId" value="LOCAL-00159" />
+      <option name="project" value="LOCAL" />
+      <updated>1653637980810</updated>
+    </task>
+    <task id="LOCAL-00160" summary="提交笔记">
+      <created>1653638053976</created>
+      <option name="number" value="00160" />
+      <option name="presentableId" value="LOCAL-00160" />
+      <option name="project" value="LOCAL" />
+      <updated>1653638053976</updated>
+    </task>
+    <task id="LOCAL-00161" summary="提交笔记">
+      <created>1653638094238</created>
+      <option name="number" value="00161" />
+      <option name="presentableId" value="LOCAL-00161" />
+      <option name="project" value="LOCAL" />
+      <updated>1653638094238</updated>
+    </task>
+    <task id="LOCAL-00162" summary="提交笔记">
+      <created>1655108072437</created>
+      <option name="number" value="00162" />
+      <option name="presentableId" value="LOCAL-00162" />
+      <option name="project" value="LOCAL" />
+      <updated>1655108072438</updated>
+    </task>
+    <task id="LOCAL-00163" summary="提交笔记">
+      <created>1656660545658</created>
+      <option name="number" value="00163" />
+      <option name="presentableId" value="LOCAL-00163" />
+      <option name="project" value="LOCAL" />
+      <updated>1656660545659</updated>
+    </task>
+    <task id="LOCAL-00164" summary="提交笔记">
+      <created>1657180845288</created>
+      <option name="number" value="00164" />
+      <option name="presentableId" value="LOCAL-00164" />
+      <option name="project" value="LOCAL" />
+      <updated>1657180845289</updated>
+    </task>
+    <option name="localTasksCounter" value="165" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
     <option name="totallyTimeSpent" value="9759000" />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="1" />
+    <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.History.Properties">
     <option name="COLUMN_ID_ORDER">
@@ -500,7 +546,6 @@
         </entry>
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="README.md" />
