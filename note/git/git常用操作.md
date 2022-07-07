@@ -28,27 +28,17 @@
 查看 git 配置
 ```bash
 $ git config --list
-diff.astextplain.textconv=astextplain
-filter.lfs.clean=git-lfs clean -- %f
-filter.lfs.smudge=git-lfs smudge -- %f
-filter.lfs.process=git-lfs filter-process
-filter.lfs.required=true
-http.sslbackend=openssl
-http.sslcainfo=D:/software/git/path/Git/mingw64/ssl/certs/ca-bundle.crt
-core.autocrlf=true
-core.fscache=true
-core.symlinks=false
-pull.rebase=false
-credential.helper=manager
-user.name=kinomin
+credential.helper=osxkeychain
+user.name=kino
 user.email=416595168@qq.com
+core.autocrlf=input
 core.repositoryformatversion=0
-core.filemode=false
+core.filemode=true
 core.bare=false
 core.logallrefupdates=true
-core.symlinks=false
 core.ignorecase=true
-remote.origin.url=https://github.com/KinoMin/git-study.git
+core.precomposeunicode=true
+remote.origin.url=https://bdgit.9zdata.cn/kino/kino-test.git
 remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*
 branch.main.remote=origin
 branch.main.merge=refs/heads/main
@@ -60,8 +50,8 @@ $ git config -e --global   # 针对系统上的所有仓库
 ```
 设置提交代码时的用户信息
 ```bash
-$ git config --global user.name "kinomin"                 # 去掉 --global 就只对当前仓库生效
-$ git config --gloabl user.email "416595168@qq.com"       # 去掉 --global 就只对当前仓库生效
+$ git config --global user.name "yourUserName"     # 去掉 --global 就只对当前仓库生效
+$ git config --gloabl user.email "yourEmail"       # 去掉 --global 就只对当前仓库生效
 ```
 
 # 四、创建仓库相关常用命令
@@ -140,37 +130,59 @@ $ git add .
 ```
 例子如下:
 ```bash
-$ touch 1.txt
-$ touch 2.txt
+$ touch 1.txt 2.txt 3.txt 4.txt
 $ ll 
-total 1
--rw-r--r-- 1 raomi 197609  0 12月 17 23:13 1.txt
--rw-r--r-- 1 raomi 197609  0 12月 17 23:13 2.txt
--rw-r--r-- 1 raomi 197609 19 12月 17 23:04 README.md
+total 8
+-rw-r--r--  1 kino  staff   0  7  5 18:30 1.txt
+-rw-r--r--  1 kino  staff   0  7  5 18:30 2.txt
+-rw-r--r--  1 kino  staff   0  7  5 18:31 3.txt
+-rw-r--r--  1 kino  staff   0  7  5 18:31 4.txt
+-rw-r--r--  1 kino  staff  13  7  5 18:30 README.md
 
 # 添加 1.txt 和 2.txt 进入暂存区
 $ git add 1.txt 2.txt
-
-$ git status -s 查看
-A  1.txt
-A  2.txt
-
-
 ```
 
 ## 5.2 git status
 查看在你上次提交之后是否有对文件进行再次修改。
 ```bash
-$ git status -s
+$ git status 
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   1.txt
+	new file:   2.txt
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	3.txt
+	4.txt
+
+$ git status -s 
 A  1.txt
 A  2.txt
+?? 3.txt
+?? 4.txt
 
 $ git commit -m "提交"
+[main 26c1139] 提交
+ 2 files changed, 0 insertions(+), 0 deletions(-)
+ create mode 100644 1.txt
+ create mode 100644 2.txt
+
 $ echo 11111 >> 1.txt
+$ echo 33333 >> 3.txt
+$ git add 3.txt
+
 $ git status -s 
-AM  1.txt
+ M 1.txt
+AM 3.txt
+?? 4.txt
 ```
 - A 表示新提交
+- M 表示提交过，并且本地又修改了
 - AM 表示有改动
 
 ## 5.3 git diff
@@ -288,5 +300,32 @@ $ git commit -a
 回退版本
 
 ## 5.6 git rm
+`git rm` 用于删除文件
+
+1、将文件从暂存区和工作区中删除
+```bash
+$ git rm 1.txt 2.txt
+```
+2、将文件从暂存区和工作区中强制删除
+```bash
+# 可以加上 -f, 表示强制删除之前修改过而且 add 到暂存区的文件
+$ git rm -f 1.txt 2.txt
+```
+3、将文件从暂存区删除，在工作区保留
+```bash
+git rm --cached 1.txt 2.txt
+```
+
 
 ## 5.7 git mv 
+
+## 5.8 git 取消 commit
+1、尚未 push 的 commit
+```bash
+$ git reset [--soft | --mixed | --hard] <commit_id> 
+```
+- `--soft`: 不删除工作空间的改动代码, **撤销commit, 不撤销git add file**,如果还需要提交,直接commit即可.
+- `--mixed`: 不删除工作空间的改动代码,撤销commit,撤销git add file.
+- `--hard（慎用）`: 删除工作空间的改动代码,撤销commit,撤销add.
+
+1、已经 push 的 commit
