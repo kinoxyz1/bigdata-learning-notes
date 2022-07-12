@@ -23,14 +23,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="324ab38d-4c70-4233-93c6-a05922f326a0" name="Default Changelist" comment="提交笔记">
-      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/1.jvm内存结构.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/2.类加载器与类的加载过程.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/3.ClassLoader加载示例.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/img/jvm/类加载机制/4.类的加载过程.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/note/JVM/内存与垃圾回收/1.类加载机制.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/note/git/git基操.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/git/git常用操作.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/note/JVM/内存与垃圾回收/1.类加载机制.md" beforeDir="false" afterPath="$PROJECT_DIR$/note/JVM/内存与垃圾回收/1.类加载机制.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,14 +166,7 @@
       <workItem from="1656645123955" duration="5608000" />
       <workItem from="1656659759265" duration="3569000" />
       <workItem from="1656665345957" duration="16581000" />
-      <workItem from="1657074240630" duration="3719000" />
-    </task>
-    <task id="LOCAL-00116" summary="提交笔记">
-      <created>1613998888102</created>
-      <option name="number" value="00116" />
-      <option name="presentableId" value="LOCAL-00116" />
-      <option name="project" value="LOCAL" />
-      <updated>1613998888103</updated>
+      <workItem from="1657074240630" duration="21938000" />
     </task>
     <task id="LOCAL-00117" summary="提交笔记">
       <created>1614134064264</created>
@@ -517,7 +504,14 @@
       <option name="project" value="LOCAL" />
       <updated>1657180845289</updated>
     </task>
-    <option name="localTasksCounter" value="165" />
+    <task id="LOCAL-00165" summary="提交笔记">
+      <created>1657635561563</created>
+      <option name="number" value="00165" />
+      <option name="presentableId" value="LOCAL-00165" />
+      <option name="project" value="LOCAL" />
+      <updated>1657635561563</updated>
+    </task>
+    <option name="localTasksCounter" value="166" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
