@@ -296,8 +296,6 @@
 
 
 
-
-
 <details>
 <summary>GitLab</summary>
 
@@ -364,7 +362,13 @@
 
 </details>
 
+<details>
+<summary>Java 基础</summary>
+
 * [Java 泛型](note/java/泛型.md)
+* [Java8](note/java/java8.md)
+
+</details>
 
 <details>
 <summary>JVM</summary>
