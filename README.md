@@ -272,9 +272,8 @@
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
-
----
 * [MySQL 约束](note/MySQL/MySQL约束.md)
+
 </details>
 
 
