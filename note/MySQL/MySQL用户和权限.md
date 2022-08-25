@@ -296,7 +296,7 @@ REVOKE SELECT,INSERT,UPDATE,DELETE ON mysql.* FROM 'zhangsan'@'%';
 # 三、权限表
 ## 3.1 user 表
 ```mysql
-mysql> desc user;
+mysql> desc mysql.user;
 +------------------------+-----------------------------------+------+-----+-----------------------+-------+
 | Field                  | Type                              | Null | Key | Default               | Extra |
 +------------------------+-----------------------------------+------+-----+-----------------------+-------+
@@ -376,19 +376,325 @@ mysql> desc user;
    - max_connections: 用户每小时允许执行的连接操作次数;
    - max_user_connections: 用户允许同时建立的连接次数。
 
+## 3.2 db类
+使用 describe 查看 db 表的基本结构
+```mysql
+mysql> describe mysql.db;
++-----------------------+---------------+------+-----+---------+-------+
+| Field                 | Type          | Null | Key | Default | Extra |
++-----------------------+---------------+------+-----+---------+-------+
+| Host                  | char(60)      | NO   | PRI |         |       |
+| Db                    | char(64)      | NO   | PRI |         |       |
+| User                  | char(32)      | NO   | PRI |         |       |
+| Select_priv           | enum('N','Y') | NO   |     | N       |       |
+| Insert_priv           | enum('N','Y') | NO   |     | N       |       |
+| Update_priv           | enum('N','Y') | NO   |     | N       |       |
+| Delete_priv           | enum('N','Y') | NO   |     | N       |       |
+| Create_priv           | enum('N','Y') | NO   |     | N       |       |
+| Drop_priv             | enum('N','Y') | NO   |     | N       |       |
+| Grant_priv            | enum('N','Y') | NO   |     | N       |       |
+| References_priv       | enum('N','Y') | NO   |     | N       |       |
+| Index_priv            | enum('N','Y') | NO   |     | N       |       |
+| Alter_priv            | enum('N','Y') | NO   |     | N       |       |
+| Create_tmp_table_priv | enum('N','Y') | NO   |     | N       |       |
+| Lock_tables_priv      | enum('N','Y') | NO   |     | N       |       |
+| Create_view_priv      | enum('N','Y') | NO   |     | N       |       |
+| Show_view_priv        | enum('N','Y') | NO   |     | N       |       |
+| Create_routine_priv   | enum('N','Y') | NO   |     | N       |       |
+| Alter_routine_priv    | enum('N','Y') | NO   |     | N       |       |
+| Execute_priv          | enum('N','Y') | NO   |     | N       |       |
+| Event_priv            | enum('N','Y') | NO   |     | N       |       |
+| Trigger_priv          | enum('N','Y') | NO   |     | N       |       |
++-----------------------+---------------+------+-----+---------+-------+
+22 rows in set (0.00 sec)
+```
+1. 用户列: db 表用户列有 3 个字段，分别是 host、user、db。这三个字段分别表示主机名、用户名、数据库名。表示从某个主机某个用户对某个数据库的操作权限，这 3 个字段的组合构成了 db 表的主键。
+2. 权限列: `Create_routine_priv` 和 `Alter_routine_priv` 这两个字段决定用户是否具有创建和修改存储过程的权限。
+
+## 3.3 table_priv 表和 columns_priv 表
+tables_priv 表用来对表**设置操作权限**，columns_priv 表用来对表的**某一列设置权限**。
+
+```mysql
+mysql> desc mysql.tables_priv;
++-------------+-----------------------------------------------------------------------------------------------------------------------------------+------+-----+-------------------+-----------------------------+
+| Field       | Type                                                                                                                              | Null | Key | Default           | Extra                       |
++-------------+-----------------------------------------------------------------------------------------------------------------------------------+------+-----+-------------------+-----------------------------+
+| Host        | char(60)                                                                                                                          | NO   | PRI |                   |                             |
+| Db          | char(64)                                                                                                                          | NO   | PRI |                   |                             |
+| User        | char(32)                                                                                                                          | NO   | PRI |                   |                             |
+| Table_name  | char(64)                                                                                                                          | NO   | PRI |                   |                             |
+| Grantor     | char(93)                                                                                                                          | NO   | MUL |                   |                             |
+| Timestamp   | timestamp                                                                                                                         | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+                                                                                                                                                                                            | Table_priv  | set('Select','Insert','Update','Delete','Create','Drop','Grant','References','Index','Alter','Create View','Show view','Trigger') | NO   |     |                   |                             |
+| Column_priv | set('Select','Insert','Update','References')                                                                                      | NO   |     |                   |                             |
++-------------+-----------------------------------------------------------------------------------------------------------------------------------+------+-----+-------------------+-----------------------------+
+8 rows in set (0.00 sec)
+```
+- Host、Db、User 和 Table_name 四个字段分别表示主机名、数据库名、用户名和表名。
+- Grantor 表示修改该记录的用户。
+- Timestamp 表示修改该记录的时间。
+- Table_priv 表示对象的操作权限。包括 Select、Insert、Update、Delete、Create、Drop、Grant、Reference、Index 和 Alter。
+- Column_priv 表示对表中的列的操作权限，包括 Select、Insert、Update 和 References。
+
+```mysql
+mysql> desc mysql.columns_priv;
++-------------+----------------------------------------------+------+-----+-------------------+-----------------------------+
+| Field       | Type                                         | Null | Key | Default           | Extra                       |
++-------------+----------------------------------------------+------+-----+-------------------+-----------------------------+
+| Host        | char(60)                                     | NO   | PRI |                   |                             |
+| Db          | char(64)                                     | NO   | PRI |                   |                             |
+| User        | char(32)                                     | NO   | PRI |                   |                             |
+| Table_name  | char(64)                                     | NO   | PRI |                   |                             |
+| Column_name | char(64)                                     | NO   | PRI |                   |                             |
+| Timestamp   | timestamp                                    | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
+| Column_priv | set('Select','Insert','Update','References') | NO   |     |                   |                             |
++-------------+----------------------------------------------+------+-----+-------------------+-----------------------------+
+7 rows in set (0.00 sec)
+```
+
+## 3.4 procs_priv 表
+procs_priv 表可以对存储过程和存储函数设置操作权限，表结构如下:
+```mysql
+mysql> desc mysql.procs_priv;
++--------------+----------------------------------------+------+-----+-------------------+-----------------------------+
+| Field        | Type                                   | Null | Key | Default           | Extra                       |
++--------------+----------------------------------------+------+-----+-------------------+-----------------------------+
+| Host         | char(60)                               | NO   | PRI |                   |                             |
+| Db           | char(64)                               | NO   | PRI |                   |                             |
+| User         | char(32)                               | NO   | PRI |                   |                             |
+| Routine_name | char(64)                               | NO   | PRI |                   |                             |
+| Routine_type | enum('FUNCTION','PROCEDURE')           | NO   | PRI | NULL              |                             |
+| Grantor      | char(93)                               | NO   | MUL |                   |                             |
+| Proc_priv    | set('Execute','Alter Routine','Grant') | NO   |     |                   |                             |
+| Timestamp    | timestamp                              | NO   |     | CURRENT_TIMESTAMP | on update CURRENT_TIMESTAMP |
++--------------+----------------------------------------+------+-----+-------------------+-----------------------------+
+8 rows in set (0.00 sec)
+```
 
 # 四、访问控制
 
+## 4.1 连接核实阶段
+当用户视图连接 MySQL 服务器时，服务器基于用户的身份以及用户是否能提供正确的密码验证身份来确定接受或者拒接连接。即客户端用户会在连接请求中提供用户名、主机地址、用户密码，MySQL 服务器接收到用户请求后，会**使用 user 表中的 host、user 和 authentication_string 这 3 个字段匹配客户端提供的信息。**
+
+服务器只有在 user 表记录在 Host 和 User 字段匹配客户端主机名和用户名，并且提供正确的密码时才接受连接。如果连接核实没有通过，服务器就完全拒绝访问；否则，服务器接收连接，然后进入阶段2等待用户请求。
+
+## 4.2 请求核实阶段
+一旦建立了连接，服务器就进入了访问控制的阶段2，也就是请求核实阶段。对此连接上进来的每个请求，服务器检查该请求要执行什么操作、是否有足够的权限来执行它，这正是需要授权表中的权限列发挥作用的地方。这些权限可以来自 user、db、table_priv 和 column_priv 表。
+
+确认权限时，MySQL 首先检查 user 表, 如果指定的权限没有在 user 表中被授予，那么 MySQL 就会继续 **检查db表**，db表是下一安全层级，其中的权限限定于数据库层级，在该层级的 SELECT 权限允许用户查看指定数据库的所有表中的数据；如果再该层级没有找到限定的权限，MySQL 继续 **检查tables_priv表**以及 **columns_priv 表**，如果若有权限表都检查完毕，但是还是没有找到允许的权限操作，MySQL 将返回错误信息，用户请求的操作不能执行，操作失败。
+
+> MySQL 通过向下层级的顺序(从 User 表到 columns_priv 表)检查权限表，但并不是所有的权限都要执行该过程。例如，一个用户登录到 MySQL 服务器之后对 MySQL 的管理操作，此时只设计到管理权限，因此 MySQL 只检查 user 表。另外，如果请求的权限操作不被允许，MySQL 也不会继续检查下一层级的表。
 
 
 
 # 五、角色管理
+角色是 MySQL8 中引入的新功能。
+## 5.1 创建角色
+语法
+```mysql
+CREATE ROLE 'role_name'[@'host_name'][,'role'[@'host_name']]...
+```
+角色名称的命令规则和用户名类似。如果 host_name 省略，默认为 %, role_name 不可以省略，不可为空。
 
+示例
+```mysql
+-- 创建 manager 角色
+CREATE ROLE 'manager'@'%';
+```
 
+## 5.2 给角色赋予权限
+```mysql
+GRANT privileges ON table_name TO 'role_name'[@'host_name'];
+```
+privileges 代表权限的名称，多个权限以逗号隔开。可使用 SHOW 语句查询权限名称，如下:
+```mysql
+mysql> SHOW PRIVILEGES\G;
+*************************** 1. row ***************************
+Privilege: Alter
+Context: Tables
+  Comment: To alter the table
+*************************** 2. row ***************************
+Privilege: Alter routine
+  Context: Functions,Procedures
+  Comment: To alter or drop stored functions/procedures
+*************************** 3. row ***************************
+Privilege: Create
+Context: Databases,Tables,Indexes
+  Comment: To create new databases and tables
+*************************** 4. row ***************************
+Privilege: Create routine
+  Context: Databases
+  Comment: To use CREATE FUNCTION/PROCEDURE
+*************************** 5. row ***************************
+Privilege: Create role
+    Context: Server Admin
+  Comment: To create new roles
+*************************** 6. row ***************************
+Privilege: Create temporary tables
+  Context: Databases
+  Comment: To use CREATE TEMPORARY TABLE
+*************************** 7. row ***************************
+...
+```
 
+示例: 给 manager 角色赋予 kinodb 的 user 表只读权限
+```mysql
+GRANT SELECT ON kinodb.user TO 'manager'@'%';
+```
 
+## 5.3 查看角色的权限
+```mysql
+mysql> show grants for 'manager';
++--------------------------------------------------+
+| Grants for manager@%                             |
++--------------------------------------------------+
+| GRANT USAGE ON *.* TO `manager`@`%`              |
+| GRANT SELECT ON `kinodb`.`user` TO `manager`@`%` |
++--------------------------------------------------+
+2 rows in set (0.00 sec)
+```
 
+## 5.4 收回角色的权限
+语法
+```mysql
+REVOKE privileges ON tablename FROM 'role_name';
+```
+示例: 撤销 manager 角色的SELECT权限
+```mysql
+REVOKE SELECT ON kinodb.user FROM 'manager';
+```
 
+## 5.5 删除角色
+语法
+```mysql
+DROP ROLE role_name [, role2]...
+```
+示例: 删除角色 manager
+```mysql
+DROP ROLE 'manager';
+```
+
+## 5.6 给用户赋予角色
+语法
+```mysql
+GRANT role [, role2, ...] TO user [, user2...];
+```
+role 代表角色，user代表用户，可以将多个角色同时赋予多个用户，用逗号隔开。
+
+示例: 给 kino 用户赋予 manager 角色
+```mysql
+-- 创建用户
+CREATE USER kino@'%' IDENTIFIED BY '123456';
+
+-- 创建角色 
+CREATE ROLE manager@'%';
+
+-- 创建数据库
+CREATE DATABASE kinodb;
+
+-- 创建 user 表
+use kinodb;
+CREATE TABLE user(id int primary key auto_increment, name varchar(200));
+
+-- 插入数据
+INSERT INTO user values(0, 'kino1');
+
+-- 给 manager 角色赋予 kinodb 所有读权限
+GRANT SELECT ON kinodb.* FROM 'manager'@'%';
+
+-- 登录 kino 用户查看是否能查询到 user 表
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| performance_schema |
++--------------------+
+2 rows in set (0.00 sec)
+
+-- 给 kino 用户赋予 manager 角色
+GRANT 'manager'@'%' TO 'kino'@'%';
+
+-- 添加完成后使用 SHOW 语句查看是否添加成功
+SHOW GRANTS FOR 'manager'@'%';
+
+-- 使用 kino 用户登录，查询当前角色，如果角色未激活，结果将显示 NONE
+SELECT CURRENT_ROLE();
++----------------+
+| CURRENT_ROLE() |
++----------------+
+| NONE           |
++----------------+
+1 row in set (0.00 sec)
+
+-- 查看是否能查询到 user 表
+此时还是看不到权限，是因为还没激活角色
+```
+
+## 5.7 激活角色
+方式一
+```mysql
+-- 为 kinodb 用户激活所有已拥有的角色
+SET DEFAULT ROLE ALL TO 'kino'@'%';
+
+-- 此时再登录 kino 用户查看 kinodb.user
+SELECT * FROM kinodb.user;
++----+-------+
+| id | name  |
++----+-------+
+|  1 | kino1 |
++----+-------+
+1 row in set (0.00 sec)
+```
+
+方式二: 将 `activate_all_roles_on_login` 设置为 `ON`
+```mysql
+-- 查看 activate_all_roles_on_login 的设置
+SHOW VARIABLES LIKE 'activate_all_roles_on_login'
++-----------------------------+-------+
+| Variable_name               | Value |
++-----------------------------+-------+
+| activate_all_roles_on_login | OFF   |
++-----------------------------+-------+
+1 row in set (0.01 sec)
+
+-- 设置
+SET GLOBAL activate_all_roles_on_login=ON;  -- 对所有角色永久激活，执行完之后用户才真正拥有了赋予角色的所有权限
+```
+
+## 5.8 撤销用户的角色
+语法
+```mysql
+REVOKE role FROM user;
+```
+示例: 撤销 kino 用户的 manager 角色
+```mysql
+-- 撤销
+REVOKE 'manager'@'%' FROM 'kino'@'%';
+
+-- 查看用户的角色信息
+SHOW GRANTS FOR 'kino'@'%';
++----------------------------------+
+| Grants for kino@%                |
++----------------------------------+
+| GRANT USAGE ON *.* TO `kino`@`%` |
++----------------------------------+
+1 row in set (0.00 sec)
+```
+执行完之后，再次登录 kino 用户，发现已经没有 kinodb.user 的查询权限。
+
+## 5.9 设置强制角色(mandatory role)
+方式一: 服务启动前设置
+```bash
+[mysqld]
+mandatory_role='role1,role2@localhost,role3@192.168.1.0';
+```
+方式二: 运行时设置
+```mysql
+SET PERSIST mandatory_role='role1,role2@localhost,role3@192.168.1.0'; -- 系统重启后仍然生效
+
+SET GLOBAL mandatory_role='role1,role2@localhost,role3@192.168.1.0'; -- 系统重启后失效
+```
 
 
 
