@@ -147,8 +147,152 @@ SELECT username,ismale from userinfo where 1=1 and age > 20 and level > 5;
 
 例如:[服务层的说明](#13-服务层) ,关于查询优化器的举例。
 
+在查询优化器中，可以分为逻辑查询优化阶段和物理查询优化阶段。
+
+**执行器**: 一个查询到此时，还没有真正的取读写真实的表，仅仅是产出了一个执行计划，然后才进入当前执行器阶段。
+
+![执行器图](../../img/mysql/mysql逻辑架构/8.执行器图.png)
+
+在执行之前，需要判断该用户**是否具备权限**
+- 如果没有权限，就会返回权限错误。
+- 如果具备权限，就执行 SQL 查询并返回结果。在MySQL8以下版本，如果设置了查询缓存，这是会将查询结果进行缓存。
+
+例如: `select * from test where id = 1;`, 在 test 表中 id 字段没有索引，那么执行的流程如下:
+- 调用 InnoDB 引擎接口取这个表的第一行，判断 id 值是不是 1，如果不是则跳过，如果是则将这行记录存到结果集中。调用引擎接口取下一行，重复相同的判断逻辑，知道取到这个表的最后一行。
+- 执行器将上述遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。
+
+至此，这个语句就执行完成了。对于有索引的表，执行的逻辑也差不多。
+
+## 2.1.2 总结
+SQL 语句在 MySQL 中的流程是: `SQL 语句` -> `查询缓存` -> `解析器` -> `优化器` -> `执行器`
+
+![MySQL执行流程图](../../img/mysql/mysql逻辑架构/9.MySQL执行流程图.png)
 
 
+## 2.2 MySQL8 中的 SQL 执行原理
+在 MySQL5.0 之后，提供了 Query profier 功能，它可以查看一条 SQL 的执行时长，还可以查询这条 SQL 消耗了多少 CPU、IO等资源。
+
+### 2.2.1 设置 profiling
+```mysql
+-- 查看 profiling
+mysql> select @@profiling;
++-------------+
+| @@profiling |
++-------------+
+|           0 |
++-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> show variables like 'profiling';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| profiling     | OFF   |
++---------------+-------+
+1 row in set (0.01 sec)
+```
+
+-- 开启 profiling
+profiling=0 表示关闭，需要把 profiling 打开，设置为 1 即可:
+```mysql
+set profiling=1;
+```
+
+### 2.2.2 多次执行相同的 SQL 查询
+```mysql
+select * from user;
+```
+
+### 2.2.3 查看 profiling
+```mysql
+mysql> show profiles; -- 显示最近的几次查询
++----------+------------+---------------------------------+
+| Query_ID | Duration   | Query                           |
++----------+------------+---------------------------------+
+|        1 | 0.00093175 | show variables like 'profiling' |
+|        2 | 0.00009725 | SELECT DATABASE()               |
+|        3 | 0.00052275 | show databases                  |
+|        4 | 0.00054250 | show tables                     |
+|        5 | 0.00077125 | show tables                     |
+|        6 | 0.00019325 | select * from user              |
+|        7 | 0.00018825 | select * from user              |
++----------+------------+---------------------------------+
+7 rows in set, 1 warning (0.00 sec)
+```
+
+### 2.2.3 查看 profile 
+```mysql
+mysql> show profile;
++--------------------------------+----------+
+| Status                         | Duration |
++--------------------------------+----------+
+| starting                       | 0.000054 |
+| Executing hook on transaction  | 0.000003 |
+| starting                       | 0.000005 |
+| checking permissions           | 0.000004 |
+| Opening tables                 | 0.000022 |
+| init                           | 0.000005 |
+| System lock                    | 0.000020 |
+| optimizing                     | 0.000003 |
+| statistics                     | 0.000010 |
+| preparing                      | 0.000011 |
+| executing                      | 0.000025 |
+| end                            | 0.000003 |
+| query end                      | 0.000002 |
+| waiting for handler commit     | 0.000006 |
+| closing tables                 | 0.000005 |
+| freeing items                  | 0.000008 |
+| cleaning up                    | 0.000006 |
++--------------------------------+----------+
+  17 rows in set, 1 warning (0.00 sec)
+```
+- `checking permissions`: 检查权限
+- `Opening tables`： 打开表
+- `init`: 初始化
+- `System lock`: 锁系统
+- `optimizing`: 查询优化
+- `preparing`: 准备
+- `executing`: 执行
+
+还可以查询执行的 Query ID
+```mysql
+show profile for query 7;
+```
+
+此外，还可以查询 CPU、Block IO 信息
+```mysql
+mysql> show profile cpu,block io for query 6;
++--------------------------------+----------+----------+------------+--------------+---------------+
+| Status                         | Duration | CPU_user | CPU_system | Block_ops_in | Block_ops_out |
++--------------------------------+----------+----------+------------+--------------+---------------+
+| starting                       | 0.000060 | 0.000030 |   0.000029 |            0 |             0 |
+| Executing hook on transaction  | 0.000003 | 0.000002 |   0.000002 |            0 |             0 |
+| starting                       | 0.000005 | 0.000002 |   0.000002 |            0 |             0 |
+| checking permissions           | 0.000003 | 0.000002 |   0.000002 |            0 |             0 |
+| Opening tables                 | 0.000023 | 0.000012 |   0.000011 |            0 |             0 |
+| init                           | 0.000004 | 0.000001 |   0.000002 |            0 |             0 |
+| System lock                    | 0.000005 | 0.000003 |   0.000003 |            0 |             0 |
+| optimizing                     | 0.000003 | 0.000001 |   0.000001 |            0 |             0 |
+| statistics                     | 0.000010 | 0.000006 |   0.000005 |            0 |             0 |
+| preparing                      | 0.000011 | 0.000005 |   0.000005 |            0 |             0 |
+| executing                      | 0.000025 | 0.000013 |   0.000013 |            0 |             0 |
+| end                            | 0.000002 | 0.000001 |   0.000001 |            0 |             0 |
+| query end                      | 0.000002 | 0.000001 |   0.000001 |            0 |             0 |
+| waiting for handler commit     | 0.000006 | 0.000003 |   0.000002 |            0 |             0 |
+| closing tables                 | 0.000005 | 0.000002 |   0.000003 |            0 |             0 |
+| freeing items                  | 0.000021 | 0.000011 |   0.000010 |            0 |             0 |
+| cleaning up                    | 0.000006 | 0.000003 |   0.000003 |            0 |             0 |
++--------------------------------+----------+----------+------------+--------------+---------------+
+  17 rows in set, 1 warning (0.00 sec)
+```
+
+
+## 2.3 MySQL5.7 中 SQL 执行原理
+
+
+
+
+# 三、数据库缓冲池(buffer pool)
 
 
 
