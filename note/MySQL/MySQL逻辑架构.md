@@ -145,7 +145,7 @@ SELECT username,ismale from userinfo where 1=1 and age > 20 and level > 5;
 
 **优化器**: 在优化器中会确定 SQL 语句的执行路径，比如是根据 **全表检**索，还是根据 **索引检索** 等。
 
-例如:[服务层的说明](##1.3服务层)
+例如:[服务层的说明](#13-服务层)
 
 
 
