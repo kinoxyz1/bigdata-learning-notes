@@ -267,7 +267,7 @@
 * [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
 * [MySQL 数据目录](note/MySQL/MySQL数据目录.md)
 * [MySQL 用户和权限](note/MySQL/MySQL用户和权限.md)
-* [MySQL 基础](note/MySQL/MySQL基础.md)
+* [MySQL 逻辑架构](note/MySQL/MySQL逻辑架构.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
