@@ -2,7 +2,7 @@
 
 | Zookeeper | [Zookeeper](#Zookeeper) |
 |-----------|-------------------------|
-| Hadoop    | [Hadoop](#Hadoop) |
+| 运维        | [运维](#运维)               |
 
 
 
