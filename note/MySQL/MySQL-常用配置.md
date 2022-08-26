@@ -202,9 +202,6 @@ show VARIABLES like '%max_allowed_packet%';
 
 # 七、sql_mode
 ## 7.1 查看当前的 sql_mode
-<details>
-<summary>展开查看</summary>
-
 ```mysql
 -- 三种方式都可以
 mysql> select @@session.sql_mode;  
@@ -217,9 +214,6 @@ mysql> show variables like 'sql_mode';
 +-------------------------------------------------------------------------------------------------------------------------------------------+
 1 row in set (0.00 sec)
 ```
-
-
-</details>
 
 
 ## 7.2 设置 sql_mode

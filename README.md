@@ -1,11 +1,5 @@
 # bigdata-learning-notes
 
-| Zookeeper | [Zookeeper](#Zookeeper) |
-|-----------|-------------------------|
-| 运维        | [运维](#运维)               |
-
-
-
 ## 大数据
 
 <details>
