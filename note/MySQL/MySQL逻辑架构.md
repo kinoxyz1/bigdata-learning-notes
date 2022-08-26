@@ -192,18 +192,18 @@ mysql> show variables like 'profiling';
 1 row in set (0.01 sec)
 ```
 
--- 开启 profiling
+### 2.2.2 开启 profiling
 profiling=0 表示关闭，需要把 profiling 打开，设置为 1 即可:
 ```mysql
 set profiling=1;
 ```
 
-### 2.2.2 多次执行相同的 SQL 查询
+### 2.2.3 多次执行相同的 SQL 查询
 ```mysql
 select * from user;
 ```
 
-### 2.2.3 查看 profiling
+### 2.2.4 查看 profiling
 ```mysql
 mysql> show profiles; -- 显示最近的几次查询
 +----------+------------+---------------------------------+
@@ -220,7 +220,7 @@ mysql> show profiles; -- 显示最近的几次查询
 7 rows in set, 1 warning (0.00 sec)
 ```
 
-### 2.2.3 查看 profile 
+### 2.2.5 查看 profile 
 ```mysql
 mysql> show profile;
 +--------------------------------+----------+
