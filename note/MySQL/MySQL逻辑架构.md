@@ -163,7 +163,7 @@ SELECT username,ismale from userinfo where 1=1 and age > 20 and level > 5;
 
 至此，这个语句就执行完成了。对于有索引的表，执行的逻辑也差不多。
 
-### 2.1.1 总结
+### 2.1.2 总结
 SQL 语句在 MySQL 中的流程是: `SQL 语句` -> `查询缓存` -> `解析器` -> `优化器` -> `执行器`
 
 ![MySQL执行流程图](../../img/mysql/mysql逻辑架构/9.MySQL执行流程图.png)
