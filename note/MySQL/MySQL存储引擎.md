@@ -206,6 +206,7 @@ MySQL 集群专用存储引擎。
 ## 4.10 引擎对比
 
 ![引擎对比](../../img/mysql/mysql存储引擎/1.引擎对比.png)
+
 ![引擎对比](../../img/mysql/mysql存储引擎/2.引擎对比1.png)
 
 # 五、MyISAM和InnoDB
