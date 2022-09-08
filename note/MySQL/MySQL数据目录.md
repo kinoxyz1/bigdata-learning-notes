@@ -40,7 +40,7 @@ drwxr-x--- 2 mysql mysql    12288 Aug 23 08:15 sys
 ```
 
 # 二、配置目录 /etc/mysql、/usr/share/mysql
-```mysql
+```bash
 -- 查看 /etc/mysql 目录
 bash-4.2# ls -l /etc/mysql
 total 8
@@ -267,7 +267,7 @@ mysql> show variables like 'innodb_file_per_table';
 ### 其他类型的表空间
 随着 MySQL 的发展，出了上述两种老牌表空间之外，现在还新提出了一些不同类型的表空间，比如通用表空间(general tablespace)、临时表空间(temporary tablespace)等。
 
-## 5.2 MyISAM 春初引擎模式
+## 5.2 MyISAM 存储引擎模式
 ### 5.2.1 表结构
 在存储表结构方面，MyISAM 和 InnoDB 一样，也是在数据目录下对应的数据库子目录创建一个专门用于描述表结构的文件:
 > 表名.frm
@@ -276,11 +276,11 @@ mysql> show variables like 'innodb_file_per_table';
 在 MyISAM 中的索引全部都是二级索引，该存储引擎的数据和索引是分开存放的。所以在文件系统中也是使用不同的文件来存储数据文件和索引文件，同时表数据都存放在对应的数据库子目录下。
 
 假如 test 表使用 MyISAM 存储引擎的话，那么在它所在数据库对应的目录下会为 test 表创建这三个文件
-> test.frm      存储表结构
+> test.frm:       存储表结构
 > 
-> test.MYD      存储数据(MYDATA)
+> test.MYD:       存储数据(MYDATA)
 > 
-> test.MYI      存储索引(MYIndex)
+> test.MYI:       存储索引(MYIndex)
 
 例如创建一个 MyISAM 表，使用 ENGINE 选项显示指定引擎(因为默认引擎是 InnoDB)
 ```mysql

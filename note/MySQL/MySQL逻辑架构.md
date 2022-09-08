@@ -288,122 +288,193 @@ mysql> show profile cpu,block io for query 6;
 
 
 ## 2.3 MySQL5.7 中 SQL 执行原理
+上述操作在MySQL5.7中测试，发现前后两次相同的sql语句，执行的查询过程仍然是相同的。
 
+在 MySQL5.7 中 显式开启查询缓存模式, 如下设置：
+
+1. 查看查询缓存是否开启
+```mysql
+mysql> show variables like 'query_cache_type';
++------------------+-------+
+| Variable_name    | Value |
++------------------+-------+
+| query_cache_type | OFF   |
++------------------+-------+
+1 row in set (0.00 sec)
+```
+2. 开启查询缓存
+```bash
+## 修改配置文件
+$ vi /etc/my.cnf
+query_cache_type=1
+
+## 重启服务
+$ systemctl restart mysqld
+
+## 再次查看查询缓存是否开启
+mysql> show variables like 'query_cache_type';
++------------------+-------+
+| Variable_name    | Value |
++------------------+-------+
+| query_cache_type | ON    |
++------------------+-------+
+1 row in set (0.00 sec)
+
+## 查看查询执行计划是否开启
+mysql> show variables like "profiling";
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| profiling     | OFF   |
++---------------+-------+
+1 row in set (0.00 sec)
+
+## 开启查询执行计划(因为重启mysql，所以需要重新开启)
+mysql> set profiling=1;
+```
+执行两次相同语句
+```mysql
+mysql> select user,host from test1;
+```
+查看 profiles 
+```mysql
+mysql> show profiles;
++----------+------------+----------------------------------+
+| Query_ID | Duration   | Query                            |
++----------+------------+----------------------------------+
+|       1  | 0.00014400 | select * from test1              |
+|       2  | 0.00015900 | select * from test1              |
++----------+------------+----------------------------------+
+4 rows in set, 1 warning (0.00 sec)
+```
+查看指定 Query_ID 的 profiles
+```mysql
+mysql> show profile for query 1;
++--------------------------------+----------+
+| Status                         | Duration |
++--------------------------------+----------+
+| starting                       | 0.000013 |
+| Waiting for query cache lock   | 0.000002 |
+| starting                       | 0.000001 |
+| checking query cache for query | 0.000025 |
+| checking permissions           | 0.000004 |
+| Opening tables                 | 0.000009 |
+| init                           | 0.000009 |
+| System lock                    | 0.000004 |
+| Waiting for query cache lock   | 0.000001 |
+| System lock                    | 0.000012 |
+| optimizing                     | 0.000003 |
+| statistics                     | 0.000009 |
+| preparing                      | 0.000006 |
+| executing                      | 0.000002 |
+| Sending data                   | 0.000024 |
+| end                            | 0.000002 |
+| query end                      | 0.000003 |
+| closing tables                 | 0.000003 |
+| freeing items                  | 0.000004 |
+| Waiting for query cache lock   | 0.000001 |
+| freeing items                  | 0.000005 |
+| Waiting for query cache lock   | 0.000001 |
+| freeing items                  | 0.000001 |
+| storing result in query cache  | 0.000002 |
+| cleaning up                    | 0.000008 |
++--------------------------------+----------+
+25 rows in set, 1 warning (0.00 sec)
+
+mysql> show profile for query 2;
++--------------------------------+----------+
+| Status                         | Duration |
++--------------------------------+----------+
+| starting                       | 0.000015 |
+| Waiting for query cache lock   | 0.000002 |
+| starting                       | 0.000001 |
+| checking query cache for query | 0.000004 |
+| checking privileges on cached  | 0.000002 |
+| checking permissions           | 0.000006 |
+| sending cached result to clien | 0.000007 |
+| cleaning up                    | 0.000003 |
++--------------------------------+----------+
+8 rows in set, 1 warning (0.00 sec)
+```
+query id 为 2 的信息比 id 为 1 的信息少了很多，因为此时是从查询缓存中获取的数据。
 
 
 
 # 三、数据库缓冲池(buffer pool)
+InnoDB 存储引擎是以页为单位来管理存储空间的，我们进行的增删改查操作本质上都是在访问页面(包括读、写、创建新的页面等操作)。 磁盘 I/O 需要消耗的时间很多，而在内存中进行操作，效率则会高很多，为了能让数据表或者索引中的数据随时被我们所用，DBMS 会申请 `占用内存作为数据缓冲池`，在真正访问页面之前，需要把在磁盘上的页缓存到内存中的 `Buffer Pool` 之后才可以访问。
 
+这样做的好处是可以让磁盘活动最小化，`从而减少与磁盘直接进行 I/O 的时间`。这种策略对提升 SQL 语句的查询性能来说至关重要。如果索引的数据在缓冲池离，那么访问的成本就会降低很多。
 
+## 3.1 缓冲池 和 查询缓存
+缓冲池和查询缓存不是一个东西。
 
+### 3.1.1 缓冲池(Buffer Pool)
+在 InnoDB 存储引擎中有一部分数据会放到内存中，缓冲池则占了这部分内存的大部分，它用来存储各种数据的缓存
 
+![缓冲池](../../img/mysql/mysql逻辑架构/10.缓冲池.png)
 
+缓存按照 **`位置 * 频率`** 这个原则，帮我们对 I/O 访问效率进行优化。
 
+首先，位置决定效率，提供缓冲池就是为了在内存中可以直接访问数据。
 
+其次，频次决定优先级顺序。因为缓冲池的大小是有限的，比如磁盘有 200G，但是内存只有 16G，缓冲池只有 1G，那么就无法将所有的数据都加载到缓冲池离，这时就涉及到优先级顺序，会**优先对使用频率高的过热数据进行缓存**。
 
 
+### 3.1.2 查询缓存
+查询缓存是提前把 **`查询结果缓存`** 起来，这样下次不需要执行就可以直接拿到结果。需要注意的是，在 MySQL 中的查询缓存，不是查询缓存计划，而是查询对应的结果。因为命中条件苛刻，而且只要数据表发生变化，查询缓存就会失效，因此命中率低。
 
+## 3.2 缓冲池如何读取数据
+缓冲池管理器会尽量将经常使用的数据保存起来，在数据库进行页面读操作的时候，首先会判断该页面是否在缓冲池中，如果存在就直接读取，如果不在，就会通过内存活磁盘将页面放到缓冲池中再进行读取。
 
+缓冲池在数据库中的结构和作用图
 
+![缓存在数据库中的结构和作用](../../img/mysql/mysql逻辑架构/11.缓存在数据库中的结构和作用.png)
 
+## 3.3 查看/设置缓冲池的大小
+InnoDB 存储引擎可以通过 `innodb_buffer_pool_size` 变量来查看缓冲池的大小
+```mysql
+mysql> show variables like 'innodb_buffer_pool_size';
++-------------------------+-----------+
+| Variable_name           | Value     |
++-------------------------+-----------+
+| innodb_buffer_pool_size | 134217728 |
++-------------------------+-----------+
+1 row in set (0.00 sec)
+```
+InnoDB 缓冲池的大小如上所示，只有 `134217728 / 1024 / 1024 = 128M`。
 
+可以通过 set 修改缓冲池大小
+```mysql
+-- 命令行修改
+mysql> set global innodb_buffer_pool_size=268435456;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 1.5 执行器
-执行器在开始执行的时候，要先判断用户有没有这个表 T 的查询权限，如果没有，就会返回没有权限的错误(如果命中查询缓存，会在查询结果返回的时候，做权限校验)
-```sql
-mysql> select * from T where ID=10;
-
-ERROR 1142(42000): SELECT command denied to user 'b@localhost' for table 'T'
+-- my.cnf 文件修改(需要重启mysql)
+[server]
+innodb_buffer_pool_size=268435456
 ```
 
-如果有权限，就打开表继续执行，打开表的时候，执行器会根据表的引擎定义，使用引擎提供的接口。如上面例子的执行流程如下:
-- 调用 InnoDB 引擎的接口取这个表的第一行，判断 ID 值是不是 10， 如果不是则跳过，如果是则将这行存在结果集中；
-- 调用引擎接口取下一行，重复上面的判断逻辑，直到最后一行；
-- 执行器将结果组成记录集作为结果返回给客户端。
+## 3.4 多个 Buffer Pool
+```bash
+[server]
+innodb_buffer_pool_instances=2
+```
 
-在数据库的慢查询日志中，可以看到一个 rows_examined 的字段，表示这个语句执行过程中扫描了多少行，这个值就是在执行器每次调用引擎获取数据行的时候累加的。
+那每个 Buffer Pool 实例实际占多少内存空间呢？其实使用这个公式算出来的：
 
-在有些场景下，执行器调用一次，在引擎内部则扫描了多行，因此 引擎扫描行数跟 row_examined 并不是完全相同的。
+```bash
+innodb_buffer_pool_size / innodb_buffer_pool_instances
+```
 
+## 3.5 引申问题
+Buffer Pool是MySQL内存结构中十分核心的一个组成，你可以先把它想象成一个黑盒子。
 
+黑盒下的更新数据流程
 
+![bufferpool更新流程](../../img/mysql/mysql逻辑架构/12.bufferpool更新流程.png)
 
+我更新到一半突然发生错误了，想要回滚到更新之前的版本，该怎么办？连数据持久化的保证、事务回滚都做不到还谈什么崩溃恢复？
 
-
-
-
-
-
-
-
-
-
-
-
+答案：Redo Log & Undo Log
 
 
 
@@ -413,24 +484,52 @@ ERROR 1142(42000): SELECT command denied to user 'b@localhost' for table 'T'
 
 
 
-# 二、MySQL 日志模块
-mysql 中，有两个重要的日志模块: `redo log(重做日志)` 和 `binlog(归档日志)`
 
-## 2.1 redo log
-当 mysql 中有一条记录需要更新的时候，InnoDB 引擎会先把记录写入到 redo log里面，更新到内存，这个时候更新就算完整了。同时，InnoDB 引擎会在适当的时候，将这个操作记录写入到磁盘里面。
 
-InnoDB 的 redo log 是固定大小的，比如配置一组4个文件，每个文件大小为1GB，那个 redo log 总共就可以记录 4GB 的操作。redo log 会从头开始写，写到末尾又回到开头循环写，如下图:
 
-![redolog](../../img/mysql/mysql逻辑架构/3.redolog.webp)
 
-write pos 是当前记录的位置，一边写一边后移，写到第3号文件末尾后，就回到0号文件的开头。
 
-checkpoint 是当前要擦除的位置，也是往后推移并且循环的，擦除记录前要把记录更新到数据文件。
 
-write pos 和 checkpoint 之间空着的，表示还可以用来记录新的操作。如果 write pos 追上 checkpoint，表示 redo log 满了，这个时候不能在执行更新操作，需要先把 redo log 更新到数据文件然后擦除，把 checkpoint 推进。
 
-有了 redo log，InnoDB 就可以保证即使数据库发生异常重启，之前提交的记录都不会丢失，这个能力称为: crash-safe.
 
-## 2.2 binlog
-[binlog 的一些简单描述](./binlog.md)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
