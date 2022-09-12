@@ -271,6 +271,7 @@
 * [MySQL 逻辑架构](note/MySQL/MySQL逻辑架构.md)
 * [MySQL 存储引擎](note/MySQL/MySQL存储引擎.md)
 * [MySQL 索引的数据结构](note/MySQL/MySQL索引的数据结构.md)
+* [InnoDB数据存储引擎](note/MySQL/InnoDB数据存储引擎.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
