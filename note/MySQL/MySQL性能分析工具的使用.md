@@ -930,9 +930,9 @@ WHERE s1.common_field = 'a';
   mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' AND common_field = 'a';
   ```
 - `No matching min/max row`: 当查询列表处有MIN或者MAx聚合函数，但是并没有符合WHERE子句中的搜索条件的记录时，将会提示该额外信息.
-```mysql
-mysql> EXPLAIN SELECT MIN(key1) FROM s1 WHERE key1 = 'abcdefg';
-```
+  ```mysql
+  mysql> EXPLAIN SELECT MIN(key1) FROM s1 WHERE key1 = 'abcdefg';
+  ```
 - `Using index`: 当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用覆盖索引的情况下，在Extra'列将会提示该额外信息。比方说下边这个查询中只需要用到idx key1而不需要回表操作:
   ```mysql
   mysql> EXPLAIN SELECT key1 FROM s1 WHERE key1 = 'a';
@@ -948,7 +948,7 @@ mysql> EXPLAIN SELECT MIN(key1) FROM s1 WHERE key1 = 'abcdefg';
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.common_field = s2.common_field;
   ```
-  可以在对s2表的执行计划的 Extra 列显示了两个提示: 
+  在对s2表的执行计划的 Extra 列显示了两个提示: 
   - Using join buffer(Block Nested Loop): 这是因为对表 s2 的访问不能有效利用索引，只好退而求其次，使用 join buffer 来减少对 s2 表的访问次数，从而提高性能。
   - Using where: 可以看到查询语句中有一个 s1.common_field = s2.common_field 条件，因为 s1 是驱动表，s2 是被驱动表，所以在访问 s2 表时，s1.common_field 的值已经确定下来了，所以实际上查询 s2 表的条件就是 s2.common_field = 一个常数，所以提示了 Using where 额外信息。
 - `Not exists`: 当我们使用左(外)连接时，如果 where 子句中包含要求被驱动表的某个列等于 NULL 值的搜索条件，而且那个列又是不允许存储 NULL 值的，那么在该表的执行计划的 Extra 列就会提示 Not exists 额外信息，比如下边这个查询语句:
@@ -956,23 +956,262 @@ mysql> EXPLAIN SELECT MIN(key1) FROM s1 WHERE key1 = 'abcdefg';
   mysql> EXPLAIN SELECT * FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.id IS NULL;
   ```
   上述查询中 s1 表时驱动表，s2 表是被驱动表，s2.id 列是不允许存储 NULL 值的，而 where 子句中又包含 s2.id IS NULL 的搜索条件，这意味着必定是驱动表的记录在被驱动表中找不到匹配 ON 子句条件的记录才会把该驱动表的记录加入到最终的结果集，所以对于某条驱动表中的记录来说，如果能在被驱动表中找到1条记录符合 ON 子句条件的记录，那么该驱动表的记录就不会被加入到最终的结果集，也就是说我们没有必要到被驱动表中找到全部符合 ON 子句条件的记录，这样可以稍微节省一点性能。
+
   > 小贴士: 右(外)连接可以被转换为左(外)连接，所以就不提右(外)连接的情况了。
-- `Using intersect(…) 、 Using union(…) 和 Using sort_union(…)`: 如果
+- `Using intersect(…) 、 Using union(…) 和 Using sort_union(…)`: 如果执行计划的 Extra 列出现了 Using intersect(...) 提示，说明准备使用 Intersect 索引合并的方式执行查询，括号中的... 表示需要进行索引合并的索引名称；如果出现了 Using union(...) 提示，说明准备使用 Union 索引合并的方式执行查询；出现了 Using sort_union(...) 提示，说明准备使用 Sort-Union 索引合并的方式执行查询。比如这个查询的执行计划：
+  ```mysql
+  mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' OR key3 = 'a';
+  ```
+  其中，Extra 列就显示了 Using union(idx_key3,inx_key1), 表明 MySQL 即将使用 idx_key3 和 idx_key1 这两个索引进行 union 索引合并的方式执行查询。
+
+- `Zero limit`: 当我们的 Limit 子句的参数是 0 时，压根不打算从表中读取任何记录，将会提示该额外信息，比如这样:
+  ```mysql
+  mysql> EXPLAIN SELECT * FROM s1 LIMIT 0;
+  ```
+- `Using filesort`: 有一些情况下对结果集中的记录排序是可以使用到索引的，比如下面这个查询：
+  ```mysql
+  mysql> EXPLAIN SELECT * FROM s1 ORDER BY key1 LIMIT 10;
+  ```
+  这个查询语句可以利用 idx_key1 索引直接取出 key1 列的10 条记录，然后再进行回表操作就好了。但是很多情况下排序操作无法使用到索引，只能在内存中(记录比较少的时候)或者磁盘中(记录较多的时候)进行排序，MySQL 把这种在内存中或者磁盘上进行排序的方式统称为文件排序(filesort)。如果某个查询需要使用文件排序的方式执行查询，就会在执行计划的 Extra 列中显示 Using filesort 提示，比如这样：
+  ```mysql
+  mysql> EXPLAIN SELECT * FROM s1 ORDER BY common_field LIMIT 10;
+  ```
+  需要注意的是，如果查询中需要使用 filesort 的方式进行排序的记录非常多，那么这个过程是很耗费性能的，我们最好想办法 `将使用文件排序的执行方式改为使用索引进行排序`。
+- `Using temporary`: 
+  ```mysql
+  mysql> EXPLAIN SELECT DISTINCT common_field FROM s1;
+  ```
+  再比如
+  ```mysql
+  mysql> EXPLAIN SELECT common_field, COUNT(*) AS amount FROM s1 GROUP BY common_field;
+  ```
+  执行计划中出现 Using temporary 并不是一个好征兆，因为建立与维护临时表需要付出很大的成本，所以我们最好能使用索引来替代掉使用临时表，比如说下面这个包含 GROUP BY 子句的查询就不需要使用临时表:
+  ```mysql
+  mysql> EXPLAIN SELECT key1, COUNT(*) AS amount FROM s1 GROUP BY key1;
+  ```
+  从 Extra 的 Using index 的提示里我们可以看出，上述查询只需要扫描 idx_key1 索引就可以搞定了，不再需要临时表了。
+
+### 12. 小结
+- EXPLAIN不考虑各种Cache
+- EXPLAIN不能显示MySQL在执行查询时所作的优化工作
+- EXPLAIN不会告诉你关于触发器、存储过程的信息或用户自定义函数对查询的影响情况
+- 部分统计信息是估算的，并非精确值
 
 
 # 七、explain 的进一步使用
+## 7.1 EXPLAIN四种输出格式
+这里谈谈EXPLAIN的输出格式。EXPLAIN可以输出四种格式： 传统格式 ， JSON格式 ， TREE格式 以及 可 视化输出 。用户可以根据需要选择适用于自己的格式。
+
+### 1. 传统格式
+传统格式简单明了，输出是一个表格形式，概要说明查询计划。
+```mysql
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 
+WHERE s2.common_field IS NOT NULL;
+```
+
+### 2. JSON格式
+第一种个时钟介绍的 EXPLAIN 语句中缺少了一个衡量执行计划好坏的重要属性-->成本。而 JSON 格式是四种格式里面输出信息最详尽的格式，里面包含了执行的成本信息
+
+JSON格式：在EXPLAIN单词和真正的查询语句中间加上 FORMAT=JSON 。
+```mysql
+EXPLAIN FORMAT=JSON SELECT ....
+```
+
+![Explain的column与JSON的对应关系](../../img/mysql/mysql性能分析工具的使用/5.Explain的column与JSON的对应关系.png)
+
+这样我们就可以得到一个 json 格式的执行计划，里面包含该计划花费的成本，比如这样
+```mysql
+mysql> explain format=json select * from s1 inner join s2 on s1.key1 = s2.key2 where s1.common_field = 'a'\G
+```
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp1.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp2.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp3.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp4.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp5.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp6.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp7.png)
+
+我们使用 # 后边跟随注释的形式为大家解释了 EXPLAIN FORMAT=JSON 语句的输出内容，但是大家可能有疑问 “cost_info” 里边的成本看着怪怪的，它们是怎么计算出来的？先看 s1 表的 “cost_info” 部分:
+```json
+"cost_info": { 
+	"read_cost": "1840.84", 
+	"eval_cost": "193.76", 
+	"prefix_cost": "2034.60", 
+	"data_read_per_join": "1M" 
+}
+```
+- read_cost 是由下边这两部分组成的：
+  - IO 成本
+  - 检测 rows × (1 - filter) 条记录的 CPU 成本
+> 小贴士： rows和filter都是我们前边介绍执行计划的输出列，在JSON格式的执行计划中，rows相当于rows_examined_per_scan，filtered名称不变。
+- eval_cost 是这样计算的：检测 rows × filter 条记录的成本。
+- prefix_cost 就是单独查询 s1 表的成本，也就是：read_cost + eval_cost
+- data_read_per_join 表示在此次查询中需要读取的数据量。
+
+对于 s2 表的 “cost_info” 部分是这样的：
+```json
+"cost_info": { 	
+	"read_cost": "968.80", 
+	"eval_cost": "193.76", 
+	"prefix_cost": "3197.16", 
+	"data_read_per_join": "1M" 
+}
+```
+由于 s2 表是被驱动表，所以可能被读取多次，这里的 read_cost 和 eval_cost 是访问多次 s2 表后累加起来的值，大家主要关注里边儿的 prefix_cost 的值代表的是整个连接查询预计的成本，也就是单次查询 s1 表和多次查询 s2 表后的成本的和，也就是：
+```bash
+968.80 + 193.76 + 2034.60 = 3197.16
+```
+
+### 3. TREE格式
+TREE格式是8.0.16版本之后引入的新格式，主要根据查询的 各个部分之间的关系 和 各部分的执行顺序 来描述如何查询。
+```mysql
+mysql> EXPLAIN FORMAT=tree SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key2 WHERE
+ s1.common_field = 'a'\G 
+*************************** 1. row *************************** 
+EXPLAIN: -> Nested loop inner join (cost=1360.08 rows=990)
+     -> Filter: ((s1.common_field = 'a') and (s1.key1 is not null)) (cost=1013.75 rows=990)
+	-> Table scan on s1 (cost=1013.75 rows=9895)
+     -> Single-row index lookup on s2 using idx_key2 (key2=s1.key1), with index 
+condition: (cast(s1.key1 as double) = cast(s2.key2 as double)) (cost=0.25 rows=1) 
+1 row in set, 1 warning (0.00 sec)
+```
+
+## 7.2 SHOW WARNINGS的使用
+在我们使用EXPLAIN语句查看了某个查询的执行计划后，紧接着还可以使用SHOW WARNINGS语句查看与这个查询的执行计划有关的一些扩展信息，比如这样:
+
+```mysql
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 
+WHERE s2.common_field IS NOT NULL;
+```
+```mysql
+mysql> SHOW WARNINGS\G 
+*************************** 1. row *************************** 
+	Level: Note 
+	Code: 1003 
+Message: /* select#1 */ select `atguigu`.`s1`.`key1` AS `key1`,`atguigu`.`s2`.`key1` 
+AS `key1` from `atguigu`.`s1` join `atguigu`.`s2` where ((`atguigu`.`s1`.`key1` =
+ `atguigu`.`s2`.`key1`) and (`atguigu`.`s2`.`common_field` is not null)) 
+1 row in set (0.00 sec)
+```
+大家可以看到 `SHOW WARNINGS` 展示出来的信息有三个字段，分别是 Level、Code、Message。我们最常见的就是 Code 为 1003 的信息，当 Code 值为 1003 时，Message 字段展示的信息类似于查询优化器将我们的查询语句重写后的语句。比如我们上边的查询本来是一个左(外)连接查询，但是有一个 s2.common_field is not null 的条件，这就会导致查询优化器把左(外)连接查询优化为内连接查询，从 SHOW WARNINGS 的 Message 字段也可以看出来，原本的 LEFT JOIN 已经变成了 JOIN。
 
 
+# 八、分析优化器执行计划: trace
+OPTIMIZER_TRACE 是 MySQL5.6 引入的一项跟踪功能，它可以跟踪优化器做出的各种决策(比如访问表的方法、各种开销计算、各种转换等)，并将跟踪结果记录到 INFORMATION_SCHEMA.OPTIMIZER_TRACE 表中。
 
-# 八、分析优化器执行计划
+此功能默认关闭。开启 trace，并设置格式为 json，同时设置 trace 最大能够使用的内存大小，避免解析过程中因为默认内存过小而不能够完整展示。
+```mysql
+SET optimizer_trace="enabled=on",end_markers_in_json=on; 
+set optimizer_trace_max_mem_size=1000000;
+```
+开启后，可分析如下语句：
+- SELECT
+- INSERT
+- REPLACE
+- UPDATE
+- DELETE
+- EXPLAIN
+- SET
+- DECLARE
+- CASE
+- IFRETURN
+- CALL
 
+测试：执行如下SQL语句
+```mysql
+select * from student where id < 10;
+```
+最后， 查询 information_schema.optimizer_trace 就可以知道MySQL是如何执行SQL的 ：
+```mysql
+select * from information_schema.optimizer_trace\G
+```
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/7.tmp1.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/7.tmp2.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/7.tmp3.png)
+
+![tmp1](../../img/mysql/mysql性能分析工具的使用/7.tmp4.png)
 
 
 # 九、MySQL监控分析视图
+关于 MySQL 的性能监控和问题诊断，我们一般都是从 performance_schema 中去获取想要的数据，在 MySQL5.7 版本中新增 sys schema,它将 performance_schema 和 information_schema 中的数据以更容易理解的方式总结归纳为 "视图"，其目的就是为了降低查询 performance_schema 的复杂度，让 DBA 能够快速的定位问题。下面看看这些库中都有哪些监控表和视图，掌握了这些，在我们开发和运维的过程中就起到了事半功倍的效果。
+
+## 9.1 Sys schema视图摘要
+1. 主机相关：以host_summary开头，主要汇总了IO延迟的信息。
+2. Innodb相关：以innodb开头，汇总了innodb buffer信息和事务等待innodb锁的信息。
+3. I/o相关：以io开头，汇总了等待I/O、I/O使用量情况。
+4. 内存使用情况：以memory开头，从主机、线程、事件等角度展示内存的使用情况
+5. 连接与会话信息：processlist和session相关视图，总结了会话相关信息。
+6. 表相关：以schema_table开头的视图，展示了表的统计信息。
+7. 索引信息：统计了索引的使用情况，包含冗余索引和未使用的索引情况。
+8. 语句相关：以statement开头，包含执行全表扫描、使用临时表、排序等的语句信息。
+9. 用户相关：以user开头的视图，统计了用户使用的文件I/O、执行语句统计信息。
+10. 等待事件相关信息：以wait开头，展示等待事件的延迟情况。
+
+## 9.2 Sys schema视图使用场景
+索引情况
+```mysql
+#1. 查询冗余索引 
+select * from sys.schema_redundant_indexes; 
+#2. 查询未使用过的索引 select * from sys.schema_unused_indexes; 
+#3. 查询索引的使用情况 select index_name,rows_selected,rows_inserted,rows_updated,rows_deleted
+from sys.schema_index_statistics where table_schema='dbname' ;
+```
+表相关
+```mysql
+# 1. 查询表的访问量 
+select table_schema,table_name,sum(io_read_requests+io_write_requests) as io from
+ sys.schema_table_statistics group by table_schema,table_name order by io desc; 
+
+# 2. 查询占用bufferpool较多的表 
+select object_schema,object_name,allocated,data
+from sys.innodb_buffer_stats_by_table order by allocated limit 10; 
+
+# 3. 查看表的全表扫描情况 
+select * from sys.statements_with_full_table_scans where db='dbname';
+```
+语句相关
+```mysql
+#1. 监控SQL执行的频率 
+select db,exec_count,query from sys.statement_analysis order by exec_count desc; 
+
+#2. 监控使用了排序的SQL 
+select db,exec_count,first_seen,last_seen,query
+from sys.statements_with_sorting limit 1; 
+
+#3. 监控使用了临时表或者磁盘临时表的SQL 
+select db,exec_count,tmp_tables,tmp_disk_tables,query
+from sys.statement_analysis where tmp_tables>0 or tmp_disk_tables >0 order by
+ (tmp_tables+tmp_disk_tables) desc;
+```
+IO相关
+```mysql
+#1. 查看消耗磁盘IO的文件 
+select file,avg_read,avg_write,avg_read+avg_write as avg_io
+from sys.io_global_by_file_by_bytes order by avg_read limit 10;
+```
+Innodb 相关
+```mysql
+#1. 行锁阻塞情况 
+select * from sys.innodb_lock_waits;
+```
+
+> 风险提示:
+> 通过 sys 库去查询时，MySQL 会消耗大量资源去收集相关信息，严重的可能会导致业务请求被阻塞，从而引起故障。建议生产生不要频繁的去查询 sys 或者 performance_schema、information_schema 来完整监控、巡检等工作。
 
 
 
 # 十、小结
+查询是数据库中最频繁的操作，提高查询速度可以有效地提高MysQL数据库的性能。通过对查询语句的分析可以了解查询语句的执行情况，找出查语句的瓶颈，从而优化查询语句。
+
 
 
 
