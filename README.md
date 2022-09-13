@@ -273,6 +273,7 @@
 * [MySQL 索引的数据结构](note/MySQL/MySQL索引的数据结构.md)
 * [InnoDB数据存储引擎](note/MySQL/InnoDB数据存储引擎.md)
 * [MySQL 索引的创建与设计原则](note/MySQL/MySQL索引的创建与设计原则.md)
+* [MySQL 性能分析工具的使用](note/MySQL/MySQL性能分析工具的使用.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
