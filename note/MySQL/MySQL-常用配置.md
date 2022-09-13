@@ -282,7 +282,18 @@ ERROR 1406 (22001): Data too long for column 'name' at row 1
 10. `STRICT_TRANS_TABLES`: 严格模式，进行数据的严格校验，错误数据不能插入，报error错误。
 
 
+# 八、修改默认引擎
+```mysql
+-- 查看数据库默认引擎
+mysql> show engines;
 
+-- 设置默认引擎(临时)
+mysql> set default_storage_engine=InnoDB;
+
+-- 设置默认引擎(永久)
+[mysqld]
+default-storage-engine=InnoDB
+```
 
 
 
