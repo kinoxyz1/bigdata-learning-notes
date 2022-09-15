@@ -77,7 +77,7 @@ CREATE TABLE `student_info` (
 ```
 如果我们想要查询 id=900001 的记录，然后看下查询成本，我们可以直接在聚簇索引上进行查找：
 ```mysql
-SELECT student_id, class_id, NAME, create_time FROM student_infoWHERE id = 900001;
+SELECT student_id, class_id, NAME, create_time FROM student_info WHERE id = 900001;
 ```
 运行结果（1 条记录，运行时间为 0.042s ）
 
@@ -92,7 +92,7 @@ mysql> SHOW STATUS LIKE 'last_query_cost';
 ```
 如果我们想要查询 id 在 900001 到 9000100 之间的学生记录呢？
 ```mysql
-SELECT student_id, class_id, NAME, create_time FROM student_infoWHERE id BETWEEN 900001 AND 900100;
+SELECT student_id, class_id, NAME, create_time FROM student_info WHERE id BETWEEN 900001 AND 900100;
 ```
 运行结果（100 条记录，运行时间为 0.046s ）：
 
@@ -131,7 +131,14 @@ MySQL的慢查询日志，用来记录在MySQL中响应时间超过阀值的语�
 ## 4.1 开启慢查询日志参数
 在使用前，我们需要先看下慢查询是否已经开启，使用下面这条命令即可:
 ```mysql
-mysql> show variables like '%slow_query_log';
+mysql> show variables like '%slow_query_log%';
++---------------------+--------------------------------------+
+| Variable_name       | Value                                |
++---------------------+--------------------------------------+
+| slow_query_log      | OFF                                  |
+| slow_query_log_file | /var/lib/mysql/42408b48ccb1-slow.log |
++---------------------+--------------------------------------+
+2 rows in set (0.00 sec)
 ```
 我们能看到`slow_query_log=OFF`，我们可以把慢查询日志打开，注意设置变量值的时候需要使用global，否则会报错:
 ```mysql
@@ -143,11 +150,22 @@ mysql> show variables like '%slow_query_log';
 ```
 你能看到这时慢查询分析已经开启，同时文件保存在 /var/lib/mysql/kinomysql8-slow.log 文件中。
 
+慢日志默认时间为 10s
+```mysql
+mysql> show variables like '%long_query_time%';
++-----------------+-----------+
+| Variable_name   | Value     |
++-----------------+-----------+
+| long_query_time | 10.000000 |
++-----------------+-----------+
+1 row in set (0.00 sec)
+```
 这里如果我们想把时间缩短，比如设置为 1 秒，可以这样设置：
 ```mysql
 # 测试发现：设置global的方式对当前session的long_query_time失效。对新连接的客户端有效。所以可以一并 执行下述语句 
 mysql > set global long_query_time = 1; 
 mysql> show global variables like '%long_query_time%'; 
+或者
 mysql> set long_query_time=1; 
 mysql> show variables like '%long_query_time%';
 ```
@@ -165,12 +183,18 @@ slow_query_log_file=/var/lib/mysql/kinomysql8-slow.log # 慢查询日志的目�
 long_query_time=3 # 设置慢查询阈值为3秒，超出此设定值的 SQL 即被记录到慢查询日志
 log_output=FILE
 ```
-如果不指定存储路径，慢查询日志将默认存储到 MySQL 数据库的数据文件夹下。如果不指定文件名，默认文件名为 histname-slow.log.
+如果不指定存储路径，慢查询日志将默认存储到 MySQL 数据库的数据文件夹下。如果不指定文件名，默认文件名为 hostname-slow.log.
 
 ## 4.2 查看慢查询数目
 查询当前系统中有多少条慢查询记录
 ```mysql
-SHOW GLOBAL STATUS LIKE '%Slow_queries%';
+mysql> SHOW GLOBAL STATUS LIKE '%Slow_queries%';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| Slow_queries  | 0     |
++---------------+-------+
+1 row in set (0.01 sec)
 ```
 
 ## 4.3 案例演示
@@ -181,7 +205,8 @@ CREATE TABLE `student` (
 	`stuno` INT NOT NULL , 
 	`name` VARCHAR(20) DEFAULT NULL, 
 	`age` INT(3) DEFAULT NULL, 
-	`classId` INT(11) DEFAULT NULL, PRIMARY KEY (`id`) 
+	`classId` INT(11) DEFAULT NULL, 
+	PRIMARY KEY (`id`) 
 ) ENGINE=INNODB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 ```
 ### 步骤2：设置参数 log_bin_trust_function_creators
@@ -206,8 +231,8 @@ BEGIN
 	WHILE i < n DO SET 
 	return_str =CONCAT(return_str,SUBSTRING(chars_str,FLOOR(1+RAND()*52),1)); 
 	SET i = i + 1; 
-		END WHILE; 
-		RETURN return_str; 
+    END WHILE; 
+    RETURN return_str; 
 END // 
 DELIMITER ; 
 
@@ -276,11 +301,20 @@ mysql> SELECT * FROM student WHERE name = 'oQmLUr';
 从上面的结果可以看出来，查询学生编号为“3455655”的学生信息花费时间为2.09秒。查询学生姓名为“oQmLUr”的学生信息花费时间为2.39秒。已经达到了秒的数量级，说明目前查询效率是比较低的，下面的小节我们分析一下原因。
 
 ### 2. 分析
+查看慢查询的数量
 ```mysql
-show status like 'slow_queries';
+mysql> show status like 'slow_queries';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| Slow_queries  | 2     |
++---------------+-------+
+1 row in set (0.00 sec)
 ```
 补充说明:
-> 除了上述变量，控制慢查询日志的还有一个系统变量: min_examined_row_limit。这个变量的意思是，查询扫描过的最少记录数。这个变量和查询执行时间，共同组成了判别一个查询是否是慢查询的条件。如果查询扫描过的记录数大于等于这个变量的值，并且查询执行时间超过long_query_time的值，那么，这个查询就被记录到慢查询日志中;反之，则不被记录到慢查询日志中。
+> 除了上述变量，控制慢查询日志的还有一个系统变量: min_examined_row_limit。
+> 
+> 这个变量的意思是，查询扫描过的最少记录数。这个变量和查询执行时间，共同组成了判别一个查询是否是慢查询的条件。如果查询扫描过的记录数大于等于这个变量的值，并且查询执行时间超过long_query_time的值，那么，这个查询就被记录到慢查询日志中;反之，则不被记录到慢查询日志中。
 > ```mysql
 > mysql> show variables like 'min%';
 > +------------------------+-------+
@@ -641,27 +675,62 @@ WHERE s1.common_field = 'a';
   
   比如下边这个查询语句中也包含2个SELECT关键字:
     ```mysql
-    SELECT * FROM s1 UNION SELECT * FROM s2;
+    mysql> explain SELECT * FROM s1 UNION SELECT * FROM s2;
+    +----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+    | id | select_type  | table      | partitions | type | possible_keys | key  | key_len | ref  | rows  | filtered | Extra           |
+    +----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+    |  1 | PRIMARY      | s1         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  9852 |   100.00 | NULL            |
+    |  2 | UNION        | s2         | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 10152 |   100.00 | NULL            |
+    | NULL | UNION RESULT | <union1,2> | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  NULL |     NULL | Using temporary |
+    +----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+    3 rows in set, 1 warning (0.00 sec)
     ```
   查询语句中每出现一个SELECT关键字，MySQL就会为它分配一个唯一的id值。这个id值就是EXPLAIN语句的第一个列，比如下边这个查询中只有一个SELECT关键字，所以EXPLAIN的结果中也就只有一条id列为1的记录:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a';
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    | id | select_type | table | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra |
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    |  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | const |    1 |   100.00 | NULL  |
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    1 row in set, 1 warning (0.00 sec)
     ```
   对于连接查询来说，一个SELECT关键字后边的FROM子句中可以跟随多个表，所以在连接查询的执行计划中，每个表都会对应一条记录，但是这些记录的id值都是相同的，比如:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2;
+    +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------------------------+
+    | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows  | filtered | Extra                         |
+    +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------------------------+
+    |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  9852 |   100.00 | NULL                          |
+    |  1 | SIMPLE      | s2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 10152 |   100.00 | Using join buffer (hash join) |
+    +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------------------------------+
+    2 rows in set, 1 warning (0.00 sec)
     ```
 可以看到，上述连接查询中参与连接的s1和s2表分别对应一条记录，但是这两条记录对应的id值都是1。这里需要大家记住的是，在连接查询的执行计划中，每个表都会对应一条记录，这些记录的id列的值是相同的，出现在前边的表表示驱动表，出现在后边的表表示被驱动表。所以从上边的EXPLAIN输出中我们可以看出，查询优化器准备让s1表作为驱动表，让s2表作为被驱动表来执行查询。
 
 对于包含子查询的查询语句来说，就可能涉及多个SELECT关键字，所以在包含子查询的查询语句的执行计划中，每个SELECT 关键字都会对应一个唯一的id值，比如这样:
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key1 FROM s2) OR key3 = 'a';
++----+-------------+-------+------------+-------+---------------+----------+---------+------+-------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows  | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+-------+----------+-------------+
+|  1 | PRIMARY     | s1    | NULL       | ALL   | idx_key3      | NULL     | NULL    | NULL |  9852 |   100.00 | Using where |
+|  2 | SUBQUERY    | s2    | NULL       | index | idx_key1      | idx_key1 | 303     | NULL | 10152 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+-------+----------+-------------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 从输出结果中我们可以看到;s1表在外层查询中，外层查询有一个独立的SELECT关键字，所以第一条记录的id值就是1，s2表在子查询中，子查询有一个独立的SELECT关键字，所以第二条记录的id值就是2。
 
 但是这里大家需要特别注意，查询优化器可能对涉及子查询的查询语句进行重写，从而转换为连接查询。所以如果我们想知道查询优化器对某个包含子查询的语句是否进行了重写，直接查看执行计划就好了，比如说:
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key2 FROM s2 WHERE common_field = 'a');
++----+-------------+-------+------------+--------+---------------+----------+---------+----------------+------+----------+------------------------------------+
+| id | select_type | table | partitions | type   | possible_keys | key      | key_len | ref            | rows | filtered | Extra                              |
++----+-------------+-------+------------+--------+---------------+----------+---------+----------------+------+----------+------------------------------------+
+|  1 | SIMPLE      | s1    | NULL       | ALL    | idx_key1      | NULL     | NULL    | NULL           | 9852 |   100.00 | Using where                        |
+|  1 | SIMPLE      | s2    | NULL       | eq_ref | idx_key2      | idx_key2 | 5       | kinodb.s1.key1 |    1 |    10.00 | Using index condition; Using where |
++----+-------------+-------+------------+--------+---------------+----------+---------+----------------+------+----------+------------------------------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 
 可以看到，虽然我们的查询语句是一个子查询，但是执行计划中s1和s2表对应的记录的id值全部是1，这就表明了查询优化器将子查询转换为了连接查询。
@@ -670,6 +739,14 @@ mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN (SELECT key2 FROM s2 WHERE common_
 
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 UNION SELECT * FROM s2;
++----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+| id | select_type  | table      | partitions | type | possible_keys | key  | key_len | ref  | rows  | filtered | Extra           |
++----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+|  1 | PRIMARY      | s1         | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  9852 |   100.00 | NULL            |
+|  2 | UNION        | s2         | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 10152 |   100.00 | NULL            |
+| NULL | UNION RESULT | <union1,2> | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  NULL |     NULL | Using temporary |
++----+--------------+------------+------------+------+---------------+------+---------+------+-------+----------+-----------------+
+3 rows in set, 1 warning (0.00 sec)
 ```
 
 这个语句的执行计划的第三条记录是什么?为何id值是NULL，而且table列也很奇怪?UNION!它会把多个查询的结果集合并起来并对结果集中的记录进行去重，怎么去重呢?MySQL使用的是内部的临时表。正如上边的查询计划中所示，UNION子句是为了把id为1的查询和id为2的查询的结果集合并起来并去重，所以在内部创建了一个名为<union1，2>的临时表（就是执行计划第三条记录的table列的名称)，id为NULL表明这个临时表是为了合并两个查询的结果集而创建的。
@@ -678,6 +755,13 @@ mysql> EXPLAIN SELECT * FROM s1 UNION SELECT * FROM s2;
 
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 UNION ALL SELECT * FROM s2;
++----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows  | filtered | Extra |
++----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------+
+|  1 | PRIMARY     | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  9852 |   100.00 | NULL  |
+|  2 | UNION       | s2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 10152 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+-------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 
 小结:
@@ -790,53 +874,123 @@ DESC SELECT * FROM user_partitions WHERE id>200;
   > 测试:可以把表改成使用InnoDB存储引擎，试试看执行计划的type列是什么。ALL
 - `const`: 当我们根据主键或者唯一二级索引列与常数进行等值匹配时，对单表的访问方法就是const，比如:
     ```mysql
-    mysql> EXPLAIN SELECT * FROM s1 WHERE id = 10005;
+    mysql> explain select * from s1 where id = 10005;
+    +----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+    | id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
+    +----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+    |  1 | SIMPLE      | s1    | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL  |
+    +----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+    1 row in set, 1 warning (0.00 sec)
     ```
 - `eq_ref`: 在连接查询时，如果被驱动表是通过主键或者唯一二级索引列等值匹配的方式进行访问的(如果该主键或者唯一二级索引是联合索引的话，所有的索引列都必须进行等值比较)，则对该被驱动表的访问方法就是eq_ref，比方说:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.id = s2.id;
+    +----+-------------+-------+------------+--------+---------------+---------+---------+--------------+------+----------+-------+
+    | id | select_type | table | partitions | type   | possible_keys | key     | key_len | ref          | rows | filtered | Extra |
+    +----+-------------+-------+------------+--------+---------------+---------+---------+--------------+------+----------+-------+
+    |  1 | SIMPLE      | s1    | NULL       | ALL    | PRIMARY       | NULL    | NULL    | NULL         | 9852 |   100.00 | NULL  |
+    |  1 | SIMPLE      | s2    | NULL       | eq_ref | PRIMARY       | PRIMARY | 4       | kinodb.s1.id |    1 |   100.00 | NULL  |
+    +----+-------------+-------+------------+--------+---------------+---------+---------+--------------+------+----------+-------+
+    2 rows in set, 1 warning (0.00 sec)
     ```
-    从执行计划的结果中可以看出，MySQL打算将s2作为驱动表，s1作为被驱动表，重点关注s1的访问方法是 eq_ref ，表明在访问s1表的时候可以 通过主键的等值匹配 来进行访问。
+    从执行计划的结果中可以看出，MySQL打算将s1作为驱动表，s2作为被驱动表，重点关注21的访问方法是 eq_ref ，表明在访问s2表的时候可以 通过主键的等值匹配 来进行访问。
+    > 因为 s1 和 s2 表记录基本差不多，想验证 小表驱动大表，可以选中之前创建了 400万记录 的 student 表 join s1 表。
 - `ref`: 当通过普通的二级索引列与常量进行等值匹配时来查询某个表，那么对该表的访问方法就可能是ref，比方说下边这个查询:
     ```mysql
-    mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a';
+    mysql> explain select * from s1 where key1 = 'a';
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    | id | select_type | table | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra |
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    |  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | const |    1 |   100.00 | NULL  |
+    +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+    1 row in set, 1 warning (0.00 sec)
     ```
 - `fulltext`: 全文索引
 - `ref_or_null`: 当对普通二级索引进行等值匹配查询，该索引列的值也可以是NULL值时，那么对该表的访问方法就可能是ref_or_null，比如说:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' OR key1 IS NULL;
+    +----+-------------+-------+------------+-------------+---------------+----------+---------+-------+------+----------+-----------------------+
+    | id | select_type | table | partitions | type        | possible_keys | key      | key_len | ref   | rows | filtered | Extra                 |
+    +----+-------------+-------+------------+-------------+---------------+----------+---------+-------+------+----------+-----------------------+
+    |  1 | SIMPLE      | s1    | NULL       | ref_or_null | idx_key1      | idx_key1 | 303     | const |    2 |   100.00 | Using index condition |
+    +----+-------------+-------+------------+-------------+---------------+----------+---------+-------+------+----------+-----------------------+
+    1 row in set, 1 warning (0.00 sec)
     ```
 - `index_merge`: 一般情况下对于某个表的查询只能使用到一个索引，但单表访问方法时在某些场景下可以使用Intersection、Union、Sort-Union这三种索引合并的方式来执行查询。我们看一下执行计划中是怎么体现MySQL使用索引合并的方式来对某个表执行查询的:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' OR key3 = 'a';
+    +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+    | id | select_type | table | partitions | type        | possible_keys     | key               | key_len | ref  | rows | filtered | Extra                                       |
+    +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+    |  1 | SIMPLE      | s1    | NULL       | index_merge | idx_key1,idx_key3 | idx_key1,idx_key3 | 303,303 | NULL |    2 |   100.00 | Using union(idx_key1,idx_key3); Using where |
+    +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+    1 row in set, 1 warning (0.00 sec)
     ```
   从执行计划的 type 列的值是 index_merge 就可以看出，MySQL 打算使用索引合并的方式来执行对 s1 表的查询。
 - `unique_subquery`： 类似于两表连接中被驱动表的eq_ref访问方法，unique_subquery是针对在一些包含IN子查询的查询语句中，如果查询优化器决定将IN子查询转换为EXISTS子查询，而且子查询可以使用到主键进行等值匹配的话，那么该子查询执行计划的type列的值就是unique_subquery，比如下边的这个查询语句:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key2 IN (SELECT id FROM s2 where s1.key1 = s2.key1) OR key3 = 'a';
+    +----+--------------------+-------+------------+-----------------+------------------+---------+---------+------+------+----------+-------------+
+    | id | select_type        | table | partitions | type            | possible_keys    | key     | key_len | ref  | rows | filtered | Extra       |
+    +----+--------------------+-------+------------+-----------------+------------------+---------+---------+------+------+----------+-------------+
+    |  1 | PRIMARY            | s1    | NULL       | ALL             | idx_key3         | NULL    | NULL    | NULL | 9852 |   100.00 | Using where |
+    |  2 | DEPENDENT SUBQUERY | s2    | NULL       | unique_subquery | PRIMARY,idx_key1 | PRIMARY | 4       | func |    1 |    10.00 | Using where |
+    +----+--------------------+-------+------------+-----------------+------------------+---------+---------+------+------+----------+-------------+
+    2 rows in set, 2 warnings (0.00 sec)
     ```
   可以看到执行计划的第二条记录的type值就是unique_subquery，说明在执行子查询时会使用到id列的索引。
 - `index_subquery`: index_subquery与unique_subquery类似，只不过访问子查询中的表时使用的是普通的索引，比如这样:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE common_field IN (SELECT key3 FROM s2 where s1.key1 = s2.key1) OR key3 = 'a';
+    +----+--------------------+-------+------------+----------------+-------------------+----------+---------+------+------+----------+-------------+
+    | id | select_type        | table | partitions | type           | possible_keys     | key      | key_len | ref  | rows | filtered | Extra       |
+    +----+--------------------+-------+------------+----------------+-------------------+----------+---------+------+------+----------+-------------+
+    |  1 | PRIMARY            | s1    | NULL       | ALL            | idx_key3          | NULL     | NULL    | NULL | 9852 |   100.00 | Using where |
+    |  2 | DEPENDENT SUBQUERY | s2    | NULL       | index_subquery | idx_key1,idx_key3 | idx_key3 | 303     | func |    1 |    10.00 | Using where |
+    +----+--------------------+-------+------------+----------------+-------------------+----------+---------+------+------+----------+-------------+
+    2 rows in set, 2 warnings (0.00 sec)
     ```
 - `range`: 如果使用索引获取某些范围区间的记录，那么就可能使用到range访问方法，比如下边的这个查询:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key1 IN ('a', 'b', 'c');
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    | id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                 |
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    |  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |    3 |   100.00 | Using index condition |
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    1 row in set, 1 warning (0.00 sec)
     ```
   或者
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'a' AND key1 < 'b';
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    | id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                 |
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    |  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  357 |   100.00 | Using index condition |
+    +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+    1 row in set, 1 warning (0.00 sec)
     ```
 - `index`: 当我们可以使用索引覆盖，但需要扫描全部的索引记录时，该表的访问方法就是index，比如这样:
     ```mysql
     mysql> EXPLAIN SELECT key_part2 FROM s1 WHERE key_part3 = 'a';
+    +----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+--------------------------+
+    | id | select_type | table | partitions | type  | possible_keys | key          | key_len | ref  | rows | filtered | Extra                    |
+    +----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+--------------------------+
+    |  1 | SIMPLE      | s1    | NULL       | index | idx_key_part  | idx_key_part | 909     | NULL | 9852 |    10.00 | Using where; Using index |
+    +----+-------------+-------+------------+-------+---------------+--------------+---------+------+------+----------+--------------------------+
+    1 row in set, 1 warning (0.00 sec)    
     ```
   上述查询中的搜索列表中只有key_part2一个列，而且搜索条件中也只有key_part3一个列，这两个列又恰好包含在idx_key_part这个索引中，可是搜索条件key_part3不能直接使用该索引进行ref或者range方式的访问，只能扫描整个idx_key_part索引的记录，所以查询计划的type列的值就是index。
     > 再一次强调，对于使用InnoDB存储引擎的表来说，二级索引的记录只包含索引列和主键列的值，而聚簇索引中包含用户定义的全部列以及一些隐藏列，所以扫描二级索引的代价比直接全表扫描，也就是扫描聚簇索引的代价更低一些。
 - `ALL`: 最熟悉的全表扫描，就不多说了，直接看例子:
     ```mysql
     mysql> EXPLAIN SELECT * FROM s1;
+    +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+    | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |
+    +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+    |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9852 |   100.00 | NULL  |
+    +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------+
+    1 row in set, 1 warning (0.00 sec)
     ```
   一般来说，这些访问方法中除了All这个访问方法外，其余的访问方法都能用到索引，除了index_merge访问方法外，其余的访问方法都最多只能用到一个索引。
 
@@ -851,19 +1005,49 @@ mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z' AND key3 = 'a';
 
 ### 7. key_len ☆
 ```mysql
- EXPLAIN SELECT * FROM s1 WHERE id = 10005;
+mysql> EXPLAIN SELECT * FROM s1 WHERE id = 10005;
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | s1    | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
 ```
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key2 = 10126;
++----+-------------+-------+------------+-------+---------------+----------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+-------+---------------+----------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | s1    | NULL       | const | idx_key2      | idx_key2 | 5       | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+-------+---------------+----------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
 ```
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a';
++----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
 ```
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key_part1 = 'a';
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | s1    | NULL       | ref  | idx_key_part  | idx_key_part | 303     | const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
 ```
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key_part1 = 'a' AND key_part2 = 'b';
++----+-------------+-------+------------+------+---------------+--------------+---------+-------------+------+----------+-------+
+| id | select_type | table | partitions | type | possible_keys | key          | key_len | ref         | rows | filtered | Extra |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------------+------+----------+-------+
+|  1 | SIMPLE      | s1    | NULL       | ref  | idx_key_part  | idx_key_part | 606     | const,const |    1 |   100.00 | NULL  |
++----+-------------+-------+------------+------+---------------+--------------+---------+-------------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
 ```
 
 练习：key_len的长度计算公式：
@@ -893,6 +1077,12 @@ mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s2.key1 = UPPER(s1.key1);
 预估的需要读取的记录条数值越小越好
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z';
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                 |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+|  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  397 |   100.00 | Using index condition |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+1 row in set, 1 warning (0.00 sec)
 ```
 
 ### 10. filtered
@@ -902,12 +1092,24 @@ mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z';
 
 ```mysql
 mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z' AND common_field = 'a';
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
+| id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                              |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
+|  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  397 |    10.00 | Using index condition; Using where |
++----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+------------------------------------+
+1 row in set, 1 warning (0.00 sec)
 ```
 
 对于单表查询来说，这个filtered列的值没什么意义，我们更关注在连接查询中驱动表对应的执行计划记录的filtered值，它决定了被驱动表要执行的次数(即: rows * filtered)
 ```mysql
-mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key1 
-WHERE s1.common_field = 'a';
+mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key1 WHERE s1.common_field = 'a';
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key      | key_len | ref            | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------+
+|  1 | SIMPLE      | s1    | NULL       | ALL  | idx_key1      | NULL     | NULL    | NULL           | 9852 |    10.00 | Using where |
+|  1 | SIMPLE      | s2    | NULL       | ref  | idx_key1      | idx_key1 | 303     | kinodb.s1.key1 |    1 |   100.00 | NULL        |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 
 ### 11. Extra ☆
@@ -916,26 +1118,62 @@ WHERE s1.common_field = 'a';
 - `No tables used`: 当查询语句的没有FROM子句时将会提示该额外信息，比如:
   ```mysql
   mysql> EXPLAIN SELECT 1;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra          |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  |  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | No tables used |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `Impossible WHERE`: 查询语句的WHERE子句永远为FALSE时将会提示该额外信息
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 WHERE 1 != 1;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra            |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+  |  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | Impossible WHERE |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `Using where`: 当我们使用全表扫描来执行对某个表的查询，并且该语句的WHERE子句中有针对该表的搜索条件时，在Extra列中会提示上述额外信息。
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 WHERE common_field = 'a';
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9852 |    10.00 | Using where |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   当使用索引访问来执行对某个表的查询，并且该语句的WHERE子句中有除了该索引包含的列之外的其他搜索条件时，在`Extra '列中也会提示上述额外信息。
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' AND common_field = 'a';
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  | id | select_type | table | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra       |
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  |  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | const |    1 |    10.00 | Using where |
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `No matching min/max row`: 当查询列表处有MIN或者MAx聚合函数，但是并没有符合WHERE子句中的搜索条件的记录时，将会提示该额外信息.
   ```mysql
   mysql> EXPLAIN SELECT MIN(key1) FROM s1 WHERE key1 = 'abcdefg';
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                   |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------+
+  |  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | No matching min/max row |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------------------+
+  1 row in set, 1 warning (0.01 sec)
   ```
 - `Using index`: 当我们的查询列表以及搜索条件中只包含属于某个索引的列，也就是在可以使用覆盖索引的情况下，在Extra'列将会提示该额外信息。比方说下边这个查询中只需要用到idx key1而不需要回表操作:
   ```mysql
   mysql> EXPLAIN SELECT key1 FROM s1 WHERE key1 = 'a';
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  | id | select_type | table | partitions | type | possible_keys | key      | key_len | ref   | rows | filtered | Extra       |
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  |  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | const |    1 |   100.00 | Using index |
+  +----+-------------+-------+------------+------+---------------+----------+---------+-------+------+----------+-------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `Using index condition`: 有些搜索条件中虽然出现了索引列，但却不能使用到索引看课件理解索引条件下推
   ```mysql
@@ -943,10 +1181,23 @@ WHERE s1.common_field = 'a';
   ```
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 WHERE key1 > 'z' AND key1 LIKE '%b';
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+  | id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra                 |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+  |  1 | SIMPLE      | s1    | NULL       | range | idx_key1      | idx_key1 | 303     | NULL |  397 |   100.00 | Using index condition |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `Using join buffer (Block Nested Loop)`: 在连接查询执行过程中，当被驱动表不能有效的利用索引加快访问速度，MySQL一般会为其分配一块名叫join buffer的内存块来加快查询速度，也就是我们所讲的基于块的嵌套循环算法，比如下边这个查询语句:
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 INNER JOIN s2 ON s1.common_field = s2.common_field;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+--------------------------------------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows  | filtered | Extra                                      |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+--------------------------------------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |  9852 |   100.00 | NULL                                       |
+  |  1 | SIMPLE      | s2    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 10151 |    10.00 | Using where; Using join buffer (hash join) |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+-------+----------+--------------------------------------------+
+  2 rows in set, 1 warning (0.00 sec)
   ```
   在对s2表的执行计划的 Extra 列显示了两个提示: 
   - Using join buffer(Block Nested Loop): 这是因为对表 s2 的访问不能有效利用索引，只好退而求其次，使用 join buffer 来减少对 s2 表的访问次数，从而提高性能。
@@ -954,6 +1205,13 @@ WHERE s1.common_field = 'a';
 - `Not exists`: 当我们使用左(外)连接时，如果 where 子句中包含要求被驱动表的某个列等于 NULL 值的搜索条件，而且那个列又是不允许存储 NULL 值的，那么在该表的执行计划的 Extra 列就会提示 Not exists 额外信息，比如下边这个查询语句:
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.id IS NULL;
+  +----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------------------+
+  | id | select_type | table | partitions | type | possible_keys | key      | key_len | ref            | rows | filtered | Extra                   |
+  +----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL     | NULL    | NULL           | 9852 |   100.00 | NULL                    |
+  |  1 | SIMPLE      | s2    | NULL       | ref  | idx_key1      | idx_key1 | 303     | kinodb.s1.key1 |    1 |    10.00 | Using where; Not exists |
+  +----+-------------+-------+------------+------+---------------+----------+---------+----------------+------+----------+-------------------------+
+  2 rows in set, 1 warning (0.00 sec)
   ```
   上述查询中 s1 表时驱动表，s2 表是被驱动表，s2.id 列是不允许存储 NULL 值的，而 where 子句中又包含 s2.id IS NULL 的搜索条件，这意味着必定是驱动表的记录在被驱动表中找不到匹配 ON 子句条件的记录才会把该驱动表的记录加入到最终的结果集，所以对于某条驱动表中的记录来说，如果能在被驱动表中找到1条记录符合 ON 子句条件的记录，那么该驱动表的记录就不会被加入到最终的结果集，也就是说我们没有必要到被驱动表中找到全部符合 ON 子句条件的记录，这样可以稍微节省一点性能。
 
@@ -961,33 +1219,75 @@ WHERE s1.common_field = 'a';
 - `Using intersect(…) 、 Using union(…) 和 Using sort_union(…)`: 如果执行计划的 Extra 列出现了 Using intersect(...) 提示，说明准备使用 Intersect 索引合并的方式执行查询，括号中的... 表示需要进行索引合并的索引名称；如果出现了 Using union(...) 提示，说明准备使用 Union 索引合并的方式执行查询；出现了 Using sort_union(...) 提示，说明准备使用 Sort-Union 索引合并的方式执行查询。比如这个查询的执行计划：
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 WHERE key1 = 'a' OR key3 = 'a';
+  +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+  | id | select_type | table | partitions | type        | possible_keys     | key               | key_len | ref  | rows | filtered | Extra                                       |
+  +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+  |  1 | SIMPLE      | s1    | NULL       | index_merge | idx_key1,idx_key3 | idx_key1,idx_key3 | 303,303 | NULL |    2 |   100.00 | Using union(idx_key1,idx_key3); Using where |
+  +----+-------------+-------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   其中，Extra 列就显示了 Using union(idx_key3,inx_key1), 表明 MySQL 即将使用 idx_key3 和 idx_key1 这两个索引进行 union 索引合并的方式执行查询。
 
 - `Zero limit`: 当我们的 Limit 子句的参数是 0 时，压根不打算从表中读取任何记录，将会提示该额外信息，比如这样:
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 LIMIT 0;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra      |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------+
+  |  1 | SIMPLE      | NULL  | NULL       | NULL | NULL          | NULL | NULL    | NULL | NULL |     NULL | Zero limit |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
 - `Using filesort`: 有一些情况下对结果集中的记录排序是可以使用到索引的，比如下面这个查询：
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 ORDER BY key1 LIMIT 10;
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------+
+  | id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------+
+  |  1 | SIMPLE      | s1    | NULL       | index | NULL          | idx_key1 | 303     | NULL |   10 |   100.00 | NULL  |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   这个查询语句可以利用 idx_key1 索引直接取出 key1 列的10 条记录，然后再进行回表操作就好了。但是很多情况下排序操作无法使用到索引，只能在内存中(记录比较少的时候)或者磁盘中(记录较多的时候)进行排序，MySQL 把这种在内存中或者磁盘上进行排序的方式统称为文件排序(filesort)。如果某个查询需要使用文件排序的方式执行查询，就会在执行计划的 Extra 列中显示 Using filesort 提示，比如这样：
   ```mysql
   mysql> EXPLAIN SELECT * FROM s1 ORDER BY common_field LIMIT 10;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra          |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9852 |   100.00 | Using filesort |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+----------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   需要注意的是，如果查询中需要使用 filesort 的方式进行排序的记录非常多，那么这个过程是很耗费性能的，我们最好想办法 `将使用文件排序的执行方式改为使用索引进行排序`。
 - `Using temporary`: 
   ```mysql
   mysql> EXPLAIN SELECT DISTINCT common_field FROM s1;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9852 |   100.00 | Using temporary |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   再比如
   ```mysql
   mysql> EXPLAIN SELECT common_field, COUNT(*) AS amount FROM s1 GROUP BY common_field;
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  | id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra           |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  |  1 | SIMPLE      | s1    | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 9852 |   100.00 | Using temporary |
+  +----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-----------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   执行计划中出现 Using temporary 并不是一个好征兆，因为建立与维护临时表需要付出很大的成本，所以我们最好能使用索引来替代掉使用临时表，比如说下面这个包含 GROUP BY 子句的查询就不需要使用临时表:
   ```mysql
   mysql> EXPLAIN SELECT key1, COUNT(*) AS amount FROM s1 GROUP BY key1;
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------------+
+  | id | select_type | table | partitions | type  | possible_keys | key      | key_len | ref  | rows | filtered | Extra       |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------------+
+  |  1 | SIMPLE      | s1    | NULL       | index | idx_key1      | idx_key1 | 303     | NULL | 9852 |   100.00 | Using index |
+  +----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+-------------+
+  1 row in set, 1 warning (0.00 sec)
   ```
   从 Extra 的 Using index 的提示里我们可以看出，上述查询只需要扫描 idx_key1 索引就可以搞定了，不再需要临时表了。
 
@@ -1005,8 +1305,14 @@ WHERE s1.common_field = 'a';
 ### 1. 传统格式
 传统格式简单明了，输出是一个表格形式，概要说明查询计划。
 ```mysql
-mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 
-WHERE s2.common_field IS NOT NULL;
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.common_field IS NOT NULL;
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key      | key_len | ref            | rows  | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+|  1 | SIMPLE      | s2    | NULL       | ALL  | idx_key1      | NULL     | NULL    | NULL           | 10151 |    90.00 | Using where |
+|  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | kinodb.s2.key1 |     1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 
 ### 2. JSON格式
@@ -1022,22 +1328,89 @@ EXPLAIN FORMAT=JSON SELECT ....
 这样我们就可以得到一个 json 格式的执行计划，里面包含该计划花费的成本，比如这样
 ```mysql
 mysql> explain format=json select * from s1 inner join s2 on s1.key1 = s2.key2 where s1.common_field = 'a'\G
+*************************** 1. row ***************************
+EXPLAIN: {
+  "query_block": {
+    "select_id": 1,                 -- 整个查询语句只有 1 个 SELECT 关键字，该关键字对应的 id 为 1
+    "cost_info": {
+      "query_cost": "1354.27"       -- 整个查询的执行成本语句为 1354.27
+    },
+    "nested_loop": [                -- 几个表之间采用嵌套循环连接算法执行
+      -- 以下是参与嵌套循环连接算法的各个表的信息
+      {
+        "table": {
+          "table_name": "s1",       -- s1 表是驱动表
+          "access_type": "ALL",     -- 访问方式是ALL，意味着使用全表扫描访问
+          "possible_keys": [        -- 可能使用的索引
+            "idx_key1"
+          ],
+          "rows_examined_per_scan": 9852,  -- 查询一次s1表大致需要扫描 9852 条记录
+          "rows_produced_per_join": 985,   -- rows_examined_per_scan * filtered 的记录数
+          "filtered": "10.00",             -- 百分比
+          "cost_info": {
+            "read_cost": "910.93",
+            "eval_cost": "98.52",
+            "prefix_cost": "1009.45",      -- 单词查询 s1 表总共的成本
+            "data_read_per_join": "1M"     -- 读取的数据量
+          },
+          "used_columns": [                -- 执行查询中涉及到的列
+            "id",
+            "key1",
+            "key2",
+            "key3",
+            "key_part1",
+            "key_part2",
+            "key_part3",
+            "common_field"
+          ],
+          -- 对 s1 表访问时针对单表查询的条件
+          "attached_condition": "((`kinodb`.`s1`.`common_field` = 'a') and (`kinodb`.`s1`.`key1` is not null))"
+        }
+      },
+      {
+        "table": {
+          "table_name": "s2",             -- s2 是被驱动表
+          "access_type": "eq_ref",        -- 访问方法为 eq_ref
+          "possible_keys": [              -- 可能使用的索引
+            "idx_key2"
+          ],
+          "key": "idx_key2",              -- 实际使用的索引
+          "used_key_parts": [             -- 使用到的索引列
+            "key2"
+          ],
+          "key_length": "5",              
+          "ref": [                        -- 与 key2 列进行等值匹配的表达式
+            "kinodb.s1.key1"
+          ],
+          "rows_examined_per_scan": 1,    -- 查询一次 s2 表大致需要扫描 1 条记录 
+          "rows_produced_per_join": 985,  
+          "filtered": "100.00",           -- 百分比
+          -- s2 表使用索引进行查询的搜索条件  
+          "index_condition": "(cast(`kinodb`.`s1`.`key1` as double) = cast(`kinodb`.`s2`.`key2` as double))",
+          "cost_info": {
+            "read_cost": "246.30",
+            "eval_cost": "98.52",
+            "prefix_cost": "1354.27",     -- 单词查询 s1、多次查询 s2 表总共的成本
+            "data_read_per_join": "1M"    -- 读取的数据量
+          },
+          "used_columns": [               -- 执行查询涉及到的列
+            "id",
+            "key1",
+            "key2",
+            "key3",
+            "key_part1",
+            "key_part2",
+            "key_part3",
+            "common_field"
+          ]
+        }
+      }
+    ]
+  }
+}
+1 row in set, 2 warnings (0.01 sec)
 ```
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp1.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp2.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp3.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp4.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp5.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp6.png)
-
-![tmp1](../../img/mysql/mysql性能分析工具的使用/6.tmp7.png)
-
-我们使用 # 后边跟随注释的形式为大家解释了 EXPLAIN FORMAT=JSON 语句的输出内容，但是大家可能有疑问 “cost_info” 里边的成本看着怪怪的，它们是怎么计算出来的？先看 s1 表的 “cost_info” 部分:
+大家可能有疑问 “cost_info” 里边的成本看着怪怪的，它们是怎么计算出来的？先看 s1 表的 “cost_info” 部分:
 ```json
 "cost_info": { 
 	"read_cost": "1840.84", 
@@ -1071,14 +1444,13 @@ mysql> explain format=json select * from s1 inner join s2 on s1.key1 = s2.key2 w
 ### 3. TREE格式
 TREE格式是8.0.16版本之后引入的新格式，主要根据查询的 各个部分之间的关系 和 各部分的执行顺序 来描述如何查询。
 ```mysql
-mysql> EXPLAIN FORMAT=tree SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key2 WHERE
- s1.common_field = 'a'\G 
-*************************** 1. row *************************** 
-EXPLAIN: -> Nested loop inner join (cost=1360.08 rows=990)
-     -> Filter: ((s1.common_field = 'a') and (s1.key1 is not null)) (cost=1013.75 rows=990)
-	-> Table scan on s1 (cost=1013.75 rows=9895)
-     -> Single-row index lookup on s2 using idx_key2 (key2=s1.key1), with index 
-condition: (cast(s1.key1 as double) = cast(s2.key2 as double)) (cost=0.25 rows=1) 
+mysql> EXPLAIN FORMAT=tree SELECT * FROM s1 INNER JOIN s2 ON s1.key1 = s2.key2 WHERE s1.common_field = 'a'\G
+*************************** 1. row ***************************
+EXPLAIN: -> Nested loop inner join  (cost=1354.27 rows=985)
+    -> Filter: ((s1.common_field = 'a') and (s1.key1 is not null))  (cost=1009.45 rows=985)
+        -> Table scan on s1  (cost=1009.45 rows=9852)
+    -> Single-row index lookup on s2 using idx_key2 (key2=s1.key1), with index condition: (cast(s1.key1 as double) = cast(s2.key2 as double))  (cost=0.25 rows=1)
+
 1 row in set, 1 warning (0.00 sec)
 ```
 
@@ -1086,17 +1458,21 @@ condition: (cast(s1.key1 as double) = cast(s2.key2 as double)) (cost=0.25 rows=1
 在我们使用EXPLAIN语句查看了某个查询的执行计划后，紧接着还可以使用SHOW WARNINGS语句查看与这个查询的执行计划有关的一些扩展信息，比如这样:
 
 ```mysql
-mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 
-WHERE s2.common_field IS NOT NULL;
+mysql> EXPLAIN SELECT s1.key1, s2.key1 FROM s1 LEFT JOIN s2 ON s1.key1 = s2.key1 WHERE s2.common_field IS NOT NULL;
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key      | key_len | ref            | rows  | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+|  1 | SIMPLE      | s2    | NULL       | ALL  | idx_key1      | NULL     | NULL    | NULL           | 10151 |    90.00 | Using where |
+|  1 | SIMPLE      | s1    | NULL       | ref  | idx_key1      | idx_key1 | 303     | kinodb.s2.key1 |     1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+----------+---------+----------------+-------+----------+-------------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 ```mysql
-mysql> SHOW WARNINGS\G 
-*************************** 1. row *************************** 
-	Level: Note 
-	Code: 1003 
-Message: /* select#1 */ select `atguigu`.`s1`.`key1` AS `key1`,`atguigu`.`s2`.`key1` 
-AS `key1` from `atguigu`.`s1` join `atguigu`.`s2` where ((`atguigu`.`s1`.`key1` =
- `atguigu`.`s2`.`key1`) and (`atguigu`.`s2`.`common_field` is not null)) 
+mysql> SHOW WARNINGS\G
+*************************** 1. row ***************************
+  Level: Note
+   Code: 1003
+Message: /* select#1 */ select `kinodb`.`s1`.`key1` AS `key1`,`kinodb`.`s2`.`key1` AS `key1` from `kinodb`.`s1` join `kinodb`.`s2` where ((`kinodb`.`s1`.`key1` = `kinodb`.`s2`.`key1`) and (`kinodb`.`s2`.`common_field` is not null))
 1 row in set (0.00 sec)
 ```
 大家可以看到 `SHOW WARNINGS` 展示出来的信息有三个字段，分别是 Level、Code、Message。我们最常见的就是 Code 为 1003 的信息，当 Code 值为 1003 时，Message 字段展示的信息类似于查询优化器将我们的查询语句重写后的语句。比如我们上边的查询本来是一个左(外)连接查询，但是有一个 s2.common_field is not null 的条件，这就会导致查询优化器把左(外)连接查询优化为内连接查询，从 SHOW WARNINGS 的 Message 字段也可以看出来，原本的 LEFT JOIN 已经变成了 JOIN。

@@ -295,7 +295,14 @@ mysql> set default_storage_engine=InnoDB;
 default-storage-engine=InnoDB
 ```
 
+# 九、命令行不能输入中文
+```bash
+## 在服务器输入
+export LANG=en_US.UTF-8
 
+## 再次进入mysql, 即可输入中文
+mysql -uroot -p
+```
 
 
 
