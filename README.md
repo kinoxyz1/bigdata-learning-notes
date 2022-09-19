@@ -523,6 +523,7 @@
 * [CentOS 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
 * [Linux CPU性能优化](note/linux/Linux-CPU性能.md)
+* [frp+openvpn+docker 搭建](note/linux/openvpn.md)
   </details>  
 
 <details>
