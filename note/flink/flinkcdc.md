@@ -217,10 +217,5 @@ Flink SQL> SET 'pipeline.operator-chaining' = 'false';
 
 
 
-[FlinkCDC 官方文档](https://ververica.github.io/flink-cdc-connectors/master/content/connectors/mysql-cdc.html#how-incremental-snapshot-reading-works)
-
-
-
-
 
 
