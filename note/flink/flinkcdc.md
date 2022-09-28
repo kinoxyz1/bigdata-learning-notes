@@ -205,8 +205,10 @@ VALUES (default, '2020-07-30 12:08:22', 'Kino', 23.10, 102, false),
 在 FlinkSQL Client 中设置并行度
 
 ```sql
+-- 设置 10 并行度
 Flink SQL> SET 'parallelism.default' = '10';
-Flink SQL> 
+-- 断开算子链，方便在 ui 中查看记录数
+Flink SQL> SET 'pipeline.operator-chaining' = 'false';
 ```
 
 选择一张大表同步(我拿了一张60w记录的表做示例)，效果如下
