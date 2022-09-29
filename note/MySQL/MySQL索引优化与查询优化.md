@@ -167,6 +167,7 @@ DELIMITER ;
 CALL proc_drop_index("dbname","tablename");
 ```
 
+
 # 二、索引失效案例
 MySQL中提高性能的一个最有效的方式是对数据表设计合理的索引。索引提供了高效访问数据的方法，并且加快查询的速度，因此索引对查询的速度有着至关重要的影响。
 
@@ -642,25 +643,47 @@ INSERT INTO book(card) VALUES( FLOOR(1 +(RAND( ) * 20) ) ) ;
 ```mysql
 EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
 ```
-结论：type 有All
+结论：type 为 ALL。
 
-添加索引优化
 ```mysql
-ALTER TABLE book ADD INDEX Y ( card); #【被驱动表】，可以避免全表扫描 
+-- 添加索引优化
+ALTER TABLE book ADD INDEX Y(card); #【被驱动表】，可以避免全表扫描 
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
+-- 再次执行
+mysql> explain select sql_no_cache * from type left join book on type.card = book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | type  | NULL       | ALL  | NULL          | NULL | NULL    | NULL             |   20 |   100.00 | NULL        |
+|  1 | SIMPLE      | book  | NULL       | ref  | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
-可以看到第二行的 type 变为了 ref，rows 也变成了优化比较明显。这是由左连接特性决定的。LEFT JOIN条件用于确定如何从右表搜索行，左边一定都有，所以 右边是我们的关键点,一定需要建立索引 。
+可以看到第二行的 type 变为了 ref，rows 也变成了1，优化比较明显。这是由左连接特性决定的。LEFT JOIN条件用于确定如何从右表搜索行，左边一定都有，所以 右边是我们的关键点,一定需要建立索引 。
 ```mysql
 ALTER TABLE `type` ADD INDEX X (card); #【驱动表】，无法避免全表扫描 
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | type  | NULL       | index | NULL          | X    | 4       | NULL             |   20 |   100.00 | Using index |
+|  1 | SIMPLE      | book  | NULL       | ref   | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 接着
 ```mysql
-DROP INDEX Y ON book; 
+DROP INDEX Y ON book;
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = book.card;
++----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+
+| id | select_type | table | partitions | type  | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |
++----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+
+|  1 | SIMPLE      | type  | NULL       | index | NULL          | X    | 4       | NULL |   20 |   100.00 | Using index                                |
+|  1 | SIMPLE      | book  | NULL       | ALL   | NULL          | NULL | NULL    | NULL |   20 |   100.00 | Using where; Using join buffer (hash join) |
++----+-------------+-------+------------+-------+---------------+------+---------+------+------+----------+--------------------------------------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 
 ## 3.3 采用内连接
@@ -670,24 +693,52 @@ drop index Y on book;（如果已经删除了可以不用再执行该操作）
 ```
 换成 inner join（MySQL自动选择驱动表）
 ```mysql
-EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+|  1 | SIMPLE      | type  | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   20 |   100.00 | NULL                                       |
+|  1 | SIMPLE      | book  | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   20 |    10.00 | Using where; Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 添加索引优化
 ```mysql
-ALTER TABLE book ADD INDEX Y ( card); 
+ALTER TABLE book ADD INDEX Y ( card);
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | type  | NULL       | ALL  | NULL          | NULL | NULL    | NULL             |   20 |   100.00 | NULL        |
+|  1 | SIMPLE      | book  | NULL       | ref  | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 ```mysql
-ALTER TABLE type ADD INDEX X (card); 
+ALTER TABLE type ADD INDEX X (card);
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type  | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | book  | NULL       | index | Y             | Y    | 4       | NULL             |   20 |   100.00 | Using index |
+|  1 | SIMPLE      | type  | NULL       | ref   | X             | X    | 4       | kinodb.book.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 接着：
 ```mysql
-DROP INDEX X ON `type`; 
+DROP INDEX X ON `type`;
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM TYPE INNER JOIN book ON type.card=book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | type  | NULL       | ALL  | NULL          | NULL | NULL    | NULL             |   20 |   100.00 | NULL        |
+|  1 | SIMPLE      | book  | NULL       | ref  | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec
 ```
 接着：
 ```mysql
@@ -715,7 +766,14 @@ INSERT INTO book(card) VALUES( FLOOR(1 +(RAND( ) * 20) ) ) ;
 
 ALTER TABLE book ADD INDEX Y ( card) ;
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM TYPE INNER JOIN book ON type.card=book.card;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref              | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+|  1 | SIMPLE      | type  | NULL       | ALL  | NULL          | NULL | NULL    | NULL             |   20 |   100.00 | NULL        |
+|  1 | SIMPLE      | book  | NULL       | ref  | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
 ```
 图中发现，由于type表数据大于book表数据，MySQL选择将type作为被驱动表。也就是小表驱动大表。
 
@@ -745,17 +803,31 @@ CREATE TABLE a(f1 INT, f2 INT,INDEX(f1 ))ENGINE=INNODB;
 
 CREATE TABLE b(f1 INT,f2 INT)ENGINE=INNODB;
 
-INSERT INTO a VALUES( 1,1),(2,2),(3,3) ,(4,4),(5,5),(6,6);
+INSERT INTO a VALUES(1,1),(2,2),(3,3),(4,4),(5,5),(6,6);
 
-INSERT INTO b VALUES(3,3 ), (4,4),(5,5),(6,6),(7,7),(8,8);
+INSERT INTO b VALUES(3,3),(4,4),(5,5),(6,6),(7,7),(8,8);
 
-SELECT *FROM b;
+SELECT * FROM b;
 
 #测试1
-EXPLAIN SELECT * FROM a LEFT JOIN b ON( a.f1=b.f1) WHERE (a.f2=b.f2);
+mysql> EXPLAIN SELECT * FROM a LEFT JOIN b ON a.f1=b.f1 WHERE a.f2=b.f2;
++----+-------------+-------+------------+------+---------------+------+---------+-------------+------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref         | rows | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+-------------+------+----------+-------------+
+|  1 | SIMPLE      | b     | NULL       | ALL  | NULL          | NULL | NULL    | NULL        |    6 |   100.00 | Using where |
+|  1 | SIMPLE      | a     | NULL       | ref  | f1            | f1   | 5       | kinodb.b.f1 |    1 |    16.67 | Using where |
++----+-------------+-------+------------+------+---------------+------+---------+-------------+------+----------+-------------+
+2 rows in set, 1 warning (0.00 sec)
 
 #测试2
-EXPLAIN SELECT * FROM a LEFT JOIN b ON(a.f1=b.f1) AND ( a.f2=b.f2);
+mysql> EXPLAIN SELECT * FROM a LEFT JOIN b ON a.f1=b.f1 AND a.f2=b.f2;
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra                                      |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+|  1 | SIMPLE      | a     | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    6 |   100.00 | NULL                                       |
+|  1 | SIMPLE      | b     | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    6 |   100.00 | Using where; Using join buffer (hash join) |
++----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+--------------------------------------------+
+2 rows in set, 1 warning (0.00 sec)
 ```
 
 ### 2. Simple Nested-Loop Join(简单嵌套循环连接)
@@ -870,7 +942,6 @@ EXPLAIN SELECT * FROM t1 STRAIGHT_JOIN t2 ON (t1.a=t2.a);
 > 1. 使用join语句，性能比强行拆成多个单表执行SQL语句的性能要好；
 > 2. 如果使用join语句的话，需要让小表做驱动表。
 
-
 ## 3.5 小结
 - 保证被驱动表的JOIN字段已经创建了索引
 - 需要JOIN 的字段，数据类型保持绝对一致。
@@ -926,6 +997,7 @@ ON a.stuno = b.monitor
 WHERE b.monitor IS NULL;
 ```
 > 结论：尽量不要使用NOT IN 或者 NOT EXISTS，用LEFT JOIN xxx ON xx WHERE xx IS NULL替代
+
 
 # 五、排序优化
 ## 5.1 排序优化
