@@ -96,8 +96,25 @@ public class TestLambda {
 }
 ```
 
-自定义接口:@FunctionalInterface
-- 需要接口中只有一个抽象方法
+
+# 二、函数式接口
+## 2.1 概念
+函数式接口在 Java 中值: 有且仅有一个抽象方法的接口。
+
+函数式接口适用于 **函数式编程**。Java 中的函数式编程体现就是 Lambda, 所以函数式接口就是可以适用于 Lambda 使用的接口。只有确保接口中有且仅有一个抽象方法，Java 中的 Lambda 才能顺利地进行推导。
+
+## 2.2 格式
+需要确保接口中有且只有一个抽象方法
+```java
+@FunctionalInterface
+<权限修饰符> interface <接口名> {
+    <返回值类型> <方法名称>(<入参>);
+}
+```
+- `@FunctionalInterface`: 与 `@Override` 注解类型，Java8 中专门为函数式接口引入了这个注解；一旦使用该注解来定义接口，编译器会强制检查该接口是否确实有且仅有一个抽象方法，否则会报错。需要注意的是，即使不适用这个注解，只要满足函数式接口的定义，这个接口就仍然是一个函数式接口。
+
+
+## 2.3 自定义函数式接口
 
 ```java
 // ------------ define interface ------------
@@ -203,8 +220,84 @@ public class TestLambda {
 }
 ```
 
+## 2.4 内置函数式接口
+| 函数式接口                | 参数类型 | 返回类型    | 用途                                                | 
+|----------------------|------|---------|---------------------------------------------------| 
+| Consumer</br> 消费类型接口 | T    | void    | 对类型为 T 的对象应用操作: void accept(T t)                  | 
+| Supplier</br>提供型接口   | 无    | T       | 返回类型为 T 的对象: T get()                              |
+| Function</br>函数型接口   | T    | R       | 对类型为 T 的对象应用操作，并返回结果为 R 类型的对象: R apply(T t)       |
+| Predicate</br>断言型接口  | T    | boolean | 确定类型为 T 的对象是否满足某约束，并返回 boolean: boolean test(T t) |
 
-# 二、函数式接口
+
+## 2.5 Consumer
+```java
+public class TestConsumer {
+    public static void main(String[] args) {
+        method("hello world", (x) -> {
+            System.out.println(x.split(" ", 1)[0]);
+        });
+    }
+    
+    public static void method(String name, Consumer<String> consumer) {
+        consumer.accept(name);
+    }
+}
+```
+andThen() 方法
+```java
+public class TestConsumer {
+    public static void main(String[] args) {
+        method("hello world", (x) -> {
+            System.out.println(x.split(" ", 1)[0]);
+        }, (y) -> {
+            System.out.println(y.split(" ", 2)[1]);
+        });
+    }
+    
+    public static void method(String name, Consumer<String> consumer1, Consumer<String> consumer2) {
+        // consumer1 连接 consumer2, 先执行 consumer1 消费数据, 在执行 consumer1 消费数据
+        consumer1.andThen(consumer2).accept(name);
+    }
+}
+```
+
+## 2.6 Supplier
+使用 Supplier 接口作为方法参数类型，通过 Lambda 表达式求出 int 数组中的最大值。
+```java
+public class TestSupplier {
+    public static void main(String[] args) {
+        int[] arr = {10,20,1,999,90,-2,200};
+        int maxValue = getMax(() -> {
+            int max = arr[0];
+            for (int i = 0; i < arr.length; i++) {
+                if (max < arr[i]) {
+                    max = arr[i];
+                }
+            }
+            return max;
+        });
+        System.out.println(maxValue);
+    }
+    
+    public static Integer getMax(Supplier supplier) {
+        return supplier.get();
+    }
+}
+```
+
+## 2.7 Function
+
+
+## 2.8 Predicate
+做判断，返回有个 boolean 结果
+```java
+public class TestPredicate {
+    public static void main(String[] args) {
+        
+    }
+}
+```
+
 
 
 
