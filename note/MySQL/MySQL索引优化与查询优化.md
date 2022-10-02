@@ -880,7 +880,7 @@ Index Nested-Loop Join其优化的思路主要是为了减少内层表数据的�
   +------------------+--------+
   1 row in set (1.56 sec)
   ```
-join_buffer_size的最大值在32位系统可以申请4G，而在64位操做系统下可以申请大于4G的Join Buffer空间(64位Windows除外，其大值会被截断为4GB并发出警告)。
+  join_buffer_size的最大值在32位系统可以申请4G，而在64位操做系统下可以申请大于4G的Join Buffer空间(64位Windows除外，其大值会被截断为4GB并发出警告)。
 
 ### 5. Join小结
 1. 整体效率比较:INLJ >BNLJ > SNLJ
@@ -1026,42 +1026,834 @@ drop index idx_age_classid_name on student;
 -- 方式2
 call pric_drop_index('kinodb', 'student');
 ```
+以下是否能使用到索引, 能否去掉 `using filesort`
+
+过程一
+```mysql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age,classid;
+
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age,classid limit 10;
+```
+过程二: order by 时不 limit, 索引失效
+```mysql
+# 创建索引
+CREATE TINDEX idx_age_classid_name ON student (age, classid, name);
+
+# 不限制，索引失效
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age, classid;
+
+# 增加 limit 过滤条件，使用上索引了
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age, classid limit 10;
+```
+过程三: order by 时，顺序错误，索引失效
+```mysql
+# 创建索引
+CREATE INDEX idx_age_classid_stuno ON student(age, classid, stuno);
+
+# 以下哪些索引失效？
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY classid limit 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY classid, name limit 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY classid, name, stuno limit 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age, classid, stuno limit 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age, classid limit 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age limit 10;
+```
+过程四: order by 时规则不一致，索引失效(顺序错，不索引；方向反，不索引)
+```mysql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid ASC LIMIT 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY classid DESC, name DESC LIMIT 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid DESC LIMIT 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid DESC LIMIT 10;
+```
+结论: order by 子句，尽量使用 Index 方式排序，避免使用 FileSort 方式排序。
+
+过程五: 无过滤，不索引
+```mysql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 45 ORDER BY classid;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 45 ORDER BY classid, name;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE classid = 45 ORDER BY age;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE classid = 45 ORDER BY age limit 10;
+```
+小结:
+```sql
+INDEX a_b_c(a,b,c) order by 能使用索引最左前缀
+- ORDER BY a
+- ORDER BY a,b
+- ORDER BY a,b,c
+- ORDER BY a DESC,b DESC,c DESC 如果WHERE使用索引的最左前缀定义为常量，则order by 能使用索引
+- WHERE a = const ORDER BY b,c
+- WHERE a = const AND b = const ORDER BY c
+- WHERE a = const ORDER BY b,c
+- WHERE a = const AND b > const ORDER BY b,c 不能使用索引进行排序
+- ORDER BY a ASC,b DESC,c DESC /* 排序不一致 */
+- WHERE g = const ORDER BY b,c /*丢失a索引*/
+- WHERE a = const ORDER BY c /*丢失b索引*/
+- WHERE a = const ORDER BY a,d /*d不是索引的一部分*/
+- WHERE a in (...) ORDER BY b,c /*对于排序来说，多个相等条件也是范围查询*/
+```
+## 5.3 案例实战
+执行案例前先清楚 student 上的索引，只留主键
+```mysql
+drop index idx_age on student;
+drop index idx_age_classid_stuno on student;
+drop index idx_age_classid_name on student;
+
+或者 
+call proc_drop_index('kinodb','student');
+```
+场景:查询年龄为30岁的，且学生编号小于101000的学生，按用户名称排序
+```mysql
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
+```
+> type 是 ALL，即最坏的情况。Extra 里还出现了 Using filesort，也是最坏的情况，优化是必须的。
+
+优化方案一: 为了去掉 filesort， 可以把索引建成
+```mysql
+create index idx_age_name on student(age,name);
+```
+优化方案二: 尽量让 where 的过滤条件和排序使用上索引
+
+建一个三个字段的组合索引：
+```mysql
+# 删除索引
+DROP INDEX idx_age_name ON student; 
+
+# 创建索引
+CREATE INDEX idx_age_stuno_name ON student (age,stuno,NAME); 
+
+EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 30 AND stuno <101000 ORDER BY NAME ;
+```
+结果竟然有 filesort的 sql 运行速度， 超过了已经优化掉 filesort的 sql ，而且快了很多，几乎一瞬间就出现了结果.
+
+> 结论: 
+> 1. 两个索引同时存在，mysql自动选择最优的方案。（对于这个例子，mysql选择idx_age_stuno_name）。但是， 随着数据量的变化，选择的索引也会随之变化的 。
+> 2. 当【范围条件】和【group by 或者 order by】的字段出现二选一时，优先观察条件字段的过滤数量，如果过滤的数据足够多，而需要排序的数据并不多时，优先把索引放在范围字段上。反之，亦然。
+
+思考：这里我们使用如下索引，是否可行？
+```mysql
+DROP INDEX idx_age_stuno_name ON student; 
+
+CREATE INDEX idx_age_stuno ON student(age,stuno);
+```
+
+
+## 5.4 filesort算法：双路排序和单路排序
+排序的字段若如果不在索引列上，则filesort会有两种算法:双路排序和单路排序
+
+### 双路排序 （慢）
+
+MySQL 4.1之前是使用双路排序 ，字面意思就是两次扫描磁盘，最终得到数据， 读取行指针和order by列 ，对他们进行排序，然后扫描已经排序好的列表，按照列表中的值重新从列表中读取对应的数据输出
+
+从磁盘取排序字段，在buffer进行排序，再从 磁盘取其他字段 。
+
+取一批数据，要对磁盘进行两次扫描，众所周知，IO是很耗时的，所以在mysql4.1之后，出现了第二种改进的算法，就是单路排序。
+
+
+### 单路排序 （快）
+
+从磁盘读取查询需要的 所有列 ，按照order by列在buffer对它们进行排序，然后扫描排序后的列表进行输出， 它的效率更快一些，避免了第二次读取数据。并且把随机IO变成了顺序IO，但是它会使用更多的空间， 因为它把每一行都保存在内存中了。
+
+### 结论及引申出的问题
+- 由于单路是后出的，总体而言好过双路
+- 但是用单路有问题
+  - 在sort_buffer中，单路比多路要多占用很多空间，因为单路是把所有字段都取出,所以有可能取出的数据的总大小超出了sort_buffer的容量，导致每次只能取sort_buffer容量大小的数据，进行排序(创建tmp文件，多路合并)，排完再取sort_buffer容量大小，再排…从而多次I/O。
+  - 单路本来想省一次lo操作，反而导致了大量的I/0操作，反而得不偿失。
+
+
+### 优化策略
+1. 尝试提高 sort_buffer_size
+
+   不管尝试哪种算法，提高这个参数都会提高效率，要根据系统的能力去提高，因为这个参数是针对每个进程(connection)的1-8M之间调整。MySQL5.7中InnoDB存储引擎默认值是 1048576字节=1MB。
+
+   ```mysql
+   show variables like '%sort_buffer_size%';
+   ```
+
+2. 尝试提高 max_length_for_sort_data
+
+   提高这个参数，会增加用改进算法的概率。
+
+   ```mysql
+   show variables like '%max_length_for_sort_data%';  # 默认 1024 字节
+   ```
+
+   但是如果设置的太高，数据总容量超出 `sort_buffer_size`的概率就增大，明显症状是高的磁盘I/O活动和低的处理器使用率。如果需要返回的列的总长度大于 `max_length_for_sort_data`,使用双路算法，否则使用单路算法。1024-8192字节之间调整
+
+
+3. Order by 时select * 是一个大忌。最好只Query需要的字段。
+   - 当 Query 的字段大小总和小于 `max_length_for_sort_data`, 而且排序字段不是 TEXT|BLOB 类型时，会用改进后的算法--单路排序，否则用老算法--多路排序。
+   - 两种算法的数据都有可能超出 `sort_buffer_size`的容量，超出之后，会创建 tmp 文件进行合并排序，导致多次I/O, 但是用单路排序算法的风险更大一些，所以要 `提高 sort_buffer_size`。
+
+# 六、GROUP BY 优化
+
+
+
+- group by 使用索引的原则几乎跟order by一致 ，group by 即使没有过滤条件用到索引，也可以直接使用索引。
+- group by 先排序再分组，遵照索引建的最佳左前缀法则。
+- 当无法使用索引列，增大 max_length_for_sort_data 和 sort_buffer_size 参数的设置。
+- where效率高于having，能写在where限定的条件就不要写在having中了。
+- 减少使用order by，和业务沟通能不排序就不排序，或将排序放到程序端去做。Order by、group by、distinct这些语句较为耗费CPU，数据库的CPU资源是极其宝贵的。
+- 包含了order by、group by、distinct这些查询的语句，where条件过滤出来的结果集请保持在1000行以内，否则SQL会很慢。
+
+
+
+# 七、优化分页查询
+
+一般分页查询时，通过创建覆盖索引能够比较好的提高性能。一个常见又非常头疼的问题就是 limit 2000000,10, 此时需要 MySQL 排序前 2000010记录，仅仅返回2000000-2000010的记录，其他的记录丢弃，查询排序的代价非常大。
+
+```mysql
+explain select sql_no_cache * from student limit 2000000,10;
+```
+
+## 7.1 优化思路一
+
+在索引上完成排序分页操作，最后根据主键关联回原表查询所需要的其他列内容。
+
+```mysql
+EXPLAIN SELECT * FROM student t,(SELECT id FROM student ORDER BY id LIMIT 2000000,10) a WHERE t.id = a.id;
+```
+
+## 7.2 优化思路二
+
+该方案适用于主键自增的表，可以把Limit 查询转换成某个位置的查询 。
+
+```mysql
+EXPLAIN SELECT * FROM student WHERE id > 2000000 LIMIT 10;
+```
+
+# 八、优先考虑覆盖索引
+
+## 8.1 什么是覆盖索引？
+
+`理解方式一`：索引是高效找到行的一个方法，但是一般数据库也能使用索引找到一个列的数据，因此它不必读取整个行。毕竟索引叶子节点存储了它们索引的数据；当能通过读取索引就可以得到想要的数据，那就不需要读取行了。一个索引包含了满足查询结果的数据就叫做覆盖索引。
+
+
+
+`理解方式二`：非聚簇复合索引的一种形式，它包括在查询里的SELECT、JOIN和WHERE子句用到的所有列（即建索引的字段正好是覆盖查询条件中所涉及的字段）。
+
+简单说就是， `索引列+主键` 包含 `SELECT 到 FROM之间查询的列` 。
+
+
+
+举例一:
+
+```mysql
+#删除之前的索引
+
+DROP INDEX idx_age_stuno ON student;
+
+CREATE INDEX idx_age_name ON student ( age, NAME);
+
+EXPLAIN SELECT * FROM student WHERE age <> 20;
+```
+
+```mysql
+EXPLAIN SELECT id , age , NAME FROM student WHERE age <> 20 ;
+```
+
+上述都使用到了声明的索引，下面的情况则不然，在查询列中多了一列classid，显示未使用到索引:
+
+```mysql
+EXPLAIN SELECT id , age , NAME,classid FROM student WHERE age <> 20;
+```
+
+举例二:
+
+```mysql
+EXPLAIN SELECT * FROM student WHERE NAME LIKE '%abc ' ;
+```
+
+```mysql
+CREATE INDEX idx_age_name ON student ( age , NAME);
+
+EXPLAIN SELECT id , age ,NAME FROM student WHERE NAME LIKE '%abc ' ;
+```
+
+上述都使用到了声明的索引，下面的情况则不然，查询列依然多了classid，结果是未使用到索引:
+
+```mysql
+EXPLAIN SELECT id , age ,NAME, classid FROM student WHERE NAME LIKE‘%ab;
+```
+
+## 8.2 覆盖索引的利弊
+
+### 好处
+
+1. 避免Innodb表进行索引的二次查询（回表）
+
+​	Innodb是以聚集索引的顺序来存储的，对于Innodb来说，二级索引在叶子节点中所保存的是行的主键信息，如果是用二级索引查询数据，在查找到相应的键值后，还需通过主键进行二次查询才能获取我们真实所需要的数据。
+
+​	在覆盖索引中，二级索引的键值中可以获取所要的数据，避免了对主键的二次查询，减少了I0操作，提升了查询效率。
+
+2. 可以把随机IO变成顺序IO加快查询效率
+
+​	由于覆盖索引是按键值的顺序存储的，对于I0密集型的范围查找来说，对比随机从磁盘读取每一行的数据Io要少的多，因此利用覆盖索引在访问时也可以把磁盘的随机读取的IO转变成索引查找的顺序I0。
+
+​	由于覆盖索引可以减少树的搜索次数，显著提升查询性能，所以使用覆盖索引是一个常用的性能优化手段。
+
+
+
+### 弊端
+
+索引字段的维护 总是有代价的。因此，在建立冗余索引来支持覆盖索引时就需要权衡考虑了。这是业务DBA，或者称为业务数据架构师的工作。
+
+
+
+# 九、如何给字符串添加索引
+
+有一张教师表，表定义如下：
+
+```mysql
+create table teacher( 
+	ID bigint unsigned primary key, 
+	email varchar(64), 
+	... 
+)engine=innodb;
+```
+
+讲师要使用邮箱登录，所以业务代码中一定会出现类似于这样的语句：
+
+```mysql
+mysql> select col1, col2 from teacher where email='xxx';
+```
+
+如果email这个字段上没有索引，那么这个语句就只能做 全表扫描 。
+
+## 9.1 前缀索引
+
+MySQL是支持前缀索引的。默认地，如果你创建索引的语句不指定前缀长度，那么索引就会包含整个字符串。
+
+```mysql
+mysql> alter table teacher add index index1(email); 
+
+#或
+
+mysql> alter table teacher add index index2(email(6));
+```
+
+这两种不同的定义在数据结构和存储上有什么区别呢？下图就是这两个索引的示意图。
+
+![示意图一](../..//img/mysql/mysql索引优化与查询优化/10.示意图一.png)
+
+或者
+
+![示意图二](../..//img/mysql/mysql索引优化与查询优化/11.示意图二.png)
+
+`如果使用的是index1`（即email整个字符串的索引结构），执行顺序是这样的：
+
+1. 从index1索引树找到满足索引值是’ [zhangssxyz@xxx.com](mailto:zhangssxyz@xxx.com) ’的这条记录，取得ID2的值；
+2. 到主键上查到主键值是ID2的行，判断email的值是正确的，将这行记录加入结果集；
+3. 取index1索引树上刚刚查到的位置的下一条记录，发现已经不满足email=’ [zhangssxyz@xxx.com](mailto:zhangssxyz@xxx.com) ’的条件了，循环结束。
+
+
+
+这个过程中，只需要回主键索引取一次数据，所以系统认为只扫描了一行。
+
+
+
+`如果使用的是index2`（即email(6)索引结构），执行顺序是这样的：
+
+1. 从index2索引树找到满足索引值是’zhangs’的记录，找到的第一个是ID1；
+2. 到主键上查到主键值是ID1的行，判断出email的值不是’ [zhangssxyz@xxx.com](mailto:zhangssxyz@xxx.com) ’，这行记录丢弃；
+3. 取index2上刚刚查到的位置的下一条记录，发现仍然是’zhangs’，取出ID2，再到ID索引上取整行然后判断，这次值对了，将这行记录加入结果集；
+4. 重复上一步，直到在idxe2上取到的值不是’zhangs’时，循环结束。
+
+也就是说使用前缀索引，定义好长度，就可以做到既节省空间，又不用额外增加太多的查询成本。前面已经讲过区分度，区分度越高越好。因为区分度越高，意味着重复的键值越少。
+
+## 9.2 前缀索引对覆盖索引的影响
+
+> 结论：
+> 使用前缀索引就用不上覆盖索引对查询性能的优化了，这也是你在选择是否使用前缀索引时需要考虑的一个因素。
+
+
+
+# 十、索引下推
+
+Index Condition Pushdown(ICP)是MySQL 5.6中新特性，是一种在存储引擎层使用索引过滤数据的一种优化方式。ICP可以减少存储引擎访问基表的次数以及MySQL服务器访问存储引擎的次数。
+
+## 10.1 使用前后对比
+
+- 如果没有ICP，存储引擎会遍历索引以定位基表中的行，并将它们返回给MySQL服务器，由MySQL服务器评估WHERE后面的条件是否保留行。
+
+- 启用ICP后，如果部分WHERE条件可以仅使用索引中的列进行筛选，则mysql服务器会把这部分WHERE条件放到存储引擎筛选。然后，存储引擎通过使用索引条目来筛选数据，并且只有在满足这一条件时才从表中读取行。
+
+   
+
+好处:ICP可以减少存储引擎必须访问基表的次数和MySQL服务器必须访问存储引擎的次数。
+
+但是，ICP的加速效果取决于在存储引擎内通过ICP筛选掉的数据的比例。
+
+## 10.2 ICP的使用条件
+
+1. 只能用于二级索引(secondary index)
+
+2. explain显示的执行计划中type值（join 类型）为 range 、 ref 、 eq_ref 或者 ref_or_null 。
+
+3. 并非全部where条件都可以用ICP筛选，如果where条件的字段不在索引列中，还是要读取整表的记录到server端做where过滤。
+
+4. ICP可以用于MyISAM和InnnoDB存储引擎
+
+5. MySQL 5.6版本的不支持分区表的ICP功能，5.7版本的开始支持。
+
+6. 当SQL使用覆盖索引时，不支持ICP优化方法。
+
+
+
+## 10.3 ICP使用案例
+
+案例1
+
+```sql
+SELECT * FROM tuser 
+WHERE NAME LIKE '张%' 
+AND age = 10 AND ismale = 1;
+```
+
+![索引下推案例一图一](../..//img/mysql/mysql索引优化与查询优化/12.索引下推案例一图一.png)
+
+# 十一、普通索引 vs 唯一索引
+
+从性能的角度考虑，你选择唯一索引还是普通索引呢？选择的依据是什么呢？
+
+假设，我们有一个主键列为ID的表，表中有字段k，并且在k上有索引，假设字段 k 上的值都不重复。
+
+
+
+这个表的建表语句是：
+
+```sql
+mysql> create table test( 
+	id int primary key, 
+	k int not null, 
+	name varchar(16), 
+	index (k) 
+)engine=InnoDB;
+```
+
+表中R1~R5的(ID,k)值分别为(100,1)、(200,2)、(300,3)、(500,5)和(600,6)。
+
+## 11.1 查询过程
+
+假设，执行查询的语句是 `select id from test where k=5`。
+
+- 对于普通索引来说，查找到满足条件的第一个记录(5,500)后，需要查找下一个记录，直到碰到第一个不满足k=5条件的记录。
+- 对于唯一索引来说，由于索引定义了唯一性，查找到第一个满足条件的记录后，就会停止继续检索。
+
+那么，这个不同带来的性能差距会有多少呢？答案是， 微乎其微 。
+
+
+
+## 11.2 更新过程
+
+为了说明普通索引和唯一索引对更新语句性能的影响这个问题，介绍一下change buffer。
+
+
+
+当需要更新一个数据页时，如果数据页在内存中就直接更新，而如果这个数据页还没有在内存中的话，在不影响数据一致性的前提下， **InooDB会将这些更新操作缓存在change buffer中** ，这样就不需要从磁盘中读入这个数据页了。在下次查询需要访问这个数据页的时候，将数据页读入内存，然后执行change buffer中与这个页有关的操作。通过这种方式就能保证这个数据逻辑的正确性。
+
+
+
+将change buffer中的操作应用到原数据页，得到最新结果的过程称为 `merge` 。除了 `访问这个数据页` 会触发merge外，系统有 后台线程会定期 merge。在 数据库正常关闭（shutdown） 的过程中，也会执行merge操作。
+
+
+
+如果能够将更新操作先记录在change buffer， 减少读磁盘 ，语句的执行速度会得到明显的提升。而且，数据读入内存是需要占用 buffer pool 的，所以这种方式还能够 避免占用内存 ，提高内存利用率。
+
+
+
+`唯一索引的更新就不能使用change buffer` ，实际上也只有普通索引可以使用。
+
+
+
+如果要在这张表中插入一个新记录(4,400)的话，InnoDB的处理流程是怎样的？
+
+
+
+## 11.3 change buffer的使用场景
+
+1. 普通索引和唯一索引应该怎么选择？其实，这两类索引在查询能力上是没差别的，主要考虑的是对 更新性能 的影响。所以，建议你 尽量选择普通索引 。
+2. 在实际使用中会发现， 普通索引 和 change buffer 的配合使用，对于 数据量大 的表的更新优化还是很明显的。
+3. 如果所有的更新后面，都马上 伴随着对这个记录的查询 ，那么你应该 关闭change buffer 。而在其他情况下，change buffer都能提升更新性能。
+4. 由于唯一索引用不上change buffer的优化机制，因此如果 业务可以接受 ，从性能角度出发建议优先考虑非唯一索引。但是如果"业务可能无法确保"的情况下，怎么处理呢？
+
+
+
+首先， 业务正确性优先 。我们的前提是“业务代码已经保证不会写入重复数据”的情况下，讨论性能问题。如果业务不能保证，或者业务就是要求数据库来做约束，那么没得选，必须创建唯一索引。这种情况下，本节的意义在于，如果碰上了大量插入数据慢、内存命中率低的时候，给你多提供一个排查思路。
+
+然后，在一些“ 归档库 ”的场景，你是可以考虑使用唯一索引的。比如，线上数据只需要保留半年，然后历史数据保存在归档库。这时候，归档数据已经是确保没有唯一键冲突了。要提高归档效率，可以考虑把表里面的唯一索引改成普通索引。
+
+
+
+# 十二、其它查询优化策略
+
+## 12.1 EXISTS 和 IN 的区分
+
+问题：
+
+不太理解哪种情况下应该使用 EXISTS，哪种情况应该用 IN。选择的标准是看能否使用表的索引吗？
+
+
+
+回答:
+
+索引是个前提，其实选择与否还是要看表的大小。你可以将选择的标准理解为小表驱动大表。在这种方式下效率是最高的。
+
+
+
+比如下面这样:
+
+```sql
+SELECT * FROM A WHERE cc IN (SELECT cc FROM B)
+SELECT * FROM A WHERE EXISTS (SELECT cc FROM B WHERE B.cc=A.cc)
+```
+
+当A小于B时，用EXISTS。因为EXISTS的实现，相当于外表循环，实现的逻辑类似于:
+
+```sql
+for i in A
+	for j in B
+		if j.cc == i.cc then
+```
+
+当B小于A时用IN，因为实现的逻辑类似于:
+
+```sql
+for i in B
+	for j in A
+		if j.cc == i.cc then ...
+```
+
+哪个表小就用哪个表来驱动，A表小就用EXISTS，B表小就用IN。
+
+
+
+## 12.2 COUNT(*)与COUNT(具体字段)效率
+
+问：在 MySQL 中统计数据表的行数，可以使用三种方式： SELECT COUNT(*) 、 SELECT COUNT(1) 和 SELECT COUNT(具体字段) ，使用这三者之间的查询效率是怎样的？
+
+答:
+
+前提:如果你要统计的是某个字段的非空数据行数，则另当别论，毕竟比较执行效率的前提是结果一样才可以。
+
+
+
+**环节1**: COUNT(*)和COUNT(1)都是对所有结果进行COUNT，COUNT(*)和COUNT(1)本质上并没有区别(二者执行时间可能略有差别，不过你还是可以把它俩的执行效率看成是相等的)。如果有WHERE子句，则是对所有符合筛选条件的数据行进行统计;如果没有WHERE子句，则是对数据表的数据行数进行统计。
+
+
+
+**环节2**:如果是MyISAM存储引擎，统计数据表的行数只需要O(1)的复杂度，这是因为每张MyISAM的数据表都有一个meta 信息存储了row_count值，而一致性则由表级锁来保证。
+
+
+
+如果是InnoDB存储引擎，因为InnoDB支持事务，采用行级锁和MVCC机制，所以无法像MyISAM一样，维护一个row_count变量，因此需要采用扫描全表，进行循环＋计数的方式来完成统计，是O(N)级别复杂度。
+
+
+
+**环节3**:在InnoDB引擎中，如果采用COUNT(具体字段)来统计数据行数，要尽量采用二级索引。因为主键采用的索引是聚簇索引，聚簇索引包含的信息多，明显会大于二级索引(非聚簇索引)。对于COUNT(*)和COUNT(1)来说，它们不需要查找具体的行，只是统计行数，系统会自动采用占用空间更小的二级索引来进行统计。
+
+
+
+如果有多个二级索引，会使用key_len 小的二级索引进行扫描。当没有二级索引的时候，才会采用主键索引来进行统计。
+
+
+
+## 12.3 关于SELECT(*)
+
+在表查询中，建议明确字段，不要使用 * 作为查询的字段列表，推荐使用SELECT <字段列表> 查询。原因：
+
+1. MySQL 在解析的过程中，会通过 查询数据字典 将"*"按序转换成所有列名，这会大大的耗费资源和时间。
+
+2. 无法使用 覆盖索引
+
+## 12.4 LIMIT 1 对优化的影响
+
+针对的是会扫描全表的 SQL 语句，如果你可以确定结果集只有一条，那么加上 LIMIT 1 的时候，当找到一条结果的时候就不会继续扫描了，这样会加快查询速度。
+
+
+
+如果数据表已经对字段建立了唯一索引，那么可以通过索引进行查询，不会全表扫描的话，就不需要加上 LIMIT 1 了。
+
+
+
+## 12.5 多使用COMMIT
+
+只要有可能，在程序中尽量多使用 COMMIT，这样程序的性能得到提高，需求也会因为 COMMIT 所释放的资源而减少。
+
+
+
+COMMIT 所释放的资源：
+
+- 回滚段上用于恢复数据的信息
+
+- 被程序语句获得的锁
+
+- redo / undo log buffer 中的空间
+
+- 管理上述 3 种资源中的内部花费
+
+# 十三、淘宝数据库，主键如何设计的？
+
+自增ID做主键，简单易懂，几乎所有数据库都支持自增类型，只是实现上各自有所不同而已。自增ID除了简单，其他都是缺点，总体来看存在以下几方面的问题：
+
+
+
+1. 可靠性不高
+
+   存在自增ID回溯的问题，这个问题直到最新版本的MySQL 8.0才修复。
+
+2. 安全性不高
+
+   对外暴露的接口可以非常容易猜测对应的信息。比如：/User/1/这样的接口，可以非常容易猜测用户ID的值为多少，总用户数量有多少，也可以非常容易地通过接口进行数据的爬取。
+
+3. 性能差
+
+   自增ID的性能较差，需要在数据库服务器端生成。
+
+4. 交互多
+
+   业务还需要额外执行一次类似 last_insert_id() 的函数才能知道刚才插入的自增值，这需要多一次的网络交互。在海量并发的系统中，多1条SQL，就多一次性能上的开销。
+
+5. 局部唯一性
+
+   最重要的一点，自增ID是局部唯一，只在当前数据库实例中唯一，而不是全局唯一，在任意服务器间都是唯一的。对于目前分布式系统来说，这简直就是噩梦。
+
+## 13.2 业务字段做主键
+
+为了能够唯一地标识一个会员的信息，需要为 会员信息表 设置一个主键。那么，怎么为这个表设置主键，才能达到我们理想的目标呢？ 这里我们考虑业务字段做主键。
+
+表数据如下：
+
+| cardno   | membername | memberphone | memberpid      | address | sex  | birthday   |
+| -------- | ---------- | ----------- | -------------- | ------- | ---- | ---------- |
+| 10000001 | 张三       | 12356789    | 11223344556677 | 北京    | 男   | 2000-01-01 |
+| 10000002 | 李四       | 12345678    | 22334455667788 | 上海    | 女   | 1990-01-01 |
+
+在这个表里，哪个字段比较合适呢？
+
+1. 选择卡号（cardno）
+
+​	会员卡号（cardno）看起来比较合适，因为会员卡号不能为空，而且有唯一性，可以用来 标识一条会员记录。
+
+```sql
+mysql> CREATE TABLE demo.membermaster
+-> (
+-> cardno CHAR(8) PRIMARY KEY, -- 会员卡号为主键
+-> membername TEXT,
+-> memberphone TEXT,
+-> memberpid TEXT,
+-> memberaddress TEXT,
+-> sex TEXT,
+-> birthday DATETIME
+-> ); 
+Query OK, 0 rows affected (0.06 sec)
+```
+
+不同的会员卡号对应不同的会员，字段“cardno”唯一地标识某一个会员。如果都是这样，会员卡号与会员一一对应，系统是可以正常运行的。
+
+
+
+但实际情况是， 会员卡号可能存在重复使用 的情况。比如，张三因为工作变动搬离了原来的地址，不再到商家的门店消费了 （退还了会员卡），于是张三就不再是这个商家门店的会员了。但是，商家不想让这个会 员卡空着，就把卡号是“10000001”的会员卡发给了王五。
+
+
+
+从系统设计的角度看，这个变化只是修改了会员信息表中的卡号是“10000001”这个会员 信息，并不会影响到数据一致性。也就是说，修改会员卡号是“10000001”的会员信息， 系统的各个模块，都会获取到修改后的会员信息，不会出现“有的模块获取到修改之前的会员信息，有的模块获取到修改后的会员信息，而导致系统内部数据不一致”的情况。因此，从 信息系统层面 上看是没问题的。
+
+
+
+但是从使用 系统的业务层面 来看，就有很大的问题 了，会对商家造成影响。
+
+
+
+比如，我们有一个销售流水表（trans），记录了所有的销售流水明细。2020 年 12 月 01 日，张三在门店购买了一本书，消费了 89 元。那么，系统中就有了张三买书的流水记录，如下所示：
+
+| transaactionno(流水单号) | itemnumber(商品编号) | quantity(销售数量) | price(价格) | salevalue(销售金额) | cardno(会员卡号) | transdate(交易时间) |
+| ------------------------ | -------------------- | ------------------ | ----------- | ------------------- | ---------------- | ------------------- |
+| 1                        | 1                    | 1                  | 10          | 10                  | 1000001          | 2022-01-01          |
+
+ 接着，我们查询一下 2020 年 12 月 01 日的会员销售记录：
+
+```sql
+mysql> SELECT b.membername,c.goodsname,a.quantity,a.salesvalue,a.transdate
+	FROM demo.trans AS a
+  JOIN demo.membermaster AS b
+  JOIN demo.goodsmaster AS c
+  ON (a.cardno = b.cardno AND a.itemnumber=c.itemnumber); 
++------------+-----------+----------+------------+---------------------+
+| membername | goodsname | quantity | salesvalue |      transdate      | 
++------------+-----------+----------+------------+---------------------+
+|     张三   |       书  |     1.000 |      89.00 | 2020-12-01 00:00:00 | 
++------------+-----------+----------+------------+---------------------+
+1 row in set (0.00 sec)
+```
+
+如果会员卡“10000001”又发给了王五，我们会更改会员信息表。导致查询时：
+
+```sql
+mysql> SELECT b.membername,c.goodsname,a.quantity,a.salesvalue,a.transdate
+ FROM demo.trans AS a
+ JOIN demo.membermaster AS b
+ JOIN demo.goodsmaster AS c
+ ON (a.cardno = b.cardno AND a.itemnumber=c.itemnumber); 
++------------+-----------+----------+------------+---------------------+
+| membername | goodsname | quantity | salesvalue |     transdate       | 
++------------+-----------+----------+------------+---------------------+
+|    王五    |     书     |   1.000  |    89.00   | 2020-12-01 00:00:00 | 
++------------+-----------+----------+------------+---------------------+
+1 row in set (0.01 sec)
+```
+
+这次得到的结果是：王五在 2020 年 12 月 01 日，买了一本书，消费 89 元。显然是错误的！结论：千万不能把会员卡号当做主键。
+
+
+
+会员电话可以做主键吗？不行的。在实际操作中，手机号也存在 被运营商收回 ，重新发给别人用的情况。
+
+
+
+那身份证号行不行呢？好像可以。因为身份证决不会重复，身份证号与一个人存在一一对 应的关系。可问题是，身份证号属于 个人隐私 ，顾客不一定愿意给你。要是强制要求会员必须登记身份证号，会把很多客人赶跑的。其实，客户电话也有这个问题，这也是我们在设计会员信息表的时候，允许身份证号和电话都为空的原因。
+
+
+
+所以，建议尽量不要用跟业务有关的字段做主键。毕竟，作为项目设计的技术人员，我们谁也无法预测在项目的整个生命周期中，哪个业务字段会因为项目的业务需求而有重复，或者重用之类的情况出现。
+
+>经验：
+>刚开始使用 MySQL 时，很多人都很容易犯的错误是喜欢用业务字段做主键，想当然地认为了解业务需求，但实际情况往往出乎意料，而更改主键设置的成本非常高。
+
+
+
+## 13.3 淘宝的主键设计
+
+在淘宝的电商业务中，订单服务是一个核心业务。请问， 订单表的主键 淘宝是如何设计的呢？是自增ID吗？
+
+打开淘宝，看一下订单信息：
+
+![淘宝订单](../..//img/mysql/mysql索引优化与查询优化/13.淘宝订单.png)
+
+
+
+从上图可以发现，订单号不是自增ID！我们详细看下上述4个订单号：
+
+```sh
+1550672064762308113 
+1481195847180308113 
+1431156171142308113 
+1431146631521308113
+```
+
+订单号是19位的长度，且订单的最后5位都是一样的，都是08113。且订单号的前面14位部分是单调递增的。
+
+大胆猜测，淘宝的订单ID设计应该是：
+
+```sh
+订单ID = 时间 + 去重字段 + 用户ID后6位尾号
+```
+
+这样的设计能做到全局唯一，且对分布式系统查询及其友好。
+
+## 13.4 推荐的主键设计
+
+**非核心业务** ：对应表的主键自增ID，如告警、日志、监控等信息。
+
+**核心业务** ：主键设计至少应该是全局唯一且是单调递增。全局唯一保证在各系统之间都是唯一的，单调递增是希望插入时不影响数据库性能。
+
+
+
+这里推荐最简单的一种主键设计：UUID。
+
+
+
+### UUID的特点：
+
+全局唯一，占用36字节，数据无序，插入性能差。
+
+- MySQL数据库的UUID组成如下所示：
+
+```bash
+UUID = 时间+UUID版本（16字节）- 时钟序列（4字节） - MAC地址（12字节）
+```
+
+我们以UUID值e0ea12d4-6473-11eb-943c-00155dbaa39d举例：
+
+![uuid](../..//img/mysql/mysql索引优化与查询优化/13.uuid.png)
+
+
+
+### 为什么UUID是全局唯一的？
+
+在UUID中时间部分占用60位，存储的类似TIMESTAMP的时间戳，但表示的是从1582-10-15 00：00：00.00到现在的100ns的计数。可以看到UUID存储的时间精度比TIMESTAMPE更高，时间维度发生重复的概率降低到1/100ns。
+
+
+
+时钟序列是为了避免时钟被回拨导致产生时间重复的可能性。MAC地址用于全局唯一。
+
+
+
+### 为什么UUID占用36个字节？
+
+UUID根据字符串进行存储，设计时还带有无用"-"字符串，因此总共需要36个字节。
+
+### 为什么UUID是随机无序的呢？
+
+因为UUID的设计中，将时间低位放在最前面，而这部分的数据是一直在变化的，并且是无序。
+
+### 改造UUID
+
+若将时间高低位互换，则时间就是单调递增的了，也就变得单调递增了。MySQL 8.0可以更换时间低位和时间高位的存储方式，这样UUID就是有序的UUID了。
+
+MySQL 8.0还解决了UUID存在的空间占用的问题，除去了UUID字符串中无意义的"-"字符串，并且将字符串用二进制类型保存，这样存储空间降低为了16字节。
+
+
+
+可以通过MySQL8.0提供的uuid_to_bin函数实现上述功能，同样的，MySQL也提供了bin_to_uuid函数进行转化：
+
+```sql
+SET @uuid = UUID(); 
+
+SELECT @uuid,uuid_to_bin(@uuid),uuid_to_bin(@uuid,TRUE);
+```
+
+通过函数uuid_to_bin(@uuid,true)将UUID转化为有序UUID了。全局唯一 + 单调递增，这不就是我们想要的主键！
 
 
 
 
 
+### 有序UUID性能测试
+
+16字节的有序UUID，相比之前8字节的自增ID，性能和存储空间对比究竟如何呢？
 
 
 
+我们来做一个测试，插入1亿条数据，每条数据占用500字节，含有3个二级索引，最终的结果如下所示：
+
+![uuid性能测试](../..//img/mysql/mysql索引优化与查询优化/14.uuid性能测试.png)
+
+从上图可以看到插入1亿条数据有序UUID是最快的，而且在实际业务使用中有序UUID在 业务端就可以生 成 。还可以进一步减少SQL的交互次数。
 
 
 
+另外，虽然有序UUID相比自增ID多了8个字节，但实际只增大了3G的存储空间，还可以接受。
+
+> 在当今的互联网环境中，非常不推荐自增ID作为主键的数据库设计。更推荐类似有序UUID的全局唯一的实现。
+>
+> 另外在真实的业务系统中，主键还可以加入业务和系统属性，如用户的尾号，机房的信息等。这样的主键设计就更为考验架构师的水平了。
 
 
 
+### 如果不是MySQL8.0 肿么办？
+
+手动赋值字段做主键！
+
+比如，设计各个分店的会员表的主键，因为如果每台机器各自产生的数据需要合并，就可能会出现主键重复的问题。
 
 
 
+可以在总部 MySQL 数据库中，有一个管理信息表，在这个表中添加一个字段，专门用来记录当前会员编号的最大值。
 
 
 
+门店在添加会员的时候，先到总部 MySQL 数据库中获取这个最大值，在这个基础上加 1，然后用这个值作为新会员的“id”，同时，更新总部 MySQL 数据库管理信息表中的当 前会员编号的最大值。
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+这样一来，各个门店添加会员的时候，都对同一个总部 MySQL 数据库中的数据表字段进 行操作，就解决了各门店添加会员时会员编号冲突的问题。

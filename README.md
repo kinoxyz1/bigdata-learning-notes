@@ -224,7 +224,7 @@
 * [Flink 实时同步Oracle数据到Hive](note/flink/Flink实时同步Oracle数据到Hive.md)
 
 ---
-* [FLink CDC](note/flink/flinkcdc.md)
+* [FLink CDC(Standalone)](note/flink/flinkcdc.md)
 * [Flink CDC 集成 Iceberg 入湖](note/flink/flinkcdc-iceberg入湖.md)
 
 ---
