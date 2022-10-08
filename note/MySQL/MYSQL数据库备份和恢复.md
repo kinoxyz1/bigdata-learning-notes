@@ -803,7 +803,7 @@ balance: 0
 **举例3：**将atguigu数据库account表中的记录导出到xml文件，使用--xml参数，具体语句如下。
 
 ```mysql
-mysql -uroot -p --xml --execute="SELECT * FROM account;" atguigu>"/var/lib/mysqlfiles/account_3.xml"
+mysql -uroot -p --xml --execute="SELECT * FROM account;" atguigu>"/var/lib/mysql/files/account_3.xml"
 ```
 
 ```mysql
