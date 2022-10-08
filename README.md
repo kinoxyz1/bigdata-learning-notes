@@ -265,26 +265,11 @@
 
 * [MySQL RMP 安装](note/MySQL/MySQL-RMP安装.md)
 * [MariaDB YUM 安装](note/MariaDB/CentOS7安装MariaDB.md)
-
-* [MySQL 数据目录](note/MySQL/MySQL数据目录.md)
-* [MySQL 用户和权限](note/MySQL/MySQL用户和权限.md)
-* [MySQL 逻辑架构](note/MySQL/MySQL逻辑架构.md)
-* [MySQL 存储引擎](note/MySQL/MySQL存储引擎.md)
-* [MySQL 索引的数据结构](note/MySQL/MySQL索引的数据结构.md)
-* [InnoDB数据存储引擎](note/MySQL/InnoDB数据存储引擎.md)
-* [MySQL 索引的创建与设计原则](note/MySQL/MySQL索引的创建与设计原则.md)
-* [MySQL 性能分析工具的使用](note/MySQL/MySQL性能分析工具的使用.md)
-* [MySQL 索引优化与查询优化](note/MySQL/MySQL索引优化与查询优化.md)
-* [MySQL 数据库的设计规范](note/MySQL/MySQL数据库的设计规范.md)
-* [MySQL 数据库其它调优策略](note/MySQL/MySQL数据库其它调优策略.md)
-* [MySQL 事务](note/MySQL/MYSQL事务.md)
-* [MySQL 事务日志](note/MySQL/MYSQL事务日志.md)
-* [MySQL 锁](note/MySQL/MYSQL锁.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
 * [MySQL 约束](note/MySQL/MySQL约束.md)
-
+* [MySQL高级(尚硅谷宋宏康)](note/MySQL/mysql高级.md)
 </details>
 
 
