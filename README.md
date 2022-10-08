@@ -279,6 +279,7 @@
 * [MySQL 数据库其它调优策略](note/MySQL/MySQL数据库其它调优策略.md)
 * [MySQL 事务](note/MySQL/MYSQL事务.md)
 * [MySQL 事务日志](note/MySQL/MYSQL事务日志.md)
+* [MySQL 锁](note/MySQL/MYSQL锁.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
