@@ -278,6 +278,7 @@
 * [MySQL 数据库的设计规范](note/MySQL/MySQL数据库的设计规范.md)
 * [MySQL 数据库其它调优策略](note/MySQL/MySQL数据库其它调优策略.md)
 * [MySQL 事务](note/MySQL/MYSQL事务.md)
+* [MySQL 事务日志](note/MySQL/MYSQL事务日志.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
@@ -558,8 +559,8 @@
 * [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
 </details>  
 
+## Mac
 
-# Mac
 <details>
 <summary>Mac</summary>
 
