@@ -269,7 +269,8 @@
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
 * [MySQL 约束](note/MySQL/MySQL约束.md)
-* [MySQL高级(尚硅谷宋宏康)](note/MySQL/mysql高级.md)
+* [MySQL基础(尚硅谷宋红康)](note/MySQL/mysql基础.md)
+* [MySQL高级(尚硅谷宋红康)](note/MySQL/mysql高级.md)
 </details>
 
 
