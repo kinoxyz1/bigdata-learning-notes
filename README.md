@@ -277,6 +277,7 @@
 * [MySQL 索引优化与查询优化](note/MySQL/MySQL索引优化与查询优化.md)
 * [MySQL 数据库的设计规范](note/MySQL/MySQL数据库的设计规范.md)
 * [MySQL 数据库其它调优策略](note/MySQL/MySQL数据库其它调优策略.md)
+* [MySQL 事务](note/MySQL/MYSQL事务.md)
 * [MySQL 常用配置](note/MySQL/MySQL-常用配置.md)
 * [MySQL binlog](note/MySQL/binlog.md)
 * [MySQL 慢查询日志](note/MySQL/MySQL慢查询日志与分析.md)
