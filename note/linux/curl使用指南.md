@@ -21,7 +21,7 @@
 
 
 
-# 重定向跟中(-L)
+# 重定向跟踪(-L)
 
 当请求一个 URL 返回 301 之类的重定向响应时，可以使用 `-L`参数来自动重定向跟踪响应头里的 `Location`时
 
@@ -35,9 +35,9 @@ curl kino.com
 curl -L kino.com
 ```
 
-# 储存响应体到文件(-O)
+# 储存响应体到文件(-o and -O)
 
-使用 `-O`参数指定文件名，可以将响应结果存储到文件中
+使用 `-o`参数指定文件名，可以将响应结果存储到文件中
 
 ```bash
 % curl -o baidu.com https://www.baidu.com
@@ -64,6 +64,16 @@ curl -L kino.com
 <!--STATUS OK--><html> <head><meta http-equiv=content-type content=text/html;charset=utf-8><meta http-equiv=X-UA-Compatible content=IE=Edge><meta content=always name=referrer><link rel=stylesheet type=text/css href=https://ss1.bdstatic.com/5eN1bjq8AAUYm2zgoY3K/r/www/cache/bdorz/baidu.min.css><title>百度一下，你就知道</title></head> <body link=#0000cc> <div id=wrapper> <div id=head> <div class=head_wrapper> <div class=s_form> <div class=s_form_wrapper> <div id=lg> <img hidefocus=true src=//www.baidu.com/img/bd_logo1.png width=270 height=129> </div> <form id=form name=f action=//www.baidu.com/s class=fm> <input type=hidden name=bdorz_come value=1> <input type=hidden name=ie value=utf-8> <input type=hidden name=f value=8> <input type=hidden name=rsv_bp value=1> <input type=hidden name=rsv_idx value=1> <input type=hidden name=tn value=baidu><span class="bg s_ipt_wr"><input id=kw name=wd class=s_ipt value maxlength=255 autocomplete=off autofocus=autofocus></span><span class="bg s_btn_wr"><input type=submit id=su value=百度一下 class="bg s_btn" autofocus></span> </form> </div> </div> <div id=u1> <a href=http://news.baidu.com name=tj_trnews class=mnav>新闻</a> <a href=https://www.hao123.com name=tj_trhao123 class=mnav>hao123</a> <a href=http://map.baidu.com name=tj_trmap class=mnav>地图</a> <a href=http://v.baidu.com name=tj_trvideo class=mnav>视频</a> <a href=http://tieba.baidu.com name=tj_trtieba class=mnav>贴吧</a> <noscript> <a href=http://www.baidu.com/bdorz/login.gif?login&amp;tpl=mn&amp;u=http%3A%2F%2Fwww.baidu.com%2f%3fbdorz_come%3d1 name=tj_login class=lb>登录</a> </noscript> <script>document.write('<a href="http://www.baidu.com/bdorz/login.gif?login&tpl=mn&u='+ encodeURIComponent(window.location.href+ (window.location.search === "" ? "?" : "&")+ "bdorz_come=1")+ '" name="tj_login" class="lb">登录</a>');
                 </script> <a href=//www.baidu.com/more/ name=tj_briicon class=bri style="display: block;">更多产品</a> </div> </div> </div> <div id=ftCon> <div id=ftConw> <p id=lh> <a href=http://home.baidu.com>关于百度</a> <a href=http://ir.baidu.com>About Baidu</a> </p> <p id=cp>&copy;2017&nbsp;Baidu&nbsp;<a href=http://www.baidu.com/duty/>使用百度前必读</a>&nbsp; <a href=http://jianyi.baidu.com/ class=cp-feedback>意见反馈</a>&nbsp;京ICP证030173号&nbsp; <img src=//www.baidu.com/img/gs.gif> </p> </div> </div> </div> </body> </html>
 ```
+
+# 下载文件并显示下载进度(-o)
+
+```bash
+curl -# -o image.jpg https://images.pexels.com/photos/301599/pexels-photo-301599.jpeg?cs=srgb&dl=pexels-pixabay-301599.jpg&fm=jpg
+```
+
+ 
+
+
 
 # 获取 HTTP 响应头(-i)
 
@@ -239,28 +249,14 @@ curl -u user:pass https://collector.github.com/github/collect
 使用 `-v` 参数可以打印出 curl 请求的所有请求与响应详细日志。它是`--verbose` 的简写。
 
 ```bash
-curl -v -I https://www.google.com/search?q=apple
+curl -v https://github.com
 ```
 
 输出
 
 ```bash
-* Uses proxy env variable https_proxy == 'http://127.0.0.1:7890'
-*   Trying 127.0.0.1:7890...
-* Connected to 127.0.0.1 (127.0.0.1) port 7890 (#0)
-* allocate connect buffer!
-* Establish HTTP proxy tunnel to www.google.com:443
-> CONNECT www.google.com:443 HTTP/1.1
-> Host: www.google.com:443
-> User-Agent: curl/7.79.1
-> Proxy-Connection: Keep-Alive
-> 
-< HTTP/1.1 200 Connection established
-HTTP/1.1 200 Connection established
-< 
-
-* Proxy replied 200 to CONNECT request
-* CONNECT phase completed!
+*   Trying 20.205.243.166:443...
+* Connected to github.com (20.205.243.166) port 443 (#0)
 * ALPN, offering h2
 * ALPN, offering http/1.1
 * successfully set certificate verify locations:
@@ -270,59 +266,24 @@ HTTP/1.1 200 Connection established
 * (304) (IN), TLS handshake, Server hello (2):
 * (304) (IN), TLS handshake, Unknown (8):
 * (304) (IN), TLS handshake, Certificate (11):
-* (304) (IN), TLS handshake, CERT verify (15):
-* (304) (IN), TLS handshake, Finished (20):
-* (304) (OUT), TLS handshake, Finished (20):
-* SSL connection using TLSv1.3 / AEAD-CHACHA20-POLY1305-SHA256
-* ALPN, server accepted to use h2
-* Server certificate:
-*  subject: CN=www.google.com
-*  start date: Sep 12 08:19:33 2022 GMT
-*  expire date: Dec  5 08:19:32 2022 GMT
-*  subjectAltName: host "www.google.com" matched cert's "www.google.com"
-*  issuer: C=US; O=Google Trust Services LLC; CN=GTS CA 1C3
-*  SSL certificate verify ok.
-* Using HTTP2, server supports multiplexing
-* Connection state changed (HTTP/2 confirmed)
-* Copying HTTP/2 data in stream buffer to connection buffer after upgrade: len=0
-* Using Stream ID: 1 (easy handle 0x11e811e00)
-> HEAD /search?q=apple HTTP/2
-> Host: www.google.com
-> user-agent: curl/7.79.1
-> accept: */*
-> 
-< HTTP/2 200 
-HTTP/2 200 
-< content-type: text/html; charset=ISO-8859-1
-content-type: text/html; charset=ISO-8859-1
-< content-security-policy: object-src 'none';base-uri 'self';script-src 'nonce-wUkC55A701sqS5Qln6pt_g' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/xsrp
-content-security-policy: object-src 'none';base-uri 'self';script-src 'nonce-wUkC55A701sqS5Qln6pt_g' 'strict-dynamic' 'report-sample' 'unsafe-eval' 'unsafe-inline' https: http:;report-uri https://csp.withgoogle.com/csp/gws/xsrp
-< p3p: CP="This is not a P3P policy! See g.co/p3phelp for more info."
-p3p: CP="This is not a P3P policy! See g.co/p3phelp for more info."
-< date: Sun, 09 Oct 2022 04:06:51 GMT
-date: Sun, 09 Oct 2022 04:06:51 GMT
-< server: gws
-server: gws
-< x-xss-protection: 0
-x-xss-protection: 0
-< x-frame-options: SAMEORIGIN
-x-frame-options: SAMEORIGIN
-< expires: Sun, 09 Oct 2022 04:06:51 GMT
-expires: Sun, 09 Oct 2022 04:06:51 GMT
-< cache-control: private
-cache-control: private
-< set-cookie: 1P_JAR=2022-10-09-04; expires=Tue, 08-Nov-2022 04:06:51 GMT; path=/; domain=.google.com; Secure
-set-cookie: 1P_JAR=2022-10-09-04; expires=Tue, 08-Nov-2022 04:06:51 GMT; path=/; domain=.google.com; Secure
-< set-cookie: AEC=AakniGPqghCzHz15NJDUX_xon5xRGBXvszny_ykPtKQJN2WXiH4oWe-tAc0; expires=Fri, 07-Apr-2023 04:06:51 GMT; path=/; domain=.google.com; Secure; HttpOnly; SameSite=lax
-set-cookie: AEC=AakniGPqghCzHz15NJDUX_xon5xRGBXvszny_ykPtKQJN2WXiH4oWe-tAc0; expires=Fri, 07-Apr-2023 04:06:51 GMT; path=/; domain=.google.com; Secure; HttpOnly; SameSite=lax
-< set-cookie: NID=511=SZ36T0r82h6oqmrS8GHleLymMiU-wAMSjME6bv4QEz5KwZva20eIEcVt4UsLox7JtNL_ozV4pWOl4ZMyx8DuOGFbWE55zLdcaTiJtKPEWGfriEk-hCfvKkzUETjuUEClG9vrl3XuAdDbuSFh-JIZgLLmCr5WY7mULs3T2oP2s8k; expires=Mon, 10-Apr-2023 04:06:51 GMT; path=/; domain=.google.com; HttpOnly
-set-cookie: NID=511=SZ36T0r82h6oqmrS8GHleLymMiU-wAMSjME6bv4QEz5KwZva20eIEcVt4UsLox7JtNL_ozV4pWOl4ZMyx8DuOGFbWE55zLdcaTiJtKPEWGfriEk-hCfvKkzUETjuUEClG9vrl3XuAdDbuSFh-JIZgLLmCr5WY7mULs3T2oP2s8k; expires=Mon, 10-Apr-2023 04:06:51 GMT; path=/; domain=.google.com; HttpOnly
-< alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
-alt-svc: h3=":443"; ma=2592000,h3-29=":443"; ma=2592000,h3-Q050=":443"; ma=2592000,h3-Q046=":443"; ma=2592000,h3-Q043=":443"; ma=2592000,quic=":443"; ma=2592000; v="46,43"
-
-< 
-* Connection #0 to host 127.0.0.1 left intact
+.....
 ```
+
+如果你想要更详细的信息，可以通过下面的命令，查看更详细的通信过程：
+
+```bash
+curl --trace output.txt https://github.com
+# or 
+curl --trace-ascii output.txt https://github.com
+```
+
+更进一步，如果想知道，一次传输中所消耗时间（毫秒数），添加 --trace-time 参数即可：
+
+```bash
+curl --trace-ascii output.txt --trace-time https://github.com
+```
+
+ 
 
 # 限制 HTTP 带宽  (--limit-rate)
 
@@ -333,6 +294,97 @@ curl --limit-rate 200k https://github.com
 ```
 
 上面的命令将 curl 限制在每秒 200K 字节。
+
+
+
+# 上传二进制文件（-F）
+
+-F 参数用来向服务器上传二进制文件。如下命令会给 HTTP 请求加上标头Content-Type: multipart/form-data，然后将文件example.png作为file字段上传。
+
+```bash
+curl -F 'file=@example.png' https://example.com/files
+```
+
+-F参数可以指定 MIME 类型。如下命令指定 MIME 类型为image/png，否则 curl 会把 MIME 类型设为application/octet-stream。
+
+```bash
+curl -F 'file=@example.png;type=image/png' https://example.com/files
+```
+
+ -F 参数也可以指定文件名。在下面的命令中，原始文件名为 example.png，但是服务器接收到的文件名为profile.png。
+
+```bash
+curl -F 'file=@example.png;filename=me.png' https://example.com/files
+```
+
+ 托管线上文件
+
+```bash
+curl -F'url=http://example.cn/img.jpg' https://example.com/files
+```
+
+# **获取所在地 ip**
+
+```bash
+curl -L tool.lu/ip
+# or
+curl -L ip.tool.lu
+```
+
+# 获取天气预报
+
+```bash
+curl wttr.in
+Weather report: Shenzhen, China
+
+      \   /     Sunny
+       .-.      +29(32) °C
+    ― (   ) ―   ↙ 11 km/h
+       `-’      10 km
+      /   \     0.0 mm
+                                                       ┌─────────────┐
+┌──────────────────────────────┬───────────────────────┤  Sun 09 Oct ├───────────────────────┬──────────────────────────────┐
+│            Morning           │             Noon      └──────┬──────┘     Evening           │             Night            │
+├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
+│     \   /     Sunny          │     \   /     Sunny          │    \  /       Partly cloudy  │     \   /     Clear          │
+│      .-.      +28(30) °C     │      .-.      +34(38) °C     │  _ /"".-.     +30(31) °C     │      .-.      +25(26) °C     │
+│   ― (   ) ―   ↙ 9-10 km/h    │   ― (   ) ―   ↓ 10-12 km/h   │    \_(   ).   ↙ 18-26 km/h   │   ― (   ) ―   ↓ 27-31 km/h   │
+│      `-’      10 km          │      `-’      10 km          │    /(___(__)  10 km          │      `-’      10 km          │
+│     /   \     0.0 mm | 0%    │     /   \     0.0 mm | 0%    │               0.0 mm | 0%    │     /   \     0.0 mm | 0%    │
+└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘
+                                                       ┌─────────────┐
+┌──────────────────────────────┬───────────────────────┤  Mon 10 Oct ├───────────────────────┬──────────────────────────────┐
+│            Morning           │             Noon      └──────┬──────┘     Evening           │             Night            │
+├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
+│    \  /       Partly cloudy  │    \  /       Partly cloudy  │    \  /       Partly cloudy  │     \   /     Clear          │
+│  _ /"".-.     +22(24) °C     │  _ /"".-.     27 °C          │  _ /"".-.     26 °C          │      .-.      24 °C          │
+│    \_(   ).   ↓ 26-30 km/h   │    \_(   ).   ↓ 23-26 km/h   │    \_(   ).   ↓ 19-26 km/h   │   ― (   ) ―   ↓ 17-25 km/h   │
+│    /(___(__)  10 km          │    /(___(__)  10 km          │    /(___(__)  10 km          │      `-’      10 km          │
+│               0.0 mm | 0%    │               0.0 mm | 0%    │               0.0 mm | 0%    │     /   \     0.0 mm | 0%    │
+└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘
+                                                       ┌─────────────┐
+┌──────────────────────────────┬───────────────────────┤  Tue 11 Oct ├───────────────────────┬──────────────────────────────┐
+│            Morning           │             Noon      └──────┬──────┘     Evening           │             Night            │
+├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
+│     \   /     Sunny          │     \   /     Sunny          │     \   /     Sunny          │     \   /     Clear          │
+│      .-.      +24(23) °C     │      .-.      +30(28) °C     │      .-.      +27(26) °C     │      .-.      +24(25) °C     │
+│   ― (   ) ―   ↙ 14-17 km/h   │   ― (   ) ―   ↙ 13-14 km/h   │   ― (   ) ―   ← 6-7 km/h     │   ― (   ) ―   ← 8-11 km/h    │
+│      `-’      10 km          │      `-’      10 km          │      `-’      10 km          │      `-’      10 km          │
+│     /   \     0.0 mm | 0%    │     /   \     0.0 mm | 0%    │     /   \     0.0 mm | 0%    │     /   \     0.0 mm | 0%    │
+└──────────────────────────────┴──────────────────────────────┴──────────────────────────────┴──────────────────────────────┘
+
+Follow @igor_chubin for wttr.in updates
+```
+
+
+
+
+
+
+
+
+
+
 
 **参考链接**
 
