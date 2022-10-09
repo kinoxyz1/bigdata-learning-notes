@@ -515,7 +515,8 @@
 * [CentOS 安装 JDK](note/linux/CentOS安装JDK.md)
 * [Linux CPU性能优化](note/linux/Linux-CPU性能.md)
 * [frp+openvpn+docker 搭建](note/linux/openvpn.md)
-  </details>  
+* [curl使用指南](note/linux/curl使用指南.md)
+</details>  
 
 <details>
 <summary>Shell</summary>
