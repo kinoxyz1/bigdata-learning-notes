@@ -655,8 +655,87 @@ mysql> show variables like '%max_connections%';
 2 rows in set (0.00 sec)
 ```
 
+## 4.7 configMap 实操3-subPath
+
+[subPath官方文档](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#using-subpath)
+
+在 k8s 中，volume 不能挂载到其他 volume 上，也不能与其他卷有硬链接，否则会造成覆盖。
+
+不过可以使用 `volumeMounts.subPath` 属性指定所引用的卷内的子路径，而不是其根路径。
+
+例如: 创建一个 nginx 容器，index.html 使用nginx 默认的，另外再挂载一个 login.html 进 `/usr/share/nginx/html/login.html`中
+
+```yaml
+# 创建login.html
+$ echo "<h1>login.html</h1>" > login.html
+
+# 创建 configmap
+$ kubectl create configmap login-file --from-file=login.html -n kino
+
+# 创建 nginx deploy
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-nginx
+  namespace: kino
+spec:
+  selector:
+    matchLabels:
+      app: my-nginx
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      nodeName: jz-desktop-04
+      containers:
+      - name: my-nginx
+        image: nginx
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort:  80
+          name:  my-nginx
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html/login.html
+          name: login-volume
+          subPath: index.html
+      restartPolicy: Always
+      volumes:
+      - name: login-volume
+        configMap:
+          name: login-file
+          items:
+          - key: "login.html"
+            path: "login.html"
+            
+# 查看 /usr/share/nginx/html 下的文件是否被覆盖
+root@my-nginx-8545c54cf6-kh58p:/usr/share/nginx/html# ls -l
+total 12
+-rw-r--r-- 1 root root  497 Jul 19 14:05 50x.html
+-rw-r--r-- 1 root root   15 Oct  9 14:56 index.html
+drwxrwxrwx 2 root root 4096 Oct  9 14:54 login.html   # subPath 挂载进来的
+```
+
+
+
+
+
+
 
 # 五、NFS
+
 [centos7 nfs安装部署](../../note/软件部署/centos/nfs.md)
 
 ## 5.1 使用 nfs 挂载
@@ -1137,7 +1216,6 @@ NAMESPACE   NAME                              STATUS   VOLUME                   
 storage     persistentvolumeclaim/mysql-pvc   Bound    pvc-bc727051-8426-4249-8e13-8414eb5279f0   50Gi       RWO            managed-nfs-storage   4m4s   Filesystem
 
 ```
-
 
 
 
