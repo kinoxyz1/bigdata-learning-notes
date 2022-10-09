@@ -659,7 +659,7 @@ mysql> show variables like '%max_connections%';
 
 [subPath官方文档](https://kubernetes.io/zh-cn/docs/concepts/storage/volumes/#using-subpath)
 
-在 k8s 中，volume 不能挂载到其他 volume 上，也不能与其他卷有硬链接，否则会造成覆盖。
+在 k8s 中，volume 不能挂载到其他 volume 上，也不能与其他卷有硬链接。
 
 不过可以使用 `volumeMounts.subPath` 属性指定所引用的卷内的子路径，而不是其根路径。
 
