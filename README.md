@@ -472,7 +472,7 @@
 * [Kubernetes 存储 | 卷的实践](note/Kubernetes/volume.md)
 * [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes 常用服务部署](note/Kubernetes/常用服务部署.md)
-----
+***
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
@@ -488,10 +488,7 @@
 * [Kubernetes 部署Java](note/Kubernetes/k8s-部署Java.md)
 * [Kubernetes 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
 * [Kubernetes 常见问题](note/Kubernetes/k8s常见问题.md)
-
-
-
-* [Kubernetes 链路整合](note/Kubernetes/install-all.md)
+* [Kubernetes 链路整合(待补完)](note/Kubernetes/install-all.md)
 </details>
 
 
