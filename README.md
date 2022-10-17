@@ -26,7 +26,12 @@
 <summary>git</summary>
 
 * [git ](note/git/git常用操作.md)
+* [git 撤销操作](note/git/git 撤销操作.md)
 * [gitlab 项目迁移](note/git/gitlab项目迁移.md)
+
+- [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
+- [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
+- [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
 </details>
 
 
@@ -292,15 +297,6 @@
 * [Gradle 安装整合Idea](note/gradle/gradle.md)
 </details>
 
-
-
-<details>
-<summary>GitLab</summary>
-
-- [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
-- [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
-- [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
-</details>
 
 <details>
 <summary>Nginx</summary>
