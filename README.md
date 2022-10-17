@@ -26,7 +26,7 @@
 <summary>git</summary>
 
 * [git ](note/git/git常用操作.md)
-* [git 撤销操作](note/git/git 撤销操作.md)
+* [git 撤销操作](note/git/git撤销操作.md)
 * [gitlab 项目迁移](note/git/gitlab项目迁移.md)
 
 - [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
