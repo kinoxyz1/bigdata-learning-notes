@@ -1399,6 +1399,7 @@ https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annota
           image:  nginx
 
 ### 利用每次请求携带同样的cookie，来标识是否是同一个会话
+```bash
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -1419,7 +1420,9 @@ spec:
             name: session-affinity   ###
             port:
               number: 80
-  ```
+```
+
+
 
 # 四、NetworkPolicy
 
@@ -1479,7 +1482,7 @@ spec:
     ports:
     - protocol: TCP
       port: 5978
-  ```
+```
 
 - **基本信息：** 同其他的 Kubernetes 对象一样，`NetworkPolicy` 需要 `apiVersion`、`kind`、`metadata` 字段
 - spec：`NetworkPolicy`的spec字段包含了定义网络策略的主要信息：
