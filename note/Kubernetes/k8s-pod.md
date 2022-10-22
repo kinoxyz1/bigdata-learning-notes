@@ -906,10 +906,10 @@ spec:
       - name: myapp
       image: ikubernetes/myapp:v1
       ports:
-      - name:http
+      - name: http
         containerPort: 80
       tolerations:
-      - key:"node-type"
+      - key: "node-type"
         operator: "Equal"
         value:"production":
         effect: "NoExecute"
