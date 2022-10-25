@@ -3,7 +3,7 @@
 ## 大数据
 
 <details>
-<summary>Zookeeper</summary>  
+<summary>Zookeeper</summary>
 
 * [Zookeeper3.4.5 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
 * [Zookeeper 常用命令行操作](note/zookeeper/zookeeper常用命令行操作.md)
@@ -28,10 +28,11 @@
 * [git ](note/git/git常用操作.md)
 * [git 撤销操作](note/git/git撤销操作.md)
 * [gitlab 项目迁移](note/git/gitlab项目迁移.md)
+* [git log format](note/git/gitlogformat.md)
 
-- [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
-- [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
-- [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
+* [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
+* [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
+* [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
 </details>
 
 
