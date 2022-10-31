@@ -547,5 +547,6 @@
 
 * [mac iterm2 安装 lrzsz](note/mac/install—lrzsz.md)
 * [mac 自动登录服务器](note/mac/自动登录服务器.md)
+* [mac oh-my-zsh](note/mac/ohmyzsh.md))
 </details>
 
