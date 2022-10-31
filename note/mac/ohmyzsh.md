@@ -247,6 +247,7 @@ git clone https://github.com/mbadolato/iTerm2-Color-Schemes ~/Downloads/itemcolo
 
 大家可以根据个人的喜好选自己喜欢的色彩主题，然后在 iterm2 中选择 Preference -> Profiles -> Colors ，导入色彩主题，并勾上就可以。
 
+比如: `BlulocoDark` 主题
 # 五、命令补全
 
 zsh-autosuggestion 是一个 zsh 命令补全，提示的插件。

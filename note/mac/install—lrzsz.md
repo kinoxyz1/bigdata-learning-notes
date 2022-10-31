@@ -95,7 +95,13 @@ ls -l /usr/local/bin | grep sz
 ```
 
 # 五、使用
+```bash
+## 上传
+rz -be 
 
+## 下载 
+sz filename
+```
 
 
 
