@@ -124,9 +124,14 @@ vim ~/.zshrc
 
 找到 `ZSH_THEME` 字段，可以看到 oh-my-zsh 的默认主题是 robbyrussell ，如果要做修改，具体操作如下：
 
-要在 Vim 里修改文件，要先按 `i` 进入编辑模式，把 `ZSH_THEME`的值修改为你喜欢的那个主题，修改完成之后按 `esc` （电脑最左上）退出编辑模式，最后 `shift+zz` 保存并退出。
+```bash
+vim ~/.zshrc 
+# ZSH_THEME="robbyrussell"
+ZSH_THEME="intheloop"
 
-当然，你不太熟悉上面的操作，可以直接打开 `.zshrc` 的文件，然后用普通的编辑器直接修改那个 `ZSH_THEME` 的值，最后保存就好。
+# :eq 保存退出
+source ~/.zshrc
+```
 
 上面介绍的都是 oh-my-zsh默认自带了一些默认主题，存放在 `~/.oh-my-zsh/themes` 目录中。
 
@@ -280,6 +285,10 @@ plugins=(zsh-autosuggestions git)
 像这种插件还有很多，比如 zsh-syntax-highlighting 语法高亮的插件，都非常拥有，这里就不一一介绍了。
 
 
+
+
+
+- [思迅token 漏掉了一个feign的接口地址URL] @zhangtao in [873262eb](https://bdgit.9zdata.cn/ninestone/ninestone-tms-parent/-/commit/873262eb)
 
 # 六、zsh 常用快捷键
 
