@@ -407,6 +407,7 @@
 
 - [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
 - [centos7 nfs](note/软件部署/centos/nfs.md)
+
 </details>
 
 <details>
@@ -468,6 +469,8 @@
 * [Kubernetes 存储 | 卷的实践](note/Kubernetes/volume.md)
 * [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes 常用服务部署](note/Kubernetes/常用服务部署.md)
+* [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
+
 ***
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
