@@ -346,6 +346,7 @@
 
 * [设计模式之工厂模式](note/设计模式/工厂模式.md)
 * [设计模式之单例模式](note/设计模式/单例模式.md)
+* [设计模式之代理模式](note/设计模式/代理模式.md)
 </details>
 
 <details>
@@ -401,7 +402,7 @@
 
 </details>
 
-## 运维
+## 运维/云原生
 <details>
 <summary>软件部署</summary>
 
@@ -472,6 +473,7 @@
 * [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
 
 ***
+**旧版**
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
