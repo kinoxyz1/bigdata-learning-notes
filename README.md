@@ -302,6 +302,8 @@
 <details>
 <summary>Nginx</summary>
 
+- [nginx 基础](note/nginx/nginx基础.md)
+
 - [nginx](note/nginx/nginx.md)
 - [nginx常用操作](note/nginx/nginx常用操作.md)
 - [alias和root的区别](note/nginx/alias和root的区别.md)
