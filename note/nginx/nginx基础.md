@@ -144,26 +144,403 @@ $ sbin/nginx -s reload
 $ sbin/nginx -c /usr/local/nginx/conf/nginx.conf
 ```
 
+# 四、location 中的正则表达式
+## 4.1 location 的作用
+location 指令的作用是根据 用户请求的URI 进行匹配, 匹配到了就执行相关操作。
+
+## 4.2 location 语法
+```bash
+location [=|~|~*|^~] /uri/ {
+   ......
+}
+```
+
+## 4.3 location 正则
+1. `/` 通用匹配, 任何请求都会匹配到.
+2. `=` 精确匹配.
+3. `~` 正则匹配, 区分大小写.
+4. `~*` 正则匹配, 不区分大小写.
+5. `^~` 非正则匹配, 匹配以指定模式开头的 location.
+6. `*` 代表'任意字符'.
+7. `$` 以'什么结尾的匹配'.
+8. `^` 以'什么开头'的匹配.
+9. `!~*` 不区分大小写匹配失败.
+10. `!~` 区分大小写匹配'失败-->!(取反)'.
+
+**备注： `~`开头的都是`正则匹配`,例如`^~`不是正则匹配.**
+
+## 4.4 location 转义
+```bash
+~^/prefix/.*\.html$ 
+ 
+解释：~ 表示后面跟的是'正则',而且是区分大小写的（ "~ "区分大小写,"~* "不区分大小写）
+ 
+~^/prefix/.*\.html$  就是'正则表达式了'
+ 
+1) ^在正则里表示,以什么'开始'
+ 
+2) /prefix/ 表示符合这个'文件夹路径的'
+ 
+3) ".*" 表示匹配'单个字符多次'
+ 
+4) "\." 表示转义 "."  采用 "." 本身,而非他在'正则里'的意思（非\r\n的单个字符）。
+ 
+5) $ 表示以什么'结尾'
+```
+
+# 五、反向代理
+## 5.1 示例1
+效果: 在浏览器中输入 `www.kino.com` 跳转到 tomcat 主页面中
+
+### 5.1.1 部署 tomcat
+
+[下载tomcat](https://tomcat.apache.org/download-90.cgi)
+
+###
+```bash
+$ tar -zxvf apache-tomcat-9.0.41.tar.gz
+$ mv apache-tomcat-9.0.41 tomcat-8080
+$ cd tomcat-8080
+$ bin/startop.sh
+$ ps -ef | grep tomcat
+root      18406      1 41 19:12 pts/1    00:00:02 /usr/local/jdk1.8.0_131/bin/java -Djava.util.logging.config.file=/opt/software/tomcat-8080/conf/logging.properties -Djava.util.logging.manager=org.apache.juli.ClassLoaderLogManager -Djdk.tls.ephemeralDHKeySize=2048 -Djava.protocol.handler.pkgs=org.apache.catalina.webresources -Dorg.apache.catalina.security.SecurityListener.UMASK=0027 -Dignore.endorsed.dirs= -classpath /opt/software/tomcat-8080/bin/bootstrap.jar:/opt/software/tomcat-8080/bin/tomcat-juli.jar -Dcatalina.base=/opt/software/tomcat-8080 -Dcatalina.home=/opt/software/tomcat-8080 -Djava.io.tmpdir=/opt/software/tomcat-8080/temp org.apache.catalina.startup.Bootstrap start
+root      18440  18303  0 19:13 pts/1    00:00:00 grep --color=auto tomcat
+```
+如果有防火墙, 开启8080 端口
+```bash
+$ firewall-cmd --add-port=8080/tcp --permanent
+success
+$ firewall-cmd --reload
+```
+在浏览器中输入: 虚拟机ip:8080, 即可访问 tomcat 页面
+
+![tomcat-8080](../../img/nginx/tomcat-80.png)
+
+### 5.1.2 配置 Nginx
+```config
+$ vim conf/nginx.conf
+server {
+        listen       80;
+        server_name  192.168.220.111;
+        location / {
+            proxy_pass  http://192.168.220.111:8080;
+        }
+...
+```
+重新加载配置文件
+```bash
+$ sbin/nginx -s reload
+```
+在浏览器中输入: www.kino.com
+
+![反向代理1](../../img/nginx/kino-com.png)
 
 
+## 5.2 示例2
+效果: 根据不同的路径跳转到不同的端口服务中, nginx 监听 9091端口, 访问: `192.168.220.111:9091/edu` 跳转到 8080的tomcat, 访问 `192.168.220.111:9092/vod` 跳转到 8081 端口的tomcat
+
+准备两个tomcat, 修改 tomcat 配置文件改端口
+```bash
+$ cp -R tomcat-8080 tomcat-8081
+$ vim tomcat-8081/conf/server.xml
+<Server port="8005" shutdown="SHUTDOWN">
+改为
+<Server port="8006" shutdown="SHUTDOWN">
+
+<Connector port="8080" protocol="HTTP/1.1"
+改为
+<Connector port="8081" protocol="HTTP/1.1"
+```
+在两个tomcat 的 webapps 目录下创建 nginx 目录, 并创建 login.html
+```bash
+$ mkdir tomcat-8080/webapps/edu
+$ mkdir tomcat-8081/webapps/vod
+$ vim tomcat-8080/webapps/edu/login.html
+<html>
+  <head>
+    <title>tomcat-8080</title>
+  </head>
+  <body>
+    <h1>tomcat-8080</h1>
+  </body>
+</html>
+$ vim tomcat-8080/webapps/vod/login.html
+<html>
+  <head>
+    <title>tomcat-8081</title>
+  </head>
+  <body>
+    <h1>tomcat-8081</h1>
+  </body>
+</html>
+```
+启动两个tomcat
+```bash
+$ tomcat-8080/bin/startup.sh 
+Using CATALINA_BASE:   /opt/software/tomcat-8080
+Using CATALINA_HOME:   /opt/software/tomcat-8080
+Using CATALINA_TMPDIR: /opt/software/tomcat-8080/temp
+Using JRE_HOME:        /usr/local/jdk1.8.0_131
+Using CLASSPATH:       /opt/software/tomcat-8080/bin/bootstrap.jar:/opt/software/tomcat-8080/bin/tomcat-juli.jar
+Using CATALINA_OPTS:   
+Tomcat started.
+$ tomcat-8081/bin/startup.sh 
+Using CATALINA_BASE:   /opt/software/tomcat-8081
+Using CATALINA_HOME:   /opt/software/tomcat-8081
+Using CATALINA_TMPDIR: /opt/software/tomcat-8081/temp
+Using JRE_HOME:        /usr/local/jdk1.8.0_131
+Using CLASSPATH:       /opt/software/tomcat-8081/bin/bootstrap.jar:/opt/software/tomcat-8081/bin/tomcat-juli.jar
+Using CATALINA_OPTS:   
+Tomcat started.
+```
+有防火墙就开放端口
+```bash
+$ firewall-cmd --add-port=8081/tcp --permanent
+success
+$ firewall-cmd --reload
+```
+在浏览器访问两个tomcat的login.html
+
+![8080](../../img/nginx/8080.png)
+
+![8081](../../img/nginx/8081.png)
 
 
+配置 Nginx
+```bash
+server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location ~ /edu/ {
+            # alias /opt/nginx/a.html
+            proxy_pass  http://192.168.220.111:8080;
+        }
+
+        location ~ /vod/ {
+            proxy_pass  http://192.168.220.111:8081;
+        }
+    }
+...
+```
+重新加载 Nginx 配置文件
+```bash
+$ sbin/nginx -s reload
+```
+在浏览器中访问: `192.168.220.111:9091/edu/login.html` 和 `192.168.220.111:9092/vod/login.html`
+
+![edu](../../img/nginx/edu.png)
+
+![vod](../../img/nginx/vod.png)
+
+## 5.3 动静分离
+如果用户请求为静态资源, 直接通过nginx获取不用将请求转发到后端接口。
+```bash
+server {
+        listen       9091;
+        server_name  192.168.220.111;
+        
+        location / {
+            proxy_pass  http://192.168.220.111:8080;
+        }
+        
+        location /css {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+        location /img {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+        location /js {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+}
+```
+使用一个 location(正则) 转发 `/css、/img、/js`.
+```bash
+location ~*/(css|img|js) {
+  root /usr/local/nginx/static;
+  index index.html index.htm;
+}
+```
+
+# 六、负载均衡
+效果: 在浏览器中输入 `192.168.220.111/edu/login.html`, 平均分配到 8080 和 8081 端口上
+
+准备如上两个tomcat, 将 vod 修改成 edu
+```bash
+$ mv /opt/software/tomcat-8081/webapps/vod/ /opt/software/tomcat-8081/webapps/edu
+$ ll /opt/software/tomcat-8081/webapps/
+总用量 4
+drwxr-x---. 15 root root 4096 1月   9 19:27 docs
+drwxr-xr-x.  2 root root   24 1月   9 19:35 edu
+drwxr-x---.  7 root root   99 1月   9 19:27 examples
+drwxr-x---.  6 root root   79 1月   9 19:27 host-manager
+drwxr-x---.  6 root root  114 1月   9 19:27 manager
+drwxr-x---.  3 root root  223 1月   9 19:27 ROOT
+$ /opt/software/tomcat-8081/bin/shutdown.sh
+$ /opt/software/tomcat-8081/bin/startup.sh
+```
+
+编辑 Nginx 配置文件
+```bash
+$ vim conf/nginx.conf
+http {
+...
+    upstream kinoserver{
+        server 192.168.220.111:8080;
+        server 192.168.220.111:8081;
+    }
 
 
+    server {
+        listen       80;
+        server_name  192.168.220.111;
 
+        #charset koi8-r;
 
+        #access_log  logs/host.access.log  main;
 
+        location / {
+           proxy_pass  http://kinoserver;
+           root  html;
+           index  index.html  index.htm;
+        }
+...
+```
+重新加载 Nginx 配置文件
+```bash
+$ sbin/nginx -s reload
+```
+在浏览器中输入: `192.168.220.111/edu/login.html`, nginx 将以**轮询(默认)**的方式进行负载均衡。
 
+## 6.1 负载均衡策略
+1. 轮询(默认): 默认情况下使用轮询方式，逐一转发，这种方式适用于无状态请求;
+2. weight: 指定轮询几率, weight 和访问率成正比, 用于服务器性能不均的情况;
+   ```bash
+   upstream kinoserver{
+        server 192.168.220.111:8080 weight=5;
+        server 192.168.220.111:8081 weight=10;
+    }
+   ```
+3. ip_hash: 按每个请求的ip进行hash结果分配, 这样每个访客固定一个后端服务器, 可以解决 Session 问题;
+   ```bash
+   upstream kinoserver{
+        ip_hash;
+        server 192.168.220.111:8080;
+        server 192.168.220.111:8081;
+    }
+   ```
+4. fair: 按后台服务器的响应时间来分配请求, 响应时间短的游侠分配, 和 weight 分配策略类似;
+   ```bash
+   upstream kinoserver{
+     server 192.168.220.111:8080;
+     server 192.168.220.111:8081;
+     fair;
+   }
+   ```
+5. url_hash: 根据用户访问的url定向转发请求
+   ```bash
+   upstream kinoserver{
+        url_hash;
+        server 192.168.220.111:8080;
+        server 192.168.220.111:8081;
+    }
+   ```
 
+# 七、root 和 alias 区别
+root 和 alias 最主要的区别在于 nginx 如何解释 location 后面的 uri, 这会使两者分别以不同的方式将请求映射到服务器文件上。
 
+root 的处理结果: rootPath + locationPath。
+alias 处理结果: 使用 aliasPath 替换 locationPath。
 
+alias 是一个目录别名的定义，root 则是最上层目录的定义。
 
+alias 后面必须要用 `/` 结束, 否则会 404.
 
+测试1:
+```bash
+location /hello {
+  alias /usr/share/nginx/html/ceshi;
+}
+```
+请求: `http://localhost/hello/404.html` 实际访问 `/usr/share/nginx/html/ceshi/404.html`.
 
+测试2:
+```bash
+location /hello {
+  root /usr/share/nginx/html/ceshi;
+}
+```
+请求: `http://localhost/hello/404.html` 实际访问: `/usr/share/nginx/html/ceshi/404.html`
 
+# 八、Nginx 斜杠(/) 说明
+1. location 中的字符有没有 `/` 都没有影响。也就是说 `/user` 和 `/user/` 是一样的。
+2. 如果 URL 结构是 `http://domain.com/` 的形式, 尾部有没有 `/` 都不会重定向。因为浏览器在发起请求的时候, 默认加了 `/`。虽然很多浏览器在地址栏里也不会显示 `/`。
+3. 如果 URL 的结构是 `http://domain.com/some-dir/`。尾部缺少 `/` 将导致重定向。因为根据约定，URL 尾部的 `/` 表示目录，没有 `/` 表示文件, 当找不到的话会将 some-dir 当成目录, 重定向到 `/some-dir/`,去该目录下找默认文件。
 
+## 8.1 proxy_pass 末尾带/
+测试地址: http://localhost/test/hello.html
 
+```bash
+测试地址：http://192.168.171.129/test/tes.jsp
+ 
+'场景一'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080/server/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server/tes.jsp -->'test由于匹配,所以会去除,然后拼接未匹配的'
+ 
+'场景二'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/server/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server//tes.jsp
+ 
+'场景三'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/tes.jsp
+ 
+'场景四':
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/;
+}
+代理后实际访问地址：http://192.168.171.129:8080//tes.jsp
+```
 
+## 8.2 proxy_pass 末尾不带/
+测试地址: http://localhost/test/hello.html
+```bash
+### 末尾不带/
 
+proxy_pass配置中'url末尾不带/时',如url中'不包含path',则直接将'原uri拼接'在proxy_pass中url之后；如url中'包含path',则将原uri'去除location匹配表达式后的内容'拼接在proxy_pass中的url之后
 
-# 四、反向代理
+ 测试地址：http://192.168.171.129/test/tes.jsp
+'场景一'：
+ location ^~ /test/{
+	proxy_pass http://192.168.171.129:8080/server;
+ }
+ 代理后实际访问地址：http://192.168.171.129:8080/'servertes.jsp' -->'去除"/test/",然后拼接'
+'场景二'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/server;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server/tes.jsp   -->'去除"/test",然后拼接"/tes.jsp"-->场景一和场景二的区别'
+ 
+'场景三'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080;
+}
+代理后实际访问地址：http://192.168.171.129:8080/test/tes.jsp     -->'场景三和场景四常用'
+ 
+'场景四'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080;
+}
+代理后实际访问地址：http://192.168.171.129:8080/test/tes.jsp
+```
+# 九、UrlRewrite
