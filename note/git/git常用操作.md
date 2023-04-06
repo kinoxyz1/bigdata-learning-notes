@@ -1359,3 +1359,85 @@ pick e5fd30e c3 commit
 drop 69799d0 c4 commit
 pick cb1017b c5 commit
 ```
+
+## 5.7 cherry-pick
+`git cherry-pick` 命令用于将指定的提交（commit）应用于当前分支。这个命令可以方便地将其他分支或者提交的修改应用到当前分支中，而无需将整个分支合并。
+
+```bash
+rm -rf first-project && mkdir first-project && cd first-project
+git init
+echo "c0" >> README.md
+git add README.md
+git commit -m "init"
+
+## 创建两个分支
+git checkout -b feature1
+git checkout -b feature2
+
+## 在 feature1 上添加两个 commit
+git checkout feature1
+echo "c1" >> README.md
+git add README.md
+git commit -m "c1 commit"
+
+echo "c2" >> README.md
+git add README.md
+git commit -m "c2 commit"
+
+## 在 feature2 上添加两个 commit
+git checkout feature2
+echo "c3" >> README.md
+git add README.md
+git commit -m "c3 commit"
+
+echo "c4" >> README.md
+git add README.md
+git commit -m "c4 commit"
+
+git log feature1
+commit 762ae4b983da0bff873877779cd74e1aa8d10f88 (feature1)
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    c2 commit
+
+commit 32fd3337cdf54589d9e6c46626886cd3c8936fa1
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    c1 commit
+
+commit 526925ca652065f75129e49f25090d58d33ce31f (master)
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    init
+    
+git log feature2
+commit f956ab14791d3d3718a57ddd8f062178f808cf44 (HEAD -> feature2)
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    c4 commit
+
+commit b0666c02180c1bddf60190e14bb9391379b54598
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    c3 commit
+
+commit 526925ca652065f75129e49f25090d58d33ce31f (master)
+Author: kino <kinoxyz1@gmail.com>
+Date:   Fri Apr 7 01:07:24 2023 +0800
+
+    init
+```
+
+现在讲 feature1 分支上的 762ae4b983da0bff873877779cd74e1aa8d10f88 应用到 feature2 上
+```bash
+git checkout feature2
+git cherry-pick 762ae4b983da0bff873877779cd74e1aa8d10f88
+```
+如果有冲突, 需要解决冲突后, 使用 `git add` 添加到暂存区, 然后使用 `git cherry-pick --continue` 继续 cherry-pick 操作, 直到完成.
+
+**注意: 使用 `git cherry-pick` 命令将提交应用到当前分支时，也可能会引入新的问题，因此在使用该命令时需要谨慎。**
