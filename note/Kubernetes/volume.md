@@ -528,7 +528,7 @@ spec:
         - containerPort:  80
           name:  my-nginx
         volumeMounts:
-        - name: my-nginx-config1
+        - name: my-nginx-config-1
           mountPath: /usr/share/nginx/html/
       volumes:
         - name: my-nginx-config-1
