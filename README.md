@@ -215,6 +215,7 @@
 <details>
 <summary>Flink</summary>
 
+* [Flink 源码编译](note/flink/flink编译.md)
 * [Flink 安装部署](note/flink/flink安装部署.md)
 * [Flink 构成和提交流程](note/flink/flink架构和提交流程.md)
 * [Flink 并行度的划分](note/flink/flink并行度.md)
@@ -352,9 +353,7 @@
 <details>
 <summary>数据结构和算法</summary>
 
-* [数组](note/数据结构和算法/数组.md)
-* [队列](note/数据结构和算法/队列.md)
-* [链表](note/数据结构和算法/链表.md)
+* [数据结构和算法](https://github.com/KinoMin/coder-base/tree/main/algorithm)
 
 </details>
 
