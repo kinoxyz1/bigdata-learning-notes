@@ -1498,7 +1498,7 @@ rebase 之后可能会有文件冲突，需要按需解决冲突，将所有冲�
 git add .
 git rebase --continue
 ```
-看到提示 `rebase successful` 之类的就表示冲突解决完成了，然后就提交到你的github 仓库中(注意不是upstream), rebase 之后可能无法正常推送, 需要 `git push -f` 强制推送，这个操作有风险, 操作前请仔细检查以避免出现无关代码被强制覆盖的问题, 具体风险可以看 <a href="#56-git-rebase">`5.6 rebase`: 将文件添加到暂存区</a> 相关的解释。
+看到提示 `rebase successful` 之类的就表示冲突解决完成了，然后就提交到你的github 仓库中(注意不是upstream), rebase 之后可能无法正常推送, 需要 `git push -f` 强制推送，这个操作有风险, 操作前请仔细检查以避免出现无关代码被强制覆盖的问题, 具体风险可以看 <a href="#56-git-rebase">5.6 rebase</a> 相关的解释。
 ```bash
 git push origin feature_your-issueid
 ```
