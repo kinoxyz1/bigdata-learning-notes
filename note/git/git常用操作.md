@@ -1441,3 +1441,65 @@ git cherry-pick 762ae4b983da0bff873877779cd74e1aa8d10f88
 如果有冲突, 需要解决冲突后, 使用 `git add` 添加到暂存区, 然后使用 `git cherry-pick --continue` 继续 cherry-pick 操作, 直到完成.
 
 **注意: 使用 `git cherry-pick` 命令将提交应用到当前分支时，也可能会引入新的问题，因此在使用该命令时需要谨慎。**
+
+
+
+# 六、参与开源项目
+这里我们以袋鼠云的 chunjun 做示例, 首先我们需要 [fork](https://github.com/DTStack/chunjun) 该项目。
+
+![git-fork](../../img/git/1.git-fork.png)
+
+然后就可以在自己的仓库中看到 chunjun 项目了
+
+![git-fork-after](../../img/git/2.git-fork-after.png)
+
+clone 我们仓库中的 chunjun 项目
+```bash
+git clone https://github.com/your-github-name/chunjun.git
+```
+
+添加远程分支
+```bash
+git remote add upstream https://github.com/DTStack/chunjun.git
+```
+
+添加了之后可以查看远程仓库
+```bash
+git remote -v 
+origin  https://github.com/your-github-name/chunjun.git (fetch)
+origin  https://github.com/your-github-name/chunjun.git (push)
+upstream    https://github.com/DTStack/chunjun.git (fetch)
+upstream    https://github.com/DTStack/chunjun.git (push)
+```
+
+不论是准备开发一个新功能，还是准备提交一个 pr，都需要优先更新远程分支到本地, 例如, 现在你需要基于开发一个新的功能，你可以做如下操作
+```bash
+# 可以使用
+git pull 
+# 或者使用
+git fetch upstream -p
+git rebase upstream/master
+
+# 然后基于 master 创建一个 feature 分支(一般新功能需要先写issue和社区同学讨论该功能，比如和作者讨论你的想法是否能带来好的效果、以及该功能是否可行)
+git checkout -b feature_your-issueid
+```
+等你开发完功能，并且完成测试之后，可以提交代码, 注意这里先不要直接push
+```bash
+git add .
+git commit -m "your-commit-message"
+```
+此时你开发一个功能可能耗时1h，期间已经有其他同学提交了代码，所以你还需要保持最新代码,
+```bash
+git fetch upstream
+git rebase upstream/feature_your-issueid
+```
+rebase 之后可能会有文件冲突，需要按需解决冲突，将所有冲突都解决之后再执行
+```bash
+git add .
+git rebase --continue
+```
+看到提示 `rebase successful` 之类的就表示冲突解决完成了，然后就提交到你的github 仓库中(注意不是upstream), rebase 之后可能无法正常推送, 需要 `git push -f` 强制推送，这个操作有风险, 操作前请仔细检查以避免出现无关代码被强制覆盖的问题, 具体风险可以看 <a href="#56-git-rebase">`5.6 rebase`: 将文件添加到暂存区</a> 相关的解释。
+```bash
+git push origin feature_your-issueid
+```
+然后按页面提示，提交pr
