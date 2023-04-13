@@ -1472,7 +1472,7 @@ upstream    https://github.com/DTStack/chunjun.git (fetch)
 upstream    https://github.com/DTStack/chunjun.git (push)
 ```
 
-不论是准备开发一个新功能，还是准备提交一个 pr，都需要优先更新远程分支到本地, 例如, 现在你需要基于开发一个新的功能，你可以做如下操作
+不论是准备开发一个新功能，还是准备提交一个 pr，都需要优先更新远程分支到本地, 例如, 现在你需要基于master开发一个新的功能，你可以做如下操作
 ```bash
 # 可以使用
 git pull 
