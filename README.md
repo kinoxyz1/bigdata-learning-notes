@@ -215,7 +215,7 @@
 <details>
 <summary>Flink</summary>
 
-* [Flink 源码编译](note/flink/flink编译.md)
+* [Flink 源码编译和远程debug设置(version: 1.12.7)](note/flink/flink编译.md)
 * [Flink 安装部署](note/flink/flink安装部署.md)
 * [Flink 构成和提交流程](note/flink/flink架构和提交流程.md)
 * [Flink 并行度的划分](note/flink/flink并行度.md)
