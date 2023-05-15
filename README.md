@@ -234,7 +234,7 @@
 * [Flink CDC 集成 Iceberg 入湖](note/flink/flinkcdc-iceberg入湖.md)
 
 ---
-* [Flinkx1.12 on K8s 部署](note/flink/flinkx_on_k8s安装部署.md)
+* [Chunjun on K8s 部署](note/flink/ChunjunOnKubernetes(Native).md)
 </details>
 
 
