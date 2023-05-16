@@ -58,7 +58,7 @@ $ tar -zcvf chunjun-dist.tgz chunjun-dist      # 打 tar 包
 
 因为我们需要改一个flink的配置，所以我们会自己打镜像.
 
-手动构建镜像, 可以参考[官方提供的示例](https://github.com/apache/flink-docker/tree/master/1.16/scala_2.12-java8-ubuntu), 这里展示我本地打镜像的目录结构(可以直接贴官方的Dockerfile、docker-entrypoint.sh)
+手动构建镜像, 可以参考[官方提供的示例](https://github.com/apache/flink-docker/tree/master/1.16/scala_2.12-java8-ubuntu), 这里展示我本地打镜像的目录结构(可以直接贴官方的部分文件，如: docker-entrypoint.sh)
 
 ```bash
 $ tree .
