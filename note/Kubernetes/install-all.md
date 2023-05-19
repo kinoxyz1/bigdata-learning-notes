@@ -116,8 +116,244 @@ Password: <secret>
 
 
 
+# 部署单机kafka
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper-use-password
+  namespace: bigdata
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: zookeeper-use-password
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: zookeeper-use-password
+    spec:
+      containers:
+        - image: wurstmeister/zookeeper
+          imagePullPolicy: IfNotPresent
+          name: zookeeper-use-password
+          ports:
+            - containerPort: 2181
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
 
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-use-password
+  namespace: bigdata
+spec:
+  ports:
+    - name: zookeeper-port
+      port: 2181
+      protocol: TCP
+      targetPort: 2181
+  selector:
+    app: zookeeper-use-password
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-use-password-np
+  namespace: bigdata
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+    - name: zookeeper-port
+      nodePort: 32099
+      port: 2181
+      protocol: TCP
+      targetPort: 2181
+  selector:
+    app: zookeeper-use-password
+  sessionAffinity: None
+  type: NodePort
+
+
+---
+
+# cat << EOF >> kafka-config.properties
+# security.protocol=SASL_PLAINTEXT
+# sasl.mechanism=PLAIN
+# sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="kafka@2023*&^";
+# EOF
+# kafka-console-producer.sh --topic aa --bootstrap-server 127.0.0.1:9092 --producer.config kafka-config.properties
+---
+
+apiVersion: v1
+data:
+  kafka.properties: |
+    listeners=SASL_PLAINTEXT://0.0.0.0:9092
+    advertised.listeners=SASL_PLAINTEXT://192.168.1.248:9092
+    security.inter.broker.protocol=SASL_PLAINTEXT
+    sasl.enabled.mechanisms=PLAIN
+    sasl.mechanism.inter.broker.protocol=PLAIN
+    authorizer.class.name=kafka.security.auth.SimpleAclAuthorizer
+    super.users=User:admin
+    allow.everyone.if.no.acl.found=false
+  kafka-credentials.properties: |
+    username=admin
+    password=kafka@2023*&^
+  kafka_server_jaas.conf: |
+    KafkaServer {
+      org.apache.kafka.common.security.plain.PlainLoginModule required
+      username="admin"
+      password="kafka@2023*&^"
+      user_admin="kafka@2023*&^";
+    };
+kind: ConfigMap
+metadata:
+  name: kafka-use-password
+  namespace: bigdata
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-use-password
+  namespace: bigdata
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: kafka-use-password
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: kafka-use-password
+    spec:
+      containers:
+      - env:
+        - name: KAFKA_ADVERTISED_PORT
+          value: "30098"
+        - name: KAFKA_ADVERTISED_HOST_NAME
+          value: 192.168.1.248
+        - name: KAFKA_ZOOKEEPER_CONNECT
+          value: zookeeper-use-password:2181
+        - name: KAFKA_MESSAGE_MAX_BYTES
+          value: "10000000"
+        - name: KAFKA_BROKER_ID
+          value: "10"
+        - name: KAFKA_OPTS
+          value: "-Djava.security.auth.login.config=/opt/kafka/kafka_server_jaas.conf"
+        - name: KAFKA_LISTENERS
+          value: SASL_PLAINTEXT://0.0.0.0:9092
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: SASL_PLAINTEXT://192.168.1.248:30098
+        - name: KAFKA_SECURITY_INTER_BROKER_PROTOCOL
+          value: SASL_PLAINTEXT
+        - name: KAFKA_SASL_ENABLED_MECHANISMS
+          value: PLAIN
+        - name: KAFKA_SASL_MECHANISM_INTER_BROKER_PROTOCOL
+          value: PLAIN
+        - name: KAFKA_AUTHORIZER_CLASS_NAME
+          value: kafka.security.auth.SimpleAclAuthorizer
+        - name: KAFKA_SUPER_USERS
+          value: User:admin
+        - name: KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND
+          value: "false"
+        image: wurstmeister/kafka
+        imagePullPolicy: IfNotPresent
+        name: kafka-use-password
+        ports:
+        - containerPort: 9092
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /opt/kafka/config/kafka.properties
+          name: kafka-properties
+          subPath: kafka.properties
+        - mountPath: /opt/kafka/config/kafka-credentials.properties
+          name: kafka-properties
+          subPath: kafka-credentials.properties
+        - mountPath: /opt/kafka/kafka_server_jaas.conf
+          name: kafka-properties
+          subPath: kafka_server_jaas.conf
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: kafka-properties
+        configMap:
+          name: kafka-use-password
+          items:
+          - key: "kafka.properties"
+            path: "kafka.properties"
+          items:
+          - key: "kafka-credentials.properties"
+            path: "kafka-credentials.properties"
+          items:
+          - key: "kafka_server_jaas.conf"
+            path: "kafka_server_jaas.conf"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-use-password
+  namespace: bigdata
+spec:
+  selector:
+    name: kafka-use-password
+  ports:
+  - protocol: TCP
+    port: 9092
+    targetPort: 9092
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-use-password-np
+  namespace: bigdata
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: kafka-port
+    nodePort: 30098
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  selector:
+    name: kafka-use-password
+  sessionAffinity: None
+  type: NodePort
+```
 
 
 
