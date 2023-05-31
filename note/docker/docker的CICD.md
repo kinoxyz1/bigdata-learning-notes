@@ -7,15 +7,21 @@
 使用 docker 直接部署
 ```bash
 $ docker run \
--u root \
--d \
--p 8080:8080 \
--p 50000:50000 \
--v jenkins-data:/var/jenkins_home \
--v /etc/localtime:/etc/localtime:ro \
--v /var/run/docker.sock:/var/run/docker.sock \
---restart=always \
-jenkinsci/blueocean
+  --name=jenkins \
+  --user=root \
+  --volume=/root/.ssh:/root/.ssh/ \
+  --volume=/var/run/docker.sock:/var/run/docker.sock \
+  --volume=/usr/bin/docker:/usr/bin/docker \
+  --volume=/usr/bin/kubectl:/usr/bin/kubectl \
+  --volume=/root/.docker:/root/.docker \
+  --volume=/etc/docker:/etc/docker \
+  --volume=/app/jenkins/jenkins_home:/var/jenkins_home \
+  --volume=/var/jenkins_home \
+  -p 17000:8080 \
+  -p 50000:50000 \
+  --restart=always \
+  --detach=true \
+  jenkins/jenkins:lts
 ```
 启动完成后, 在浏览器中直接访问: ip:8080
 
@@ -38,6 +44,14 @@ This may also be found at: /var/jenkins_home/secrets/initialAdminPassword
 ```
 
 选择 "安装推荐的插件" 即可
+
+> 如果插件安装失败, 可以选择更换镜像源, 这里提供清华的镜像源供选择, https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/
+```bash
+$ cd /app/jenkins/jenkins_home/
+$ vim hudson.model.UpdateCenter.xml
+### 将 <url> 标签里面的内容替换掉
+```
+
 
 # 二、Idea 安装 gitee 插件
 file  -> setting -> plugins -> 搜索 gitee 直接安装即可
