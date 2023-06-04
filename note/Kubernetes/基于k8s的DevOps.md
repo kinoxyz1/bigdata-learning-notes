@@ -490,11 +490,16 @@ server {
     rewrite ^(.*) https://$server_name$1 permanent;
 }
 ```
+# 七、prometheus & grafana
+[官方文档](https://github.com/prometheus-operator/kube-prometheus/tree/v0.9.0)
 
+```bash
+# 删除无用服务
+rm -rf manifests/prometheus-adapter-*.yaml
+```
+按官方文档安装即可。
 
-
-
-
+设置模版: https://github.com/starsliao/Prometheus/tree/master/kubernetes
 
 
 
