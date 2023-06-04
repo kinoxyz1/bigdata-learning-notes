@@ -470,6 +470,7 @@
 * [Kubernetes 存储 | 卷的实践](note/Kubernetes/volume.md)
 * [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes 常用服务部署](note/Kubernetes/常用服务部署.md)
+* [Kubernetes devops](note/Kubernetes/基于k8s的DevOps.md)
 * [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
 
 ***
