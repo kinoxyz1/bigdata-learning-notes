@@ -201,6 +201,7 @@ spec:
 # sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="admin" password="kafka@2023*&^";
 # EOF
 # kafka-console-producer.sh --topic aa --bootstrap-server 127.0.0.1:9092 --producer.config kafka-config.properties
+# kafka-console-consumer.sh --topic aa --bootstrap-server 127.0.0.1:9092 --consumer.config kafka-config.properties --from-beginning
 ---
 
 apiVersion: v1
@@ -257,6 +258,8 @@ spec:
       - env:
         - name: KAFKA_ADVERTISED_PORT
           value: "30098"
+        - name: KAFKA_PORT
+          value: "9092"
         - name: KAFKA_ADVERTISED_HOST_NAME
           value: 192.168.1.248
         - name: KAFKA_ZOOKEEPER_CONNECT
