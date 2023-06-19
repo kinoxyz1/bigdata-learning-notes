@@ -27,7 +27,6 @@
 
 * [git ](note/git/git常用操作.md)
 * [git log format](note/git/gitlogformat.md)
-
 * [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
 * [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
 * [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
