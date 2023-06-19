@@ -11,6 +11,7 @@
 ```bash
 $ yum -y install make zlib zlib-devel gcc-c++ libtool  openssl openssl-devel
 ```
+
 ## 1.2 安装 pcre
 pcre 作用是 Nginx 支持 Rewrite 功能
 ```bash
@@ -23,6 +24,7 @@ $ make && make install
 $ pcre-config --version
 8.35
 ```
+
 ## 1.3 编译安装 nginx
 [Nginx 下载地址](http://nginx.org/)
 ```bash
@@ -85,6 +87,7 @@ drwxr-xr-x. 2 root root   19 8月  20 18:56 sbin
 $ cd /usr/local/nginx && ls 
 client_body_temp conf fastcgi_temp html logs proxy_temp sbin scgi_temp uwsgi_temp
 ```
+
 其中这几个文件夹在刚安装后是没有的，主要用来存放运行过程中的临时文件
 ```bash
 client_body_temp fastcgi_temp proxy_temp scgi_temp
@@ -97,6 +100,7 @@ client_body_temp fastcgi_temp proxy_temp scgi_temp
 ```bash
 $ cd /usr/local/nginx/
 ```
+
 ## 3.1 帮助
 ```bash
 $ sbin/nginx -help
@@ -117,6 +121,7 @@ Options:
   -c filename   : set configuration file (default: conf/nginx.conf)
   -g directives : set global directives out of configuration file
 ```
+
 ## 3.2 启动
 ```bash
 $ ps -ef | grep nginx
@@ -127,18 +132,22 @@ root      17989      1  0 18:49 ?        00:00:00 nginx: master process sbin/ngi
 nobody    17990  17989  0 18:49 ?        00:00:00 nginx: worker process
 root      17992  11127  0 18:49 pts/0    00:00:00 grep --color=auto nginx
 ```
+
 ## 3.3 暴力停止
 ```bash
 $ sbin/nginx -s stop
 ```
+
 ## 3.4 优雅停止
 ```bash
 $ sbin/nginx -s quit
 ```
+
 ## 3.4 重新加载配置文件
 ```bash
 $ sbin/nginx -s reload
 ```
+
 ## 3.5 指定启动的配置文件
 ```bash
 $ sbin/nginx -c /usr/local/nginx/conf/nginx.conf
@@ -394,7 +403,6 @@ http {
         server 192.168.220.111:8081;
     }
 
-
     server {
         listen       80;
         server_name  192.168.220.111;
@@ -451,30 +459,54 @@ $ sbin/nginx -s reload
    ```
 
 # 七、root 和 alias 区别
-root 和 alias 最主要的区别在于 nginx 如何解释 location 后面的 uri, 这会使两者分别以不同的方式将请求映射到服务器文件上。
-
-root 的处理结果: rootPath + locationPath。
-alias 处理结果: 使用 aliasPath 替换 locationPath。
-
-alias 是一个目录别名的定义，root 则是最上层目录的定义。
-
-alias 后面必须要用 `/` 结束, 否则会 404.
-
-测试1:
+## 示例1
 ```bash
-location /hello {
-  alias /usr/share/nginx/html/ceshi;
-}
-```
-请求: `http://localhost/hello/404.html` 实际访问 `/usr/share/nginx/html/ceshi/404.html`.
+server {
+        listen       9091;
+        server_name  192.168.220.111;
 
-测试2:
-```bash
-location /hello {
-  root /usr/share/nginx/html/ceshi;
-}
+        location /nginx/ {
+            root /opt/nginx/;
+        }
 ```
-请求: `http://localhost/hello/404.html` 实际访问: `/usr/share/nginx/html/ceshi/404.html`
+- 在 alias 目录配置下, 访问 192.168.220.111:9091/nginx/a.html 实际上访问的是 /opt/nginx/a.html
+- 在 root 目录配置下, 访问 192.168.220.111:9091/nginx/a.html 实际上访问的是 /opt/nginx/nginx/a.html
+
+## 示例2
+当 location 匹配访问的path 和 alias 设置的目录名不一致时
+```bash
+    server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location /nginx1/ {
+            alias /opt/nginx/;
+        }
+```
+在浏览器中输入: 192.168.220.111:9091/nginx1/a.html 此时可以正常访问
+
+当 location 匹配访问的path 和 root 设置的目录名不一致时
+```bash
+    server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location /nginx1/ {
+            root /opt;
+        }
+```
+在浏览器中输入: 192.168.220.111:9091/nginx1/a.html 此时不能正常访问, 查看 nginx 日志发现实际访问的路径是 `/opt/nginx1/a.html`
+```bash
+2021/01/09 20:48:19 [error] 22304#0: *148 open() "/opt/nginx1/a.html" failed (2: No such file or directory), client: 192.168.220.1, server: 192.168.220.111, request: "GET /nginx1/a.html HTTP/1.1", host: "192.168.220.111:9091"
+```
+
+区别:
+- 在 alias 目录配置下, 访问的是 **alias + location<font color='red'>上一级</font>** 组合的地址
+- 在 root 目录配置下, 访问的是 **alias + location** 组合的地址
+- 当 location 匹配目录 和 alias 目录不一致时, 访问的本地目录还是 alias 配置的目录
+- 当 location 匹配目录 和 root 目录不一致时, 需要将 **本地目录名 和 location 匹配访问的path名保持一致**
+
+
 
 # 八、Nginx 斜杠(/) 说明
 1. location 中的字符有没有 `/` 都没有影响。也就是说 `/user` 和 `/user/` 是一样的。
