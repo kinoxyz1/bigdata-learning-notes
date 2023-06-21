@@ -1,29 +1,4 @@
 
-* [1\. 安装要求](#1-%E5%AE%89%E8%A3%85%E8%A6%81%E6%B1%82)
-* [2\. 准备环境](#2-%E5%87%86%E5%A4%87%E7%8E%AF%E5%A2%83)
-* [3\. 所有 master节点部署 keepalived](#3-%E6%89%80%E6%9C%89-master%E8%8A%82%E7%82%B9%E9%83%A8%E7%BD%B2-keepalived)
-  * [3\.1 安装相关包和 keepalived](#31-%E5%AE%89%E8%A3%85%E7%9B%B8%E5%85%B3%E5%8C%85%E5%92%8C-keepalived)
-  * [3\.2配置master节点](#32%E9%85%8D%E7%BD%AEmaster%E8%8A%82%E7%82%B9)
-  * [3\.3 启动和检查](#33-%E5%90%AF%E5%8A%A8%E5%92%8C%E6%A3%80%E6%9F%A5)
-* [4\. 部署haproxy](#4-%E9%83%A8%E7%BD%B2haproxy)
-  * [4\.1 安装](#41-%E5%AE%89%E8%A3%85)
-  * [4\.2 配置](#42-%E9%85%8D%E7%BD%AE)
-  * [4\.3 启动和检查](#43-%E5%90%AF%E5%8A%A8%E5%92%8C%E6%A3%80%E6%9F%A5)
-* [5\. 所有节点安装Docker/kubeadm/kubelet](#5-%E6%89%80%E6%9C%89%E8%8A%82%E7%82%B9%E5%AE%89%E8%A3%85dockerkubeadmkubelet)
-  * [5\.1 安装Docker](#51-%E5%AE%89%E8%A3%85docker)
-  * [5\.2 添加阿里云YUM软件源](#52-%E6%B7%BB%E5%8A%A0%E9%98%BF%E9%87%8C%E4%BA%91yum%E8%BD%AF%E4%BB%B6%E6%BA%90)
-  * [5\.3 安装kubeadm，kubelet和kubectl](#53-%E5%AE%89%E8%A3%85kubeadmkubelet%E5%92%8Ckubectl)
-* [6\. 部署Kubernetes Master](#6-%E9%83%A8%E7%BD%B2kubernetes-master)
-  * [6\.1 创建kubeadm配置文件](#61-%E5%88%9B%E5%BB%BAkubeadm%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)
-  * [6\.2 在master1节点执行](#62-%E5%9C%A8master1%E8%8A%82%E7%82%B9%E6%89%A7%E8%A1%8C)
-* [7\.安装集群网络](#7%E5%AE%89%E8%A3%85%E9%9B%86%E7%BE%A4%E7%BD%91%E7%BB%9C)
-* [8、master2节点加入集群](#8master2%E8%8A%82%E7%82%B9%E5%8A%A0%E5%85%A5%E9%9B%86%E7%BE%A4)
-  * [8\.1 复制密钥及相关文件](#81-%E5%A4%8D%E5%88%B6%E5%AF%86%E9%92%A5%E5%8F%8A%E7%9B%B8%E5%85%B3%E6%96%87%E4%BB%B6)
-  * [8\.2 master2加入集群](#82-master2%E5%8A%A0%E5%85%A5%E9%9B%86%E7%BE%A4)
-* [5\. 加入Kubernetes Node](#5-%E5%8A%A0%E5%85%A5kubernetes-node)
-* [7\. 测试kubernetes集群](#7-%E6%B5%8B%E8%AF%95kubernetes%E9%9B%86%E7%BE%A4)
----
-
 kubeadm是官方社区推出的一个用于快速部署kubernetes集群的工具。
 
 这个工具能通过两条指令完成一个kubernetes集群的部署：
@@ -161,6 +136,27 @@ $ kubeadm join 192.168.220.121:6443 --token sz2gnl.8njr74u8iq2wdno7 \
 ```
 kubeadm token create --print-join-command
 ```
+
+## 补充: 加入Kubernetes master
+在 当前master 节点执行
+```bash
+$ kubectl -n kube-system edit cm kubeadm-config
+...
+clusterName: kubernetes
+controlPlaneEndpoint: 172.28.88.209:6443 ## 添加 当前master 的ip
+...
+
+$ kubeadm init phase upload-certs --experimental-upload-certs
+$ kubeadm token create --print-join-command
+# 将两条结果合并，如下, 然后在待加入k8s的节点执行此命令: https://blog.csdn.net/qq_31677507/article/details/104847892
+kubeadm join 172.28.88.209:6443 --token 9f9vs9.hs733pej2xtymmpp     --discovery-token-ca-cert-hash sha256:7e4110b51f90e46b8818b3f3d2115ac6b2dc9660ae61c939efea1dfee430233e \
+--control-plane --certificate-key e3fd58c2b170bb50f08c92123347ffd7ac1538be0205dc8e0e9c119dccc83967
+
+## 显示 master 
+## kubectl label nodes k8s-master1 node-role.kubernetes.io/master=""
+```
+
+
 
 ## 6. 部署CNI网络插件
 
