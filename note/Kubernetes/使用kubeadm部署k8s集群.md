@@ -118,6 +118,24 @@ $ kubectl get nodes
 ```
 ![部署](../../img/k8s/kubeadm单机部署/部署1.png)
 
+
+> 可能会遇到的问题
+> ```bash
+> 6月 21 23:10:10 k8s-master099 kubelet[4163]: : [failed to find plugin "flannel" in path [/opt/cni/bin]]
+> 6月 21 23:10:10 k8s-master099 kubelet[4163]: W0621 23:10:10.731341    4163 cni.go:239] Unable to update cni config: no valid networks found in /etc/cni
+> 6月 21 23:10:12 k8s-master099 kubelet[4163]: E0621 23:10:12.123430    4163 kubelet.go:2183] Container runtime network not ready: NetworkReady=false rea
+> 6月 21 23:10:17 k8s-master099 systemd[1]: Stopping kubelet: The Kubernetes Node Agent...
+> 6月 21 23:10:17 k8s-master099 systemd[1]: Stopped kubelet: The Kubernetes Node Agent.
+> 6月 21 23:10:17 k8s-master099 systemd[1]: Started kubelet: The Kubernetes Node Agent.
+> 6月 21 23:10:17 k8s-master099 kubelet[5904]: I0621 23:10:17.595869    5904 server.go:416] Version: v1.20.15
+> 6月 21 23:10:17 k8s-master099 kubelet[5904]: I0621 23:10:17.596086    5904 server.go:837] Client rotation is on, will bootstrap in background
+> ```
+> 解决办法: 
+> $ wget https://github.com/containernetworking/plugins/releases/download/v0.8.6/cni-plugins-linux-amd64-v0.8.6.tgz
+> $ tar -zxvf cni-plugins-linux-amd64-v0.8.6.tgz
+> $ cp flannel /opt/cni/bin
+> $ kubectl restart kubelet
+
 ## 5. 加入Kubernetes Node
 
 在 192.168.220.122/123（Node）执行。
@@ -146,7 +164,7 @@ clusterName: kubernetes
 controlPlaneEndpoint: 172.28.88.209:6443 ## 添加 当前master 的ip
 ...
 
-$ kubeadm init phase upload-certs --experimental-upload-certs
+$ kubeadm init phase upload-certs --upload-certs
 $ kubeadm token create --print-join-command
 # 将两条结果合并，如下, 然后在待加入k8s的节点执行此命令: https://blog.csdn.net/qq_31677507/article/details/104847892
 kubeadm join 172.28.88.209:6443 --token 9f9vs9.hs733pej2xtymmpp     --discovery-token-ca-cert-hash sha256:7e4110b51f90e46b8818b3f3d2115ac6b2dc9660ae61c939efea1dfee430233e \

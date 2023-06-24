@@ -797,18 +797,413 @@ hello nfs volume
 ```
 
 
-# 六、PV、PVC
+# 六、ceph 
+https://ceph.io/
+## 6.1、基本概念
+
+Ceph可以有
+
+- Ceph对象存储：键值存储，其接口就是简单的GET,PUT,DEL等。如七牛，阿里云oss等
+- Ceph块设备：**AWS的EBS**，**青云的云硬盘**和**阿里云的盘古系统**，还有**Ceph的RBD**(RBD是Ceph面向块存储的接口)
+- Ceph文件系统：它比块存储具有更丰富的接口，需要考虑目录、文件属性等支持，实现一个支持并行化的文件存储应该是最困难的。
+
+一个Ceph存储集群需要
+
+- 至少一个Ceph监视器、Ceph管理器、Ceph OSD（对象存储守护程序）
+- 需要运行Ceph文件系统客户端，则需要部署 Ceph Metadata Server。
+- **Monitors**:  [Ceph Monitor](https://docs.ceph.com/en/latest/glossary/#term-Ceph-Monitor) (`ceph-mon`) 监视器：维护集群状态信息
+   - 维护集群状态的映射，包括监视器映射，管理器映射，OSD映射，MDS映射和CRUSH映射。
+   - 这些映射是Ceph守护程序相互协调所必需的关键群集状态。
+   - 监视器还负责管理守护程序和客户端之间的身份验证。
+   - 通常至少需要三个监视器才能实现冗余和高可用性。
+- **Managers**: [Ceph Manager](https://docs.ceph.com/en/latest/glossary/#term-Ceph-Manager) 守护进程(`ceph-mgr`) : 负责跟踪运行时指标和Ceph集群的当前状态
+   - Ceph Manager守护进程（ceph-mgr）负责跟踪运行时指标和Ceph集群的当前状态
+   - 包括存储利用率，当前性能指标和系统负载。
+   - Ceph Manager守护程序还托管基于python的模块，以管理和公开Ceph集群信息，包括基于Web的Ceph Dashboard和REST API。
+   - 通常，至少需要两个管理器才能实现高可用性。
+- **Ceph OSDs**: [Ceph OSD](https://docs.ceph.com/en/latest/glossary/#term-Ceph-OSD) (对象存储守护进程, `ceph-osd`) 【存储数据】
+   - 通过检查其他Ceph OSD守护程序的心跳来存储数据，处理数据复制，恢复，重新平衡，并向Ceph监视器和管理器提供一些监视信息。
+   - 通常至少需要3个Ceph OSD才能实现冗余和高可用性。
+- **MDSs**: [Ceph Metadata Server](https://docs.ceph.com/en/latest/glossary/#term-Ceph-Metadata-Server) (MDS, `ceph-mds`ceph元数据服务器)
+   -  存储能代表 [Ceph File System](https://docs.ceph.com/en/latest/glossary/#term-Ceph-File-System) 的元数据(如：Ceph块设备和Ceph对象存储不使用MDS).
+   -  Ceph元数据服务器允许POSIX文件系统用户执行基本命令（如ls，find等），而不会给Ceph存储集群带来巨大负担
+
+
+## 6.2 Rook
+### 6.2.1、基本概念
+Rook是云原生平台的存储编排工具
+
+Rook工作原理如下：
+
+![rook 工作原理](../../img/k8s/PV和PVC/rook-architecture.png)
+
+Rook架构如下:
+
+![rook架构图](../../img/k8s/PV和PVC/rook架构图.png)
+
+RGW：为Restapi Gateway
+
+### 6.2.2、operator是什么
+
+k8s中operator+CRD（CustomResourceDefinitions【k8s自定义资源类型】），可以快速帮我们部署一些有状态应用集群，如redis，mysql，Zookeeper等。
+
+Rook的operator是我们k8s集群和存储集群之间进行交互的解析器
+
+
+
+CRD：CustomResourceDefinitions (自定义资源)；如：Itdachang
+
+operator：这个能处理自定义资源类型
+
+## 6.3 部署
+https://rook.io/docs/rook/v1.6/ceph-quickstart.html
+
+### 6.3.1、查看前提条件
+
+- Raw devices (no partitions or formatted filesystems)； 原始磁盘，无分区或者格式化
+- Raw partitions (no formatted filesystem)；原始分区，无格式化文件系统
+
+
+```bash
+fdisk -l 
+找到自己挂载的磁盘
+如： /dev/vdc
+
+# 查看满足要求的
+lsblk -f
+
+#云厂商都这么磁盘清0
+dd if=/dev/zero of=/dev/vdc bs=1M status=progress
+
+
+# NAME                  FSTYPE      LABEL UUID                                   MOUNTPOINT
+# vda
+# └─vda1                LVM2_member       >eSO50t-GkUV-YKTH-WsGq-hNJY-eKNf-3i07IB
+# ├─ubuntu--vg-root   ext4              c2366f76-6e21-4f10-a8f3-6776212e2fe4   /
+# └─ubuntu--vg-swap_1 swap              9492a3dc-ad75-47cd-9596-678e8cf17ff9   [SWAP]
+# vdb
+```
+vdb 是可用的
+
+### 6.3.2、部署&修改operator
+```bash
+git clone --single-branch --branch v1.6.11 https://github.com/rook/rook.git
+cd cluster/examples/kubernetes/ceph
+## vim operator.yaml
+## 建议修改以下的东西。在operator.yaml里面
+## ROOK_CSI_CEPH_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/cephcsi:v3.3.1"
+## ROOK_CSI_REGISTRAR_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/csi-node-driver-registrar:v2.0.1"
+## ROOK_CSI_RESIZER_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/csi-resizer:v1.0.1"
+## ROOK_CSI_PROVISIONER_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/csi-provisioner:v2.0.4"
+## ROOK_CSI_SNAPSHOTTER_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/csi-snapshotter:v4.0.0"
+## ROOK_CSI_ATTACHER_IMAGE: "registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/csi-attacher:v3.0.2"
+
+kubectl create -f crds.yaml -f common.yaml -f operator.yaml #注意修改operator镜像
+
+kubectl -n rook-ceph get pod
+```
+
+### 6.3.3 部署集群
+修改`cluster.yaml`使用我们指定的磁盘当做存储节点即可
+```bash
+...
+    image: registry.cn-hangzhou.aliyuncs.com/lfy_k8s_images/ceph-ceph:v15.2.11  # 修改镜像
+...
+  mon:
+    # Set the number of mons to be started. Must be an odd number, and is generally recommended to be 3.
+    count: 3
+    # The mons should be on unique nodes. For production, at least 3 nodes are recommended for this reason.
+    # Mons should only be allowed on the same node for test environments where data loss is acceptable.
+    allowMultiplePerNode: false
+  mgr:
+    # When higher availability of the mgr is needed, increase the count to 2.
+    # In that case, one mgr will be active and one in standby. When Ceph updates which
+    # mgr is active, Rook will update the mgr services to match the active mgr.
+    count: 2
+    modules:
+      # Several modules should not need to be included in this list. The "dashboard" and "monitoring" modules
+      # are already enabled by other settings in the cluster CR.
+      - name: pg_autoscaler
+        enabled: true
+  # enable the ceph dashboard for viewing cluster status
+...
+  storage: # cluster level storage configuration and selection
+    useAllNodes: false
+    useAllDevices: false
+    #deviceFilter:
+    config:
+      osdsPerDevice: "3" # this value can be overridden at the node or device level
+    nodes:
+    - name: "k8s-master099"
+      devices: # specific devices to use for storage can be specified for each node
+      - name: "vdb"
+    - name: "k8s-master100"
+      devices:
+      - name: "vdb"
+    - name: "k8s-master101"
+      devices:
+      - name: "vdb"
+```
+
+### 6.3.4、部署dashboard
+https://www.rook.io/docs/rook/v1.6/ceph-dashboard.html
+
+前面的步骤，已经自动部署了。
+
+```bash
+kubectl -n rook-ceph get service
+#查看service
+
+
+#为了方便访问我们改为nodePort。应用nodePort文件
+
+
+#获取访问密码
+kubectl -n rook-ceph get secret rook-ceph-dashboard-password -o jsonpath="{['data']['password']}" | base64 --decode && echo
+
+#默认账号 admin
+4/qt]e5wad_HY:0&V.ba
+```
+暴露 ingress 提供访问
+```bash
+vim dashboard-ingress-https.yaml
+#
+# This example is for Kubernetes running an ngnix-ingress
+# and an ACME (e.g. Let's Encrypt) certificate service
+#
+# The nginx-ingress annotations support the dashboard
+# running using HTTPS with a self-signed certificate
+#
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rook-ceph-mgr-dashboard
+  namespace: rook-ceph # namespace:cluster
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    # kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      proxy_ssl_verify off;
+spec:
+  # tls:
+  #   - hosts:
+  #       - rook.kinoxyz.com
+  #     secretName: rook-tls-secret
+  rules:
+    - host: rook.kinoxyz.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: rook-ceph-mgr-dashboard
+                port:
+                  number: 8443
+                  
+                  
+kubectl apply -f dashboard-ingress-https.yaml
+```
+访问 https://rook.kinoxyz.com 即可
+
+### 6.3.5 说明
+```bash
+## 部署完的组件如下
+NAME                                                     READY   STATUS      RESTARTS   AGE
+csi-cephfsplugin-4kctq                                   3/3     Running     0          48m
+csi-cephfsplugin-7fnrm                                   3/3     Running     0          48m
+csi-cephfsplugin-provisioner-5fc67679b6-6kbgs            6/6     Running     0          48m
+csi-cephfsplugin-provisioner-5fc67679b6-s5z9b            6/6     Running     0          48m
+csi-cephfsplugin-wrqvt                                   3/3     Running     0          48m
+csi-rbdplugin-75pph                                      3/3     Running     0          48m
+csi-rbdplugin-provisioner-675764ff49-gqh4k               6/6     Running     0          48m
+csi-rbdplugin-provisioner-675764ff49-x74t4               6/6     Running     0          48m
+csi-rbdplugin-slzzd                                      3/3     Running     0          48m
+csi-rbdplugin-xq82s                                      3/3     Running     0          48m
+rook-ceph-crashcollector-k8s-master099-6998b6d8f-nb4rm   1/1     Running     0          33m
+rook-ceph-crashcollector-k8s-master100-7c9c8df98-t8d8g   1/1     Running     0          46m
+rook-ceph-crashcollector-k8s-master101-fd444f5dc-kl7pk   1/1     Running     0          33m
+rook-ceph-mds-myfs-a-5575d8cc8f-tt2w8                    1/1     Running     0          33m
+rook-ceph-mds-myfs-b-69f74567c5-bp7zv                    1/1     Running     0          33m
+rook-ceph-mgr-a-5d7c4dd494-gkcc9                         2/2     Running     0          46m
+rook-ceph-mgr-b-65fb676b5-nhwp6                          2/2     Running     0          46m
+rook-ceph-mon-a-867d4f65fc-r4ggj                         1/1     Running     0          47m
+rook-ceph-mon-b-5c64d58fb7-xdrsj                         1/1     Running     0          47m
+rook-ceph-mon-c-787f48598-2v7n9                          1/1     Running     0          46m
+rook-ceph-operator-bfdc879fd-wjm7k                       1/1     Running     0          48m
+rook-ceph-osd-0-678696f975-rfftx                         1/1     Running     0          46m
+rook-ceph-osd-1-75fcc48dc7-d6j2v                         1/1     Running     0          46m
+rook-ceph-osd-2-5497cbdb45-cf7rd                         1/1     Running     0          46m
+rook-ceph-osd-3-5f6cbd76f6-whw54                         1/1     Running     0          46m
+rook-ceph-osd-4-68dfc99778-r88np                         1/1     Running     0          46m
+rook-ceph-osd-5-7978cb5f7f-hkxd9                         1/1     Running     0          46m
+rook-ceph-osd-6-6b48fc54cf-zl8k8                         1/1     Running     0          46m
+rook-ceph-osd-7-54f5554468-8rl47                         1/1     Running     0          46m
+rook-ceph-osd-8-56f8c9486-xq2gn                          1/1     Running     0          46m
+rook-ceph-osd-prepare-k8s-master099-p44ll                0/1     Completed   0          44m
+rook-ceph-osd-prepare-k8s-master100-lsz5s                0/1     Completed   0          44m
+rook-ceph-osd-prepare-k8s-master101-k2tdf                0/1     Completed   0          44m
+```
+
+## 6.4 卸载
+```bash
+# rook集群的清除，
+##1、 delete -f 之前的yaml
+
+##2、 再执行如下命令
+kubectl -n rook-ceph get cephcluster
+kubectl -n rook-ceph patch cephclusters.ceph.rook.io rook-ceph -p '{"metadata":{"finalizers": []}}' --type=merge
+
+##3、 清除每个节点的 /var/lib/rook 目录
+
+
+## 顽固的自定义资源删除；
+kubectl -n rook-ceph patch cephblockpool.ceph.rook.io replicapool -p '{"metadata":{"finalizers": []}}' --type=merge
+```
+
+## 6.5 实战
+### 6.5.1 块存储(RDB)
+```bash
+cd rook/cluster/examples/kubernetes/ceph/csi/rbd
+kubectl apply -f storageclass.yaml
+```
+### 6.5.2 案例
+```bash
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sts-nginx
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: sts-nginx # has to match .spec.template.metadata.labels
+  serviceName: "sts-nginx"
+  replicas: 3 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: sts-nginx # has to match .spec.selector.matchLabels
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: sts-nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: www
+          mountPath: /usr/share/nginx/html
+  volumeClaimTemplates:
+  - metadata:
+      name: www
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "rook-ceph-block"
+      resources:
+        requests:
+          storage: 20Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sts-nginx
+  namespace: default
+spec:
+  selector:
+    app: sts-nginx
+  type: ClusterIP
+  ports:
+  - name: sts-nginx
+    port: 80
+    targetPort: 80
+    protocol: TCP
+```
+> 测试： 创建sts、修改nginx数据、删除sts、重新创建sts。他们的数据丢不丢，共享不共享
+
+### 6.5.3 文件存储(CephFS)
+常用 文件存储。 RWX模式；如：10个Pod共同操作一个地方
+
+https://rook.io/docs/rook/v1.6/ceph-filesystem.html
+
+```bash
+cd rook/cluster/examples/kubernetes
+kubectl apply -f filesystem.yaml
+cd rook/cluster/examples/kubernetes/ceph/csi/cephfs
+kubectl apply -f storageclass.yaml
+```
+
+### 6.5.4 案例
+```bash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  nginx-deploy
+  namespace: default
+  labels:
+    app:  nginx-deploy
+spec:
+  selector:
+    matchLabels:
+      app: nginx-deploy
+  replicas: 3
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  nginx-deploy
+    spec:
+      containers:
+      - name:  nginx-deploy
+        image:  nginx
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: nginx-html-storage
+          mountPath: /usr/share/nginx/html
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: nginx-html-storage
+          persistentVolumeClaim:
+            claimName: nginx-pv-claim
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nginx-pv-claim
+  labels:
+    app:  nginx-deploy
+spec:
+  storageClassName: rook-cephfs
+  accessModes:
+    - ReadWriteMany  ##如果是ReadWriteOnce将会是什么效果
+  resources:
+    requests:
+      storage: 10Mi
+```
+> 测试，创建deploy、修改页面、删除deploy，新建deploy是否绑定成功，数据是否在。
+
+
+# 七、PV、PVC
 [官方 PV、PVC 实战](https://kubernetes.io/zh/docs/tasks/configure-pod-container/configure-persistent-volume-storage/)
 
 [PV、PVC 的官方文档](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#access-modes)
 
-## 6.1 持久卷（PersistentVolume ）
+## 7.1 持久卷（PersistentVolume ）
 
 - 持久卷（PersistentVolume，PV）是集群中的一块存储，可以由管理员事先供应，或者 使用[存储类（Storage Class）](https://kubernetes.io/zh/docs/concepts/storage/storage-classes/)来动态供应。
 - 持久卷是集群资源，就像节点也是集群资源一样。PV 持久卷和普通的 Volume 一样，也是使用 卷插件来实现的，只是它们拥有独立于使用他们的Pod的生命周期。
 - 此 API 对象中记述了存储的实现细节，无论其背后是 NFS、iSCSI 还是特定于云平台的存储系统。
 
-### 6.1.1 示例
+### 7.1.1 示例
 ```bash
 apiVersion: v1
 kind: PersistentVolume
@@ -839,13 +1234,13 @@ spec:
 5. storageClassName: [用于和 PVC 匹配](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#class)
 
 
-## 6.2 持久卷申请（PersistentVolumeClaim，PVC）
+## 7.2 持久卷申请（PersistentVolumeClaim，PVC）
 
 - 表达的是用户对存储的请求
 - 概念上与 Pod 类似。 Pod 会耗用节点资源，而 PVC 申领会耗用 PV 资源。
 - Pod 可以请求特定数量的资源（CPU 和内存）；同样 PVC 申领也可以请求特定的大小和访问模式 （例如，可以要求 PV 卷能够以 ReadWriteOnce、ReadOnlyMany 或 ReadWriteMany 模式之一来挂载，参见[访问模式](https://kubernetes.io/zh/docs/concepts/storage/persistent-volumes/#access-modes)）。
 
-### 6.2.1 示例
+### 7.2.1 示例
 ```bash
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -862,7 +1257,7 @@ spec:
   storageClassName: slow
 ```
 
-## 6.3 PV、PVC 实操
+## 7.3 PV、PVC 实操
 使用 PV、PVC、ConfigMap 部署一个单机版的 MySQL
 ```bash
 # 1. 创建 my.cnf 文件并 create 为 configmap
@@ -970,7 +1365,7 @@ spec:
 
 ```
 
-## 6.4 动态存储类（Storage Class）
+## 7.4 动态存储类（Storage Class）
 
 - 尽管 PersistentVolumeClaim 允许用户消耗抽象的存储资源，常见的情况是针对不同的 问题用户需要的是具有不同属性（如，性能）的 PersistentVolume 卷。
 - 集群管理员需要能够提供不同性质的 PersistentVolume，并且这些 PV 卷之间的差别不 仅限于卷大小和访问模式，同时又不能将卷是如何实现的这些细节暴露给用户。
@@ -978,7 +1373,7 @@ spec:
 
 [官方部署文档](https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner)
 
-### 6.4.1 部署
+### 7.4.1 部署
 ```bash
 # 创建存储类
 apiVersion: storage.k8s.io/v1
@@ -1104,7 +1499,7 @@ roleRef:
 ```
 
 
-### 6.4.2 设置默认
+### 7.4.2 设置默认
 方式一:
 ```bash
 ## 创建了一个存储类
@@ -1121,7 +1516,7 @@ metadata:
 kubectl patch storageclass managed-nfs-storage -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'
 ```
 
-### 6.4.3 案例
+### 7.4.3 案例
 ```yaml
 
 ---

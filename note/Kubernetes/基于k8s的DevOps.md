@@ -10,7 +10,12 @@
 # 二、NFS 部署和创建 storageClass
 [文档查看 <五、NFS> 和 <6.4 动态存储类（Storage Class）>](../../note/Kubernetes/volume.md)
 
-# 三、Jenkins 部署
+# 三、ceph 部署和创建 storageClass
+[volume # 六、ceph ](volume.md)
+
+
+
+# 四、Jenkins 部署
 docker 方式
 ```bash
 docker run \
