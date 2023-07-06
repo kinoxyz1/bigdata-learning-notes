@@ -362,6 +362,7 @@
 
 * [Java 泛型](note/java/泛型.md)
 * [Java8](note/java/java8.md)
+* [Java 日志框架发展史](https://segmentfault.com/a/1190000041842868?utm_source=sf-backlinks)
 
 </details>
 
