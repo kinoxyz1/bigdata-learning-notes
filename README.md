@@ -518,6 +518,7 @@
 * [Linux CPU性能优化](note/linux/Linux-CPU性能.md)
 * [frp+openvpn+docker 搭建](note/linux/openvpn.md)
 * [curl使用指南](note/linux/curl使用指南.md)
+* [linux 常用指令](note/linux/常用指令.md)
 </details>  
 
 <details>
