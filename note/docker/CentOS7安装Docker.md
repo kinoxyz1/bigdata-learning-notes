@@ -6,6 +6,8 @@
 
 ---
 
+https://zhuanlan.zhihu.com/p/490585683
+
 # 一、前提条件
 
 操作系统要求
