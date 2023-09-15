@@ -410,6 +410,8 @@
 
 - [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
 - [centos7 nfs](note/软件部署/centos/nfs.md)
+- [centos7 sftp](note/软件部署/centos/sftp.md)
+- [keepalived](note/软件部署/centos/keepalived.md)
 
 </details>
 

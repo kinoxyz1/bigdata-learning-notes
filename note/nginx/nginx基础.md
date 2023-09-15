@@ -576,3 +576,144 @@ location ^~ /test {
 代理后实际访问地址：http://192.168.171.129:8080/test/tes.jsp
 ```
 # 九、UrlRewrite
+
+# 十、Nginx+Keepalived
+安装 keepalived
+```bash
+yum install -y keepalived
+```
+配置nginx1
+```bash
+vim /etc/nginx/conf.d/web.conf 
+server{
+        listen 8080;
+        root /usr/local/nginx/html;
+        index test.html;
+}
+echo "<h1>This is web1</h1>"  > /usr/local/nginx/html/test.html
+```
+配置nginx2
+```bash
+vim /etc/nginx/conf.d/web.conf 
+server{
+        listen 8080;
+        root /usr/local/nginx/html;
+        index test.html;
+}
+echo "<h1>This is web2</h1>"  > /usr/local/nginx/html/test.html
+```
+启动两个nginx
+```bash
+cd $NGINX_HOME
+./nginx
+```
+配置 keepalived(nginx1)
+```bash
+vim /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+vrrp_script nginx_check {
+  script "/tools/nginx_check.sh"
+  interval 1
+}
+vrrp_instance VI_1 {
+  state MASTER
+  interface ens33
+  virtual_router_id 52
+  priority 100
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass test
+  }
+  virtual_ipaddress {
+    192.168.149.100
+  }
+  track_script {
+    nginx_check
+  }
+  notify_master /tools/master.sh
+  notify_backup /tools/backup.sh
+  notify_fault /tools/fault.sh
+  notify_stop /tools/stop.sh
+}
+```
+配置 keepalived(nginx2)
+```bash
+vim /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+vrrp_script nginx_check {
+  script "/tools/nginx_check.sh"
+  interval 1
+}
+vrrp_instance VI_1 {
+  state BACKUP
+  interface ens33
+  virtual_router_id 52
+  priority 99
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass test
+  }
+  virtual_ipaddress {
+    192.168.149.100
+  }
+  track_script {
+    nginx_check
+  }
+  notify_master /tools/master.sh
+  notify_backup /tools/backup.sh
+  notify_fault /tools/fault.sh
+  notify_stop /tools/stop.sh
+}
+```
+健康检查脚本
+```bash
+vim /etc/keepalived/nginx_check.sh
+#!/bin/bash
+if [ -f /usr/local/nginx/logs/nginx.pid ]; then
+  echo "success"
+  exit 0
+else
+  echo "failed"
+  exit 1
+fi
+
+chmod +x /etc/keepalived/nginx_check.sh
+```
+启动keepalived
+```bash
+vim /etc/keepalived/keepalived.conf
+systemctl stop keepalived.service
+systemctl start keepalived.service
+systemctl status keepalived.service
+```
+访问nginx: http://192.168.149.100:8080, 停止启动一个nginx, 再次查看效果
