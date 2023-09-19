@@ -477,7 +477,6 @@
 * [Kubernetes devops](note/Kubernetes/基于k8s的DevOps.md)
 * [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
 * [Kubernetes 更换证书](https://www.jianshu.com/p/4c9581b69ee2)
-
 ***
 **旧版**
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
