@@ -503,14 +503,12 @@
 <details>
 <summary>Linux</summary>
 
+* [Linux 基础](note/linux/Linux基础/linux基础.md)
+* [Shell 编程](note/linux/Shell编程/shell编程.md)
+
 * [开机、重启和用户登录注销](/note/linux/Linux用户管理/开机、重启和用户登录注销.md)
-* [vim编辑器](/note/linux/Linux用户管理/vi和vim的使用.md)
-* [用户与权限](note/linux/Linux用户管理/用户管理.md)
 * [linux 常用操作命令](note/linux/常用指令.md)
-* [文件系统管理](note/linux/Linux用户管理/文件系统管理.md)
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
-* [Linux Swap分区](note/linux/Linux-Swap分区.md)
-* [Linux扩展/删除swap分区](note/linux/Linux扩展-删除swap分区.md)
 * [Linux 集群时间同步](note/linux/CentOS集群时间同步.md)
 * [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [Linux 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
@@ -520,22 +518,7 @@
 * [kill pid 和 kill -9 pid 的区别](note/linux/kill-pid.md)
 * [frp+openvpn+docker 搭建](note/linux/openvpn.md)
 * [curl使用指南](note/linux/curl使用指南.md)
-</details>  
-
-<details>
-<summary>Shell</summary>
-
-* [shell 基础入门](note/linux/shell/shell入门.md)
-* [shell 变量](note/linux/shell/shell变量.md)
-* [shell 运算符](note/linux/shell/shell运算符.md)
-* [shell 流程控制](note/linux/shell/shell流程控制.md)
-* [shell 读取控制台输入数据](note/linux/shell/shell读取控制台输入数据.md)
-* [shell 函数](note/linux/shell/shell函数.md)
-* [shell 工具](note/linux/shell/shell工具.md)
-* [echo 命令详解](note/linux/echo命令.md)
-* [集群同步脚本](note/linux/集群同步脚本.md)
-* [集群批量执行脚本](note/linux/集群批量执行脚本.md)
-</details>  
+</details>
 
 <details>
 <summary>内网穿透</summary>
