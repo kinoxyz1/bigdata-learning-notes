@@ -505,7 +505,6 @@
 
 * [Linux 基础](note/linux/Linux基础/linux基础.md)
 * [Shell 编程](note/linux/Shell编程/shell编程.md)
-
 * [开机、重启和用户登录注销](/note/linux/Linux用户管理/开机、重启和用户登录注销.md)
 * [linux 常用操作命令](note/linux/常用指令.md)
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
