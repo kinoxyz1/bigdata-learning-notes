@@ -1613,8 +1613,140 @@ storage     persistentvolumeclaim/mysql-pvc   Bound    pvc-bc727051-8426-4249-8e
 ```
 
 
+# 八、扩容 pv(ceph)
+https://www.cnblogs.com/evescn/p/16929463.html
 
+查看信息
+```bash
+# 查看要扩容的容器的磁盘挂载情况
+$ kubectl exec -it gitlab-56b96d5594-d4zkd -n gitlab-new -- df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         879G  581G  254G  70% /
+tmpfs            64M     0   64M   0% /dev
+tmpfs            63G     0   63G   0% /sys/fs/cgroup
+/dev/nvme0n1p2  879G  581G  254G  70% /etc/hosts
+shm              64M     0   64M   0% /dev/shm
+/dev/rbd6        20G   16G   4G   91% /home/git/data
+tmpfs            63G   12K   63G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs            63G     0   63G   0% /proc/acpi
+tmpfs            63G     0   63G   0% /proc/scsi
+tmpfs            63G     0   63G   0% /sys/firmware
 
+# 查看 deploy 使用的 pvc
+$ kubectl get deploy gitlab -n gitlab-new -o yaml
+...
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: gitlab-new-gitlab-data
+          
+# 查看 pvc 绑定的 pv
+$ kubectl get pvc gitlab-new-gitlab-data -n gitlab-new -o yaml
+...
+  storageClassName: rbd
+  volumeMode: Filesystem
+  volumeName: pvc-93a0f3a3-0157-486c-ac63-008fb2ae6a36
+  
+# 查看 pv 的信息
+$ kubectl get pv pvc-93a0f3a3-0157-486c-ac63-008fb2ae6a36 -o yaml
+## 看 image 和 pool
+...
+  rbd:
+    image: kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e
+    keyring: /etc/ceph/keyring
+    monitors:
+    - 192.168.1.80:6789
+    - 192.168.1.163:6789
+    - 192.168.1.182:6789
+    pool: kube
+    secretRef:
+      name: ceph-secret
+      namespace: kube-system
+```
+修改 sc 
+```bash
+$ kubectl edit sc rbd 
+# 加进去
+allowVolumeExpansion: true  
+```
+修改pv的大小
+```bash
+$ kubectl edit pvc gitlab-new-gitlab-data -n gitlab-new
+...
+  resources:
+    requests:
+      storage: 50Gi    <--- 修改成指定的大小
+```
+修改pvc的大小
+```bash
+$ kubectl edit pvc gitlab-new-gitlab-data -n gitlab-new
+...
+  resources:
+    requests:
+      storage: 50Gi    <--- 修改成指定的大小
+```
+修改rbd的大小
+```bash
+# 登录到 pod 所在的机器执行以下命令
+# 查看当前机器所有的rbd
+$ rbd showmapped
+id pool image                                                       snap device
+0  kube kubernetes-dynamic-pvc-01d4ed95-ebc1-11ec-aa29-c6c1f9206139 -    /dev/rbd0
+1  kube kubernetes-dynamic-pvc-c0da3843-8948-11ec-88db-d25b11a75b57 -    /dev/rbd1
+5  kube kubernetes-dynamic-pvc-2eabc27f-d7f6-11ec-badd-8a131a0f411c -    /dev/rbd5
+6  kube kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e -    /dev/rbd6
+7  kube kubernetes-dynamic-pvc-7442f7fc-ebc0-11ec-aa29-c6c1f9206139 -    /dev/rbd7
+8  kube kubernetes-dynamic-pvc-740322a4-ebc0-11ec-aa29-c6c1f9206139 -    /dev/rbd8
 
+# 查看 rbd 的大小, info 是上面查的 pool 的值, kubernetes-dynam... 是上面查的 image 的只
+$ rbd -p kube info kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e
+rbd image 'kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e':
+	size 20 GiB in 12800 objects
+	order 22 (4 MiB objects)
+	id: fbab6b8b4567
+	block_name_prefix: rbd_data.fbab6b8b4567
+	format: 2
+	features: layering
+	op_features:
+	flags:
+	create_timestamp: Wed Mar  2 16:57:57 2022
+	
+# 修改 rbd 的大小
+$ rbd -p kube resize kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e --size 50G
+调整大小
+Resizing image: 100% complete...done.
 
+# 查看 rbd 的大小
+rbd -p kube info kubernetes-dynamic-pvc-dae1a1b2-9a06-11ec-91e7-365e0976bf6e
+	size 50 GiB in 12800 objects
+	order 22 (4 MiB objects)
+	id: fbab6b8b4567
+	block_name_prefix: rbd_data.fbab6b8b4567
+	format: 2
+	features: layering
+	op_features:
+	flags:
+	create_timestamp: Wed Mar  2 16:57:57 2022
+```
+查看pv和pvc的大小
+```bash
+$ kubectl get pv,pvc -n gitlab-new |grep gitlab-new-gitlab-data
+persistentvolume/pvc-93a0f3a3-0157-486c-ac63-008fb2ae6a36   50Gi       RWO            Delete           Bound    gitlab-new/gitlab-new-gitlab-data               rbd                     636d
+persistentvolumeclaim/gitlab-new-gitlab-data          Bound    pvc-93a0f3a3-0157-486c-ac63-008fb2ae6a36   50Gi       RWO            rbd            636d
+```
+查看容器中的挂载
+```bash
+$ kubectl exec -it gitlab-56b96d5594-d4zkd -n gitlab-new -- df -h
+Filesystem      Size  Used Avail Use% Mounted on
+overlay         879G  581G  254G  70% /
+tmpfs            64M     0   64M   0% /dev
+tmpfs            63G     0   63G   0% /sys/fs/cgroup
+/dev/nvme0n1p2  879G  581G  254G  70% /etc/hosts
+shm              64M     0   64M   0% /dev/shm
+/dev/rbd6        50G   16G   34G  32% /home/git/data
+tmpfs            63G   12K   63G   1% /run/secrets/kubernetes.io/serviceaccount
+tmpfs            63G     0   63G   0% /proc/acpi
+tmpfs            63G     0   63G   0% /proc/scsi
+tmpfs            63G     0   63G   0% /sys/firmware
+```
 
