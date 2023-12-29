@@ -458,7 +458,9 @@
 <details>
 <summary>Kubernetes</summary>
 
-* [部署三种模式的k8s](note/Kubernetes/k8s部署.md)
+* [kubernetes guide](https://jimmysong.io/kubernetes-handbook/)
+* [云原生的定义](https://cloudnative.to/blog/cloud-native-culture-not-container/)
+* [三种方式部署k8s](note/Kubernetes/k8s部署.md)
 * [扩容 K8s](note/Kubernetes/k8s扩容.md)
 * [命令自动补全](note/Kubernetes/命令自动补全.md)
 * [使用秘钥从私有仓库下载镜像](note/Kubernetes/使用秘钥从私有仓库下载镜像.md)
@@ -472,11 +474,13 @@
 * [Kubernetes 工作负载 | 服务网络和负载均衡](note/Kubernetes/k8s-Service.md)
 * [Kubernetes 工作负载 | RS、RC、DaemonSet、StatefulSet、Job、CronJob实践](note/Kubernetes/k8s-RS&RC.md)
 * [Kubernetes 存储 | 卷的实践](note/Kubernetes/volume.md)
+* [Kubernetes 权限](note/Kubernetes/k8s-权限.md)
 * [Kubernetes helm](note/Kubernetes/k8s-helm.md)
 * [Kubernetes 常用服务部署](note/Kubernetes/常用服务部署.md)
 * [Kubernetes devops](note/Kubernetes/基于k8s的DevOps.md)
 * [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
 * [Kubernetes 更换证书](https://www.jianshu.com/p/4c9581b69ee2)
+* [Kubernetes context 上下文配置](note/Kubernetes/k8s-context管理.md)
 ***
 **旧版**
 * [Kubernetes label](note/Kubernetes/k8s-label.md)

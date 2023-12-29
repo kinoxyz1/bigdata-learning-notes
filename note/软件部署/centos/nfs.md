@@ -62,6 +62,14 @@ systemctl enable nfs-server.service
 
 systemctl start rpcbind.service
 systemctl start nfs-server.service
+
+
+systemctl stop nfs-server.service
+systemctl stop nfs-mountd.service
+
+
+systemctl status nfs-server.service
+systemctl status nfs-mountd.service
 ```
 
 ## 1.5 检查

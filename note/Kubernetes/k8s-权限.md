@@ -1,0 +1,343 @@
+
+
+Kubernetes 中提供了良好的多租户认证管理机制，如 RBAC、ServiceAccount 还有各种策略等。
+
+# ServerAccount
+ServiceAccount 为 Pod 中的进程提供身份信息。
+
+当您（真人用户）访问集群（例如使用kubectl命令）时，apiserver 会将您认证为一个特定的 User Account（目前通常是admin，除非您的系统管理员自定义了集群配置）。Pod 容器中的进程也可以与 apiserver 联系。 当它们在联系 apiserver 的时候，它们会被认证为一个特定的 Service Account（例如default）。
+
+## 使用默认的 Service Account 访问 API server
+当您创建 pod 的时候，如果您没有指定一个 service account，系统会自动得在与该pod 相同的 namespace 下为其指派一个default service account。如果您获取刚创建的 pod 的原始 json 或 yaml 信息（例如使用kubectl get pods/podename -o yaml命令），您将看到spec.serviceAccountName字段已经被设置为 default。
+
+您可以在 pod 中使用自动挂载的 service account 凭证来访问 API，如 Accessing the Cluster 中所描述。
+
+Service account 是否能够取得访问 API 的许可取决于您使用的 授权插件和策略。
+
+在 1.6 以上版本中，您可以选择取消为 service account 自动挂载 API 凭证，只需在 service account 中设置 automountServiceAccountToken: false：
+
+```bash
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: build-robot
+automountServiceAccountToken: false
+...
+```
+在 1.6 以上版本中，您也可以选择只取消单个 pod 的 API 凭证自动挂载：
+```bash
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-pod
+spec:
+  serviceAccountName: build-robot
+  automountServiceAccountToken: false
+  ...
+```
+如果在 pod 和 service account 中同时设置了 automountServiceAccountToken , pod 设置中的优先级更高。
+
+## 使用多个Service Account
+每个 namespace 中都有一个默认的叫做 default 的 service account 资源。
+
+您可以使用以下命令列出 namespace 下的所有 serviceAccount 资源。
+```bash
+$ kubectl get serviceAccounts
+NAME      SECRETS    AGE
+default   1          1d
+```
+您可以像这样创建一个 ServiceAccount 对象：
+```bash
+$ cat > /tmp/serviceaccount.yaml <<EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: build-robot
+EOF
+$ kubectl create -f /tmp/serviceaccount.yaml
+serviceaccount "build-robot" created
+```
+如果您看到如下的 service account 对象的完整输出信息：
+```bash
+$ kubectl get serviceaccounts/build-robot -o yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: 2015-06-16T00:12:59Z
+  name: build-robot
+  namespace: default
+  resourceVersion: "272500"
+  selfLink: /api/v1/namespaces/default/serviceaccounts/build-robot
+  uid: 721ab723-13bc-11e5-aec2-42010af0021e
+secrets:
+- name: build-robot-token-bvbk5
+```
+然后您将看到有一个 token 已经被自动创建，并被 service account 引用。
+
+您可以使用授权插件来 设置 service account 的权限 。
+
+设置非默认的 service account，只需要在 pod 的spec.serviceAccountName 字段中将name设置为您想要用的 service account 名字即可。
+
+在 pod 创建之初 service account 就必须已经存在，否则创建将被拒绝。
+
+您不能更新已创建的 pod 的 service account。
+
+您可以清理 service account，如下所示：
+```bash
+$ kubectl delete serviceaccount/build-robot
+```
+
+## 手动创建 service account 的 API token
+假设我们已经有了一个如上文提到的名为 ”build-robot“ 的 service account，我们手动创建一个新的 secret。
+```bash
+$ cat > /tmp/build-robot-secret.yaml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: build-robot-secret
+  annotations: 
+    kubernetes.io/service-account.name: build-robot
+type: kubernetes.io/service-account-token
+EOF
+$ kubectl create -f /tmp/build-robot-secret.yaml
+secret "build-robot-secret" created
+```
+现在您可以确认下新创建的 secret 取代了 “build-robot” 这个 service account 原来的 API token。
+
+所有已不存在的 service account 的 token 将被 token controller 清理掉。
+```bash
+$ kubectl describe secrets/build-robot-secret 
+Name:   build-robot-secret
+Namespace:  default
+Labels:   <none>
+Annotations:  kubernetes.io/service-account.name=build-robot,kubernetes.io/service-account.uid=870ef2a5-35cf-11e5-8d06-005056b45392
+
+Type: kubernetes.io/service-account-token
+
+Data
+====
+ca.crt: 1220 bytes
+token: ...
+namespace: 7 bytes
+```
+> 注意：该内容中的token被省略了。
+
+## 为 service account 添加 ImagePullSecret
+首先，创建一个 imagePullSecret，详见[这里](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod)。
+
+然后，确认已创建。如：
+```bash
+$ kubectl get secrets myregistrykey
+NAME             TYPE                              DATA    AGE
+myregistrykey    kubernetes.io/.dockerconfigjson   1       1d
+```
+然后，修改 namespace 中的默认 service account 使用该 secret 作为 imagePullSecret。
+```bash
+kubectl patch serviceaccount default -p '{"imagePullSecrets": [{"name": "myregistrykey"}]}'
+```
+Vi 交互过程中需要手动编辑：
+```bash
+$ kubectl get serviceaccounts default -o yaml > ./sa.yaml
+$ cat sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: 2015-08-07T22:02:39Z
+  name: default
+  namespace: default
+  resourceVersion: "243024"
+  selfLink: /api/v1/namespaces/default/serviceaccounts/default
+  uid: 052fb0f4-3d50-11e5-b066-42010af0d7b6
+secrets:
+- name: default-token-uudge
+$ vi sa.yaml
+[editor session not shown]
+[delete line with key "resourceVersion"]
+[add lines with "imagePullSecret:"]
+$ cat sa.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  creationTimestamp: 2015-08-07T22:02:39Z
+  name: default
+  namespace: default
+  selfLink: /api/v1/namespaces/default/serviceaccounts/default
+  uid: 052fb0f4-3d50-11e5-b066-42010af0d7b6
+secrets:
+- name: default-token-uudge
+imagePullSecrets:
+- name: myregistrykey
+$ kubectl replace serviceaccount default -f ./sa.yaml
+serviceaccounts/default
+```
+现在，所有当前 namespace 中新创建的 pod 的 spec 中都会增加如下内容：
+```bash
+spec:
+  imagePullSecrets:
+  - name: myregistrykey
+```
+
+
+# RBAC
+> 在 Kubernetes 中，RBAC 是一种强大的访问控制机制，用于管理对集群资源的访问权限。RBAC 可以帮助管理员精确地控制用户、ServiceAccount 或其他实体对 Kubernetes API 中资源的操作权限。RBAC 基于角色的授权模型使得管理员可以定义角色和角色绑定，从而实现对不同用户或实体的访问权限控制。
+> 
+> RBAC 由四个基本概念组成：
+> - 角色（Role）：角色定义了一组操作权限，例如对某个命名空间下资源的读取、创建或删除等操作。
+> - 角色绑定（RoleBinding）：角色绑定将特定的角色授予 User、Group 或者 ServiceAccount，从而赋予它们相应的权限。
+> - 集群角色（ClusterRole）：类似于角色，但作用范围更广，可以授权对整个集群中资源的操作权限。
+> - 集群角色绑定（ClusterRoleBinding）：将集群角色绑定给 User、Group 或者 ServiceAccount，授予它们在整个集群范围内的权限。
+> 
+> 通过 RBAC，管理员可以根据需求精确控制不同用户或实体在集群中的权限范围，避免了不必要的权限泄露或误操作，提高了集群的安全性和管理灵活性。
+
+## 创建 ServiceAccount、Role、RoleBinding 和 Secret
+ServiceAccount:
+```bash
+vim serviceAccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: user1-account
+  namespace: kino
+```
+Role:
+```bash
+vim role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: user1-role
+  namespace: kino
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+```
+RoleBinding:
+```bash
+vim roleBinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: user1-access-default-namespace
+  namespace: kino
+subjects:
+- kind: ServiceAccount
+  name: user1-account
+  namespace: kino
+roleRef:
+  kind: Role
+  name: user1-role
+  apiGroup: rbac.authorization.k8s.io
+```
+Secret: 在 K8s 1.24 版本之后，ServiceAccount 对应的 Secret 就不会自动创建了
+```bash
+vim secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: user1-account-secret
+  annotations:
+    kubernetes.io/service-account.name: "user1-account"
+type: kubernetes.io/service-account-token
+```
+查看 secret 
+```bash
+kubectl get secret -n kino user1-account-token-hl2k2 -o yaml
+apiVersion: v1
+data:
+  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1USXdOVEUxTXpZek0xb1hEVE16TVRJd01qRTFNell6TTFvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFM2Cm5Yd1RRa20wRlpNdjcwMUd4d1M0dit0bzZBczZ1cEg1NEt1OEdiNVB1L3pMMndIOEJjSVZhd1oyeUU5Um54dnUKYkF3R2lHZk11a1FXaEhqRWtyNHY5SGZBODlkY00xSFh6NmFKNU9UaUZpY24yRmlUMWI5TnhvczB6U2t5VWpNVQpIYUZwK1FNSzdSM1NiUjNnMEVveXh6MUtoWFY2Z054UkZlYkZFRnVwUGR6eHgvUWdSRUhocjlyazhIVUFOL2tKCk1xTWFuTnB4bS9mYmZWT3VvNU9heEpjZ1RvK2R6U3N2WTViOVYraVVsSVRZblBad2xsK2pYQ0xFS1FLYmlNS1YKWTB6ZitVVzRVK1hNcUMrL2RuT3ozaDcrRnd1UXdGckZkY2VidFhmNkk0NlhvWHZSUXJRd1pTOEp0MjVOYUdFYgpYeW9jUFFRckxFVTJCN1FhZ29zQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZPSHlVejVMNHd0SGt3NjZvK1JzYUIzR0p4Z0ZNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFDb0JuM0ZyRTVFMmZCWm1XK0YzemtQUFhMcjVJVEljQzRhOUpiOXVWb296Vjdkd1ZwdwovNUZTWXQ2ckJNSHkxQzF0Vm9wMzMxRGRYaFJ3NDR3NXN2MnpGSDZVNGVNeC9qeENGL25UNUsvWlN4UDdoN2lvCmNOV2Njc0FwNng4Wi9mRHpFK214MEdzZ08vYzB2NzNqcTlCbk5ySkwvNy9YeVRWbVpMN0pMbERyeFh1cDZEK3IKN1RmSUdIejVuUHUyQjJ5UXNxYW51RTJ2OHFidG5TN3lJcWF3bWlTMFNZOVU1OW9hN3NmWVBSVHgxM2tMWkM2dApBOWU4dlFwWk1ad09WYU5PTGpmSjN2Um9lb01POWhKK1EzUzRQZkdZKzBGcSs3TjMxZEl6WVZVdWpIUG5qV1RVCjY3WUVJTlN1S05HdGNUZ2ozMTFoWTNoMUo4cDhweXRLSmlIdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+  namespace: a2lubw==
+  token: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklsRjFTMGRKVW1nMWIyZzNVREJZVVY5dFRIcDJYMjQ0Um1wWFkyZGlWVUZOVWs1RFlTMTNZMWx6YkhjaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUpyYVc1dklpd2lhM1ZpWlhKdVpYUmxjeTVwYnk5elpYSjJhV05sWVdOamIzVnVkQzl6WldOeVpYUXVibUZ0WlNJNkluVnpaWEl4TFdGalkyOTFiblF0ZEc5clpXNHRibWh0ZURJaUxDSnJkV0psY201bGRHVnpMbWx2TDNObGNuWnBZMlZoWTJOdmRXNTBMM05sY25acFkyVXRZV05qYjNWdWRDNXVZVzFsSWpvaWRYTmxjakV0WVdOamIzVnVkQ0lzSW10MVltVnlibVYwWlhNdWFXOHZjMlZ5ZG1salpXRmpZMjkxYm5RdmMyVnlkbWxqWlMxaFkyTnZkVzUwTG5WcFpDSTZJakEzWlRReVlqSXdMVGxsTXpVdE5EZGhNeTFpTnpnNUxUTmlOelZpTm1NeU9HWTJOeUlzSW5OMVlpSTZJbk41YzNSbGJUcHpaWEoyYVdObFlXTmpiM1Z1ZERwcmFXNXZPblZ6WlhJeExXRmpZMjkxYm5RaWZRLlNrY2c3aXpnRGFrTndnRTBBRy03M2RWZktKT0NLVDRtdVJRZXhBcEhhUVVsQjdHckZJUjRNTzlsamY0N1B3M2N1T0hSZmJRZlAwMGhiUFJrMGY1NkNjbEp4cWp1bFBIbXVicFhnanQyNkhzTTRXTnpTODg0RG1IOWFwNFlramRrSVRuOGxQWDNNUm53TzUya2pvRFZUN3lLZTlodkVNZFUtZDhHenluZ09UTHpTQm9PY3hGWjROTHBzQ3FzQ1lSdmhtaXk5YXNrWGhUdUZtd2VEZFlwdWpBSGlyNk5fblM1RkZWMlZpRDZNbGxra2lsUUV2ZF9xb2xfRmhaeGhReFp3YVl5MWVOTkxZbnhYSkdIOU5mSFoyS1k4TnFWV2I1Y1BLTUVkQTBxRHppTFZDZk5OdWItSTlqOTl3TnFRMGkzZXY4dFNSVW96S191VWkzWHN2ZGF1QQ==
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: user1-account
+    kubernetes.io/service-account.uid: 07e42b20-9e35-47a3-b789-3b75b6c28f67
+  creationTimestamp: "2023-12-29T15:55:26Z"
+  name: user1-account-token-nhmx2
+  namespace: kino
+  resourceVersion: "4417076"
+  uid: 53d8e5be-b345-48e0-8e60-7259b2ea1055
+type: kubernetes.io/service-account-token
+```
+ca.crt 和 token 信息被填进去了。这两段配置在后面要用到。
+
+
+## 配置 kubeconfig 文件
+user1 的权限配置已经 OK 了，下一步就是将 token 搞到 kubeconfig 里。
+
+### kubeconfig 文件介绍
+> kubeconfig 是 Kubernetes 的一个配置文件，它包含了访问 Kubernetes 集群所需的所有信息。这些信息包括集群的地址、用户证书、用户名和命名空间等。kubeconfig 文件使得用户和 CI/CD 工具可以方便地与 Kubernetes 集群进行交互。
+> 
+> kubeconfig 文件通常位于用户的主目录下的 .kube 目录中，文件名为 config。然而，用户也可以通过设置 KUBECONFIG 环境变量来指定其他位置的 kubeconfig 文件。
+> 
+> kubeconfig 文件主要由以下三部分组成：
+> - 集群（clusters）：定义了要连接的 Kubernetes 集群的信息，包括集群的名称、服务器的地址和 CA 证书。
+> - 用户（users）：定义了用户的认证信息，包括用户的名称、客户端证书和密钥。
+> - 上下文（contexts）：定义了用户和集群之间的关系。一个上下文包含了一个用户和一个集群，以及用户在该集群中的默认命名空间。
+> 
+> 通过在 kubeconfig 文件中定义不同的上下文，用户可以轻松地在不同的 Kubernetes 集群和命名空间之间切换。
+
+### 具体的 kubeconfig 配置
+前面创建的 Secret 里有一个 token，将其复制出来备用。（这里要注意，别拿 base64 转码后的结果。kubectl get -o yaml 拿到的是 base64 编码的；kubectl describe 拿到的是原始的，你可以直接拿原始的，也可以拿编码后的自己 echo "xxx" | base64 -d 解码一下。
+
+此外 Secret 里有一个 ca.crt，这个 ca 的内容是集群维度统一的，你在其他地方复制也行，不过这里有，顺手拿一个也不打紧。这里需要是 base64 编码后的内容，注意这个细节。
+
+然后准备这样一个 kubeconfig 文件：
+```bash
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJeE1USXdOekF5TWpVd09Wb1hEVE14TVRJd05UQXlNalV3T1Zvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTGNpCkZmRDk1WWhjR0tkTGJ6VjVDNmpDVCthN09hWW0yNDFTTnpFMmVTeWNsZEE3YXZnZHQ2elB4RDY3Y2xuTXlxZ04KT2VtUUVUT3pyNitnR21LNzBmZHg4SDFZaVVXVXpJSjFkKzFUT3pSelM2SnkvdUpnaHRrR1dtdll4RjhWenVhcQpGY2MweUhFNzJ3NmJQemNPdk5FQVJaOVJseDE3RkxQdkZIL29pWFIreUo5MUlLU0NGdW5ld0l2WFRIRXB2K2tICmcydTQ3T0ttYzdXeTZFY1ArVWFyNUJwNytFNU12VTNFZCtmLzdFeVFwRE15WWU0NEdvdk5jQmxSTUQ1NGRwaU4KRzdod29BbmZUdGg1a1QzeUpUUmVINUZTSytNRWFDNEEyVFovV2Qwc0EwS0VVYjd6cm9BUUl3Q3BpRmV3V0VtVgpxZ3NuZDZBbEdjdmk1Y1ZacTNzQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZNVzU4ZlhlcHNyMVcwbmtuamh4S2s4aDZqUzBNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFCMTJkSXhFQVVsNkpsRXkzcUN1NkRvZ0lTMU8rY1NaZUhVRHd6dEt6bm5sZUJ6YmlZWQo0VnVOZzlHYk93dWlMZW4rdldtOVlOWGhnSEI5a1Y1NlgzV0VrY3JpTDA0TzhzUjVvNFNmbG82TnMybStXTElMClpVM2VVUEhGUGdrWlZVbmVXdVpaaENnemxZa2c0c1ZJaG1MT0lGY3VIQmdURmVWS00yTldKZDM0NmhPcm9uOFcKUk1TbDdIK2llNm9sQ0VMT3hvbWlTb3k4VHVHejh5c20yTzFEbWpwUkJJeWFFNy95QjhWRmMreXBCaVl2TE9vcApsYlAyakM3NjNTaCt0dVZibzFOMGZIdUtYa2FnYVZ6ZlQ5eXVpR1VVRFJjQ0xEcllZeUJoakpSaC9tL3pqOVJQCmlLRGlzcnF2R0xWR3dxaHk3UEFra21UeHRtWVM0dVR3RTlRVgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    server: https://192.168.1.122:6443
+  name: kubernetes
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1USXdOVEUxTXpZek0xb1hEVE16TVRJd01qRTFNell6TTFvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFM2Cm5Yd1RRa20wRlpNdjcwMUd4d1M0dit0bzZBczZ1cEg1NEt1OEdiNVB1L3pMMndIOEJjSVZhd1oyeUU5Um54dnUKYkF3R2lHZk11a1FXaEhqRWtyNHY5SGZBODlkY00xSFh6NmFKNU9UaUZpY24yRmlUMWI5TnhvczB6U2t5VWpNVQpIYUZwK1FNSzdSM1NiUjNnMEVveXh6MUtoWFY2Z054UkZlYkZFRnVwUGR6eHgvUWdSRUhocjlyazhIVUFOL2tKCk1xTWFuTnB4bS9mYmZWT3VvNU9heEpjZ1RvK2R6U3N2WTViOVYraVVsSVRZblBad2xsK2pYQ0xFS1FLYmlNS1YKWTB6ZitVVzRVK1hNcUMrL2RuT3ozaDcrRnd1UXdGckZkY2VidFhmNkk0NlhvWHZSUXJRd1pTOEp0MjVOYUdFYgpYeW9jUFFRckxFVTJCN1FhZ29zQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZPSHlVejVMNHd0SGt3NjZvK1JzYUIzR0p4Z0ZNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFDb0JuM0ZyRTVFMmZCWm1XK0YzemtQUFhMcjVJVEljQzRhOUpiOXVWb296Vjdkd1ZwdwovNUZTWXQ2ckJNSHkxQzF0Vm9wMzMxRGRYaFJ3NDR3NXN2MnpGSDZVNGVNeC9qeENGL25UNUsvWlN4UDdoN2lvCmNOV2Njc0FwNng4Wi9mRHpFK214MEdzZ08vYzB2NzNqcTlCbk5ySkwvNy9YeVRWbVpMN0pMbERyeFh1cDZEK3IKN1RmSUdIejVuUHUyQjJ5UXNxYW51RTJ2OHFidG5TN3lJcWF3bWlTMFNZOVU1OW9hN3NmWVBSVHgxM2tMWkM2dApBOWU4dlFwWk1ad09WYU5PTGpmSjN2Um9lb01POWhKK1EzUzRQZkdZKzBGcSs3TjMxZEl6WVZVdWpIUG5qV1RVCjY3WUVJTlN1S05HdGNUZ2ozMTFoWTNoMUo4cDhweXRLSmlIdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    server: https://192.168.1.122:6444
+  name: kubernetes-new
+- cluster:
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1USXdOVEUxTXpZek0xb1hEVE16TVRJd01qRTFNell6TTFvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBTFM2Cm5Yd1RRa20wRlpNdjcwMUd4d1M0dit0bzZBczZ1cEg1NEt1OEdiNVB1L3pMMndIOEJjSVZhd1oyeUU5Um54dnUKYkF3R2lHZk11a1FXaEhqRWtyNHY5SGZBODlkY00xSFh6NmFKNU9UaUZpY24yRmlUMWI5TnhvczB6U2t5VWpNVQpIYUZwK1FNSzdSM1NiUjNnMEVveXh6MUtoWFY2Z054UkZlYkZFRnVwUGR6eHgvUWdSRUhocjlyazhIVUFOL2tKCk1xTWFuTnB4bS9mYmZWT3VvNU9heEpjZ1RvK2R6U3N2WTViOVYraVVsSVRZblBad2xsK2pYQ0xFS1FLYmlNS1YKWTB6ZitVVzRVK1hNcUMrL2RuT3ozaDcrRnd1UXdGckZkY2VidFhmNkk0NlhvWHZSUXJRd1pTOEp0MjVOYUdFYgpYeW9jUFFRckxFVTJCN1FhZ29zQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZPSHlVejVMNHd0SGt3NjZvK1JzYUIzR0p4Z0ZNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFDb0JuM0ZyRTVFMmZCWm1XK0YzemtQUFhMcjVJVEljQzRhOUpiOXVWb296Vjdkd1ZwdwovNUZTWXQ2ckJNSHkxQzF0Vm9wMzMxRGRYaFJ3NDR3NXN2MnpGSDZVNGVNeC9qeENGL25UNUsvWlN4UDdoN2lvCmNOV2Njc0FwNng4Wi9mRHpFK214MEdzZ08vYzB2NzNqcTlCbk5ySkwvNy9YeVRWbVpMN0pMbERyeFh1cDZEK3IKN1RmSUdIejVuUHUyQjJ5UXNxYW51RTJ2OHFidG5TN3lJcWF3bWlTMFNZOVU1OW9hN3NmWVBSVHgxM2tMWkM2dApBOWU4dlFwWk1ad09WYU5PTGpmSjN2Um9lb01POWhKK1EzUzRQZkdZKzBGcSs3TjMxZEl6WVZVdWpIUG5qV1RVCjY3WUVJTlN1S05HdGNUZ2ozMTFoWTNoMUo4cDhweXRLSmlIdwotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    server: https://192.168.1.122:6444
+  name: user1
+contexts:
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: k8s1
+- context:
+    cluster: kubernetes-new
+    user: kubernetes-admin-new
+  name: k8s2
+- context:
+    cluster: user1
+    user: user1-account
+    namespace: kino
+  name: user1
+current-context: k8s2
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvakNDQWVhZ0F3SUJBZ0lVV3IwWHNkYkdvVVE2ek52dDZLM2prcGJIamdnd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekFlRncweU16QTJNakF3TnpVeE1qZGFGdzB6TXpBMgpNVGN3TnpVeE1qZGFNRFF4RnpBVkJnTlZCQW9NRG5ONWMzUmxiVHB0WVhOMFpYSnpNUmt3RndZRFZRUUREQkJyCmRXSmxjbTVsZEdWekxXRmtiV2x1TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEKNE14d01ZYmJpMjB6NDlSOGw0N0k3TzV3TFQxZ3ZQcE5aN3R0REt4M3VCb0VsUlFYUnRRZ1dhRWVLZ1VKUjBDYgpQNVVMcU0relN1MmVXWlBLczVMR3NnZDAvVTVRSzZ5MTFZdVVpSjBKbWpwblJBVGhpUmkva2l2c2xYRUh0aFA0CmtUaFNUNmhaemV1aStPQUdpMEZsblVTWndESFFtSndoVVR0NUpxQmYzQzZqN2FERHNkTFltZDA2VHFvQy85eVQKQllyOEVrVTNQV1N5d1ZMcWgxZDVXV0F2dkl6NnZIVXBhNnlwS3dhR01xbUtkbEVYd1FjVjBMaTdDcXRkaDlYYQpwOGlpSUgzQWNHbnlsZW9uVlhMVnBGZDBvblZBeUo1VGFLcjR5NEV0WDVCd3FLUUVXaDFVL2ZZOTJQNUo0WDBrCkNYbU5CMTRQYUhBWUFPWDJyMmVRT1FJREFRQUJveWN3SlRBT0JnTlZIUThCQWY4RUJBTUNCYUF3RXdZRFZSMGwKQkF3d0NnWUlLd1lCQlFVSEF3SXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBRVZWR0xEK1BHbE9JYWdGbGtmdwpFNXlkMHlXNEdDNjM0bytkNFYzS2t4cWhQKzBFK2NHQmxJWGJvSHhBU21LeWhZckNDVUxyc3c3VTVMZ1hZUU5QCklqTmtuT3hmZTRubm1ia01pYk9OK0lOa0RiT2FnallnZ1FOZE9iakk3aUFBN295UFhNUFJpVHk3R2lvNVJwTXIKb0FsS20vZkdJZkd3NHBYOElWUnpIbHBmUHFERTZEMVVkQmdRVkFYMkhTMHBYWm1GUVFBWHVkRGc3elg1UzF5NAp1OXM0YkF2bGFUSlNjRXkrN1dWODVpMjk4c01HelFwcTllajBtaHdXVlZrNU9oSXgwQXYrSktVYVkwSWRiYWVxCjRTN0pwNzg1dnlQSDI1K1lGRERyL1U3RUxCbEJPOEJQMU1GcE51S3AvWmN6TmxRcU9vMVNiK3lQVkN6S2MySWIKbERNPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBNE14d01ZYmJpMjB6NDlSOGw0N0k3TzV3TFQxZ3ZQcE5aN3R0REt4M3VCb0VsUlFYClJ0UWdXYUVlS2dVSlIwQ2JQNVVMcU0relN1MmVXWlBLczVMR3NnZDAvVTVRSzZ5MTFZdVVpSjBKbWpwblJBVGgKaVJpL2tpdnNsWEVIdGhQNGtUaFNUNmhaemV1aStPQUdpMEZsblVTWndESFFtSndoVVR0NUpxQmYzQzZqN2FERApzZExZbWQwNlRxb0MvOXlUQllyOEVrVTNQV1N5d1ZMcWgxZDVXV0F2dkl6NnZIVXBhNnlwS3dhR01xbUtkbEVYCndRY1YwTGk3Q3F0ZGg5WGFwOGlpSUgzQWNHbnlsZW9uVlhMVnBGZDBvblZBeUo1VGFLcjR5NEV0WDVCd3FLUUUKV2gxVS9mWTkyUDVKNFgwa0NYbU5CMTRQYUhBWUFPWDJyMmVRT1FJREFRQUJBb0lCQUNRRUhTV1NPYktJK0h0VQpHL0ljU2t6TGx1Vm9wQXNpL3l2VGQ1RkVRSm9hY1FtQmdva3lpMHhRNkFoTGJrVWdNTDlySGNjYUg5dXRYbVZ6CnJGSkEvZHlnSFRwSVJjZjVqOWg2MkgxYXk2TU9JR1ZoY3RFSVNna2RTSFpZK2FkT1k5REFlVStSNVhGOGcwdmsKZUtmdS9seklGT29hRVJXaVRpUTVweHR0TG02VUxYK0xFOWc5VTZMYlpJS1hxYmNxY0RPVElrN3g2ZDl5Sjg1UAoyUTRhczM5MDhCelErOWJMUHp6WnB0RjZuNThzMWpNRWVIS3pYN00vTWRIMG9JZGNkZG95ZTN3UzgzRDlzaXZoClBOWHNqYXNLalk5TmFaNnFoTWZVd0tUeURLbHZxSWVJb0hzenhTME92L0lGM1c3bmU2WEt4ZTZCK1hKakVYVS8KOVVZcWNnRUNnWUVBOTFpSytmTnM0RkwzQko0cEkzaEZBL1NQRFlrY3BDV0tBYjZMMzIxTXUvTHdVUVVjMVgyYwo1SUx3UjhMRHN2Z0dTZXd4dE1aY01ZaU9LU21KdlA1NklRNXY0M3FjZlE3RVMycDZteGhYekdjTzN3ODdQL1BpCkFRN2tvSllNRFc1aVlOUlhvUGNhaEpCUmFrdWNaaGtlVHFZUG52eHovL1hDbWtMVTJxZDVKTkVDZ1lFQTZLbncKOEdFOENhRzN0TS9tNENTeStuME9nMDV4bVpnWTdneWl4NnBKSGJONFhYUnBtRzB3M21qRFVCRzQ1a3pFRllqOApHSmExd1gvaEc4QUMyTFhuRHBNeHlxMjRVS1ZsL1ltUGhLYjdpN3h5L2hOTTVuOW1IOGFyNTI0Tm5PSDFXa0o0CjI5VTBpc2F2VmFGVW84blBtenVwbnFDRW92NGZ5dms2c016dnJ1a0NnWUVBaXpscW1NQzlReE5QK1doeExZYncKQ2dicFVxd2YxQUZSU2lRUUpVWW5rQTl4MTVqeUh2VmlqM2xvZUd3WHJiQlFFZUlDSklnV3NzYnpoaFhjY3VZbQpwbDZ5K2k4MDBHdTBiK0xTZW1SY1h6Q1BQVjBjYzZYNlM3QXZYbmkyOWdSeEdhSE1aVTFSdnRaaERWemIvdGdhCnFCaHU2SVdmWWE3YXgrdmdWZWM0bUZFQ2dZRUF0bGd5R0FMc3pkT3JxWTdqTURveTkzUTVncGxoR1BLR1gxTVIKNUpCRiszd2owb0toRzdCQUE1OXhxM2dvUkg1WGsxVW4xcEdQWTFhNDgwbTZNV1BtOFpwVkJMYS81SnlzWVZlRgpYbjZNV01qYUN0elBnVHJKckEvRnZIeVpPS0l5NjRsN05UZFVsWXIvOFltZVR6dWtkTkgrcnU2NDVSRnJrMlZmCkpSK0luYmtDZ1lBbEdzUWtRQy9sS0Q5dnVCR2oza2ZtRXgvd3Z0Q1NFb0NtUTNQNE1maFNBUzFxQVc2RG1HdmQKMUpiTTN3b2d0OEVuZVphellIb1RPQTNZek05MkR6WHdFZlpZRWxwYjVYc090VWFhUEh2blRMWUh0M0hNVVp0Sgp5Rlcrb1ptWGFmNUlnOE5GKy9OVGdWTGVFa0xUV3RWRnR0SWxjRWZNWndBNms4OWthWlord1E9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
+- name: kubernetes-admin-new
+  user:
+    client-certificate-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUMvakNDQWVhZ0F3SUJBZ0lVTlQ3VXZCWmJKaHRocnRQeC9UbmxITThISG1nd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0ZURVRNQkVHQTFVRUF4TUthM1ZpWlhKdVpYUmxjekFlRncweU16RXlNRFV4TmpReE1ERmFGdzB6TXpFeQpNREl4TmpReE1ERmFNRFF4RnpBVkJnTlZCQW9NRG5ONWMzUmxiVHB0WVhOMFpYSnpNUmt3RndZRFZRUUREQkJyCmRXSmxjbTVsZEdWekxXRmtiV2x1TUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEKcGJLSmJqOHNjYWYxYVlCYksyTGV0YlRCUnFWRkViZnBNVUJLYzFsdXFXVHJnZG5FdFRjN0xFaEJQWUVDTDB0OApkS0ZnYzN6Tkk2Wjc3Qk05NUY3VXl0ODN4VVhDLytXK250TkU1U1ZzRHdVMU9EcWdvVm1HZ2N1akVKNVNtQ2EzCmpBVVE0bFdIYkNlUkh1MzRLL3ltOGRydUhFMHJCOU0wdU40aWhuQzN5RmlnZzdoMDNOZENHQ0lFL0dxdXU1R1IKM0lLR3ZKQm1UUkhVOGlKdEp1RjdCOEtCM2NzS3VoL3lKUnhHY3hLZGFHUWFodllsOWhISGp2aGZzTlgvaFdMeApxOEk2b3hCMzJ4MnQyUmhnWE5wamZKeEVlRXRzSW4rSEw5cFhpZy81c1dCT0FjVVVZdFlXSTY4TlloWThGU0pCClVvUDNZeGpJN3E1dWJqT3QxbERheFFJREFRQUJveWN3SlRBT0JnTlZIUThCQWY4RUJBTUNCYUF3RXdZRFZSMGwKQkF3d0NnWUlLd1lCQlFVSEF3SXdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBRU1lM0pLSmE0dVpQR3ZQc2d2Mgo0ZXYySDhXQ0thNU9hdXRUeEVpcHJLVzBlUnpCR3dSSGs2L3FSRW00WisxRjQzN0laVndydUJPd2dyZ2grbXkyCldSZTFDaTdFb2E3anI3TlR5bGI5elRKbzZXTmFsSXdzR0lqUmd1a3Fhdm8ycGFhUkVzbUlRNHZ5Y0pPMk1PM3gKdUtPQzMwcFlXTFVqNmxWSk9LOWVaR1VsZjZ3Mzl0UnNjSStVQlVoVHpLRGVEd3ZXN0kyekZod0pIdUlyK2VGcwpOTkM0OTZxVXdvT0FQWHcrRUc0aElvY1ZYVFNuaUN6RnArWW1XWTlhckJpdTM5VkZyRDRqK0NPSmpsUHF2cDBICjJncHVmUENYTTlzaGE5Yk9jTHpIQXRjVmlZY2FjWXNKRjdJWFkrVzM3QlVPNWwxeUZiS045TzhrQ3JtcTZjdVMKaXVRPQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFb2dJQkFBS0NBUUVBcGJLSmJqOHNjYWYxYVlCYksyTGV0YlRCUnFWRkViZnBNVUJLYzFsdXFXVHJnZG5FCnRUYzdMRWhCUFlFQ0wwdDhkS0ZnYzN6Tkk2Wjc3Qk05NUY3VXl0ODN4VVhDLytXK250TkU1U1ZzRHdVMU9EcWcKb1ZtR2djdWpFSjVTbUNhM2pBVVE0bFdIYkNlUkh1MzRLL3ltOGRydUhFMHJCOU0wdU40aWhuQzN5RmlnZzdoMAozTmRDR0NJRS9HcXV1NUdSM0lLR3ZKQm1UUkhVOGlKdEp1RjdCOEtCM2NzS3VoL3lKUnhHY3hLZGFHUWFodllsCjloSEhqdmhmc05YL2hXTHhxOEk2b3hCMzJ4MnQyUmhnWE5wamZKeEVlRXRzSW4rSEw5cFhpZy81c1dCT0FjVVUKWXRZV0k2OE5ZaFk4RlNKQlVvUDNZeGpJN3E1dWJqT3QxbERheFFJREFRQUJBb0lCQUFHVWgweisyenltUG1mbwpLblpxZGZkRHB3ZzJjVWN1K3RGV2JKOVcvZ0F0anpWb3owQnZLMmhMdEJ1VERHTkpGQUhFdkRlOXUvTVlGbHgwCi9vVWNCbWw4NFhwSEpRbnR0ZmlyeVI5cVVQSi91VGMxRCswWi9uZGthc1N3emRiWG42NTlLZUVPc2NEdFM2d0EKMXZvTWFjY3FzRlNpdzhOS1YxbGYvUEpOUnVOcE9RZmVYcWNDL3kzY3VnR3JRWHFURlJuY2N6U2J3OWhvOFM3Rwo4NGFZNHpuQUN2ejk5d29zMko1U3VwYkNaZ0llb2M4TGpnbFU5bzBMdE9iSmkyeEpJYStvSlZ0V3NmdDdSbW9vCmRJZ2NLQytWc3I3YWIzdk9GRm5sWWtCejRKWHkvcVlQQjRaKzV6UHZPRzc3Nlg4dldITWpKZ1lyWGFMZWJFYncKcmVLZU5PRUNnWUVBMS8wZDNVaXZ1bjIxdGR0WktCcml2SWhqKzhhdzhrS2dXeGJhNHJ1Q1oxTVNjRU1GQUpINQp6Ymo2dys1K1MzSkNKUkdsaFFqc3dQdmNHQlZ6OTBRM21JNzlXeWdMaVcwMEtma3Q4ZWdrS0tOL1FaVkdlUnVoCjE0Sy8vWWRBcHlaTzlIb1IyRTVvNENzTmk3d2lTWDQ4bXVGTWFGd0JPWEhyMk1BSGdEZ2wvdDBDZ1lFQXhHUngKYXkrSldJNlZVcWRQVUtGRnN2SC95NmM5NG8rbWV6TkozODBZc3NkclhQVG5uU1ZVR2h6dmt4eUwwRkROTTNDcApFWnpjKyt2alhlN0NNNzNldzdIdXBZZEpNLzBxcngxb3R5SVpwRGlZL0J0NFVZdkJYQ0MzL0xCdGFZMUpvVEF0CmQwRzNlTTF6RWljK3RSd1U1MTd6RnVKNldvMkhpdUhNMEJ0M3FRa0NnWUFYZC9CVHgvOFlJMnFvSFBKZUVqWEsKeUlNY3EyVTBuWnF3NnhYVGh3NVBUYzUyRmtJbjRyU2k3dE9Ja0pSMmZDN0Z1bG9pejJweU9hdWJqbEV3YitBZQptb0xhOGNuM0g3K0lSQVFEQWZkVDF4Z1B0em1XRlRPTHFEQldTdWp5Z0k0WnNGM2FCQU1QUUg1VFRaam9KV2hPClorYVdmRkRCdmlnalFCSlFrMGxGblFLQmdHQngweUVJSHpMV0VvNmNpMTdWVkIwa3FyR2dWOHZETDhhZzBVNk8Kc2VwWjlHZVovWVEycUs2S056elBiL25GTklCbWV5Q2pJQUszUE5rTVAyS1pnNlFtNVVOMHhJWTdkWks1cG9zSQp1Lzdockg5aUhod3R2YTg0Z2lJZG9oMkx2UFRqYS9CODNWVDl6OXpDV1JFbjBUd3ViTUo0UmczaUl3WVpEVFBGCnlXWEJBb0dBTmxvbmd3QytNYnFSUG5KenhERzBkSmZGZ3VSZHJVM2lrcEJPWlJSMUNoaDltSjZobXVmd08vVGkKUTE2ZG84Rkd4NUhKdzh1d05jS3kyUDVsdVVRMWp0YnNMTXRLTGVtN0ZKR2J0RThiZ1dGTVg4UisyNGoyZmZYVwpJc2kzSEkyczhVQnAvdmNQZWt1cUc0MVBTaitGQ1VOUHhSNHB2Q2J4UHRPNDBhYlZXSlU9Ci0tLS0tRU5EIFJTQSBQUklWQVRFIEtFWS0tLS0tCg==
+- name: user1-account
+  user: 
+    token: eyJhbGciOiJSUzI1NiIsImtpZCI6IlF1S0dJUmg1b2g3UDBYUV9tTHp2X244RmpXY2diVUFNUk5DYS13Y1lzbHcifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJraW5vIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6InVzZXIxLWFjY291bnQtdG9rZW4tbmhteDIiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoidXNlcjEtYWNjb3VudCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjA3ZTQyYjIwLTllMzUtNDdhMy1iNzg5LTNiNzViNmMyOGY2NyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpraW5vOnVzZXIxLWFjY291bnQifQ.Skcg7izgDakNwgE0AG-73dVfKJOCKT4muRQexApHaQUlB7GrFIR4MO9ljf47Pw3cuOHRfbQfP00hbPRk0f56CclJxqjulPHmubpXgjt26HsM4WNzS884DmH9ap4YkjdkITn8lPX3MRnwO52kjoDVT7yKe9hvEMdU-d8GzyngOTLzSBoOcxFZ4NLpsCqsCYRvhmiy9askXhTuFmweDdYpujAHir6N_nS5FFV2ViD6MllkkilQEvd_qol_FhZxhQxZwaYy1eNNLYnxXJGH9NfHZ2KY8NqVWb5cPKMEdA0qDziLVCfNNub-I9j99wNqQ0i3ev8tSRUozK_uUi3XsvdauA
+```
+切换context
+```bash
+kubectl config --kubeconfig=/root/.kube/config use-context user1
+```
+查看新context
+```bash
+kubectl get pod -n kino
+Error from server (Forbidden): pods is forbidden: User "system:serviceaccount:kino:user1-account" cannot list resource "pods" in API group "" in the namespace "kino"
+
+kubectl get deploy -n kino
+No resources found in kino namespace.
+```
