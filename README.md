@@ -406,6 +406,13 @@
 
 ## 运维/云原生
 <details>
+<summary>StarRocks</summary>
+
+- [生产事故](note/starrocks/生产事故.md)
+</details>
+
+
+<details>
 <summary>软件部署</summary>
 
 - [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
