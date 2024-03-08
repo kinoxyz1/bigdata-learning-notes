@@ -66,6 +66,9 @@ PUT /movie_index
 # 三、删除索引
 ```bash
 DELETE movie_index
+
+# 索引删除后不会释放磁盘，需要 forcemerge 
+POST _forcemerge?only_expunge_deletes=true
 ```
 
 # 四、新增文档
