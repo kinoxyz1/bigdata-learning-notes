@@ -409,6 +409,10 @@
 <summary>StarRocks</summary>
 
 - [生产事故](note/starrocks/生产事故.md)
+- [监控说明](https://forum.mirrorship.cn/t/topic/4639)
+- [StarRocks-Profile分析及优化指南](https://forum.mirrorship.cn/t/topic/2367)
+- [[查询]Profile分析（非pipeline版本）](https://forum.mirrorship.cn/t/topic/4925/2)
+- [StarRocks数据导入--Insert into](https://www.955code.com/1984.html)
 </details>
 
 
@@ -520,6 +524,7 @@
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
 * [Linux 集群时间同步](note/linux/CentOS集群时间同步.md)
 * [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
+* [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [Linux 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
 * [Linux 安装 JDK](note/linux/CentOS安装JDK.md)
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
@@ -527,6 +532,7 @@
 * [kill pid 和 kill -9 pid 的区别](note/linux/kill-pid.md)
 * [frp+openvpn+docker 搭建](note/linux/openvpn.md)
 * [curl使用指南](note/linux/curl使用指南.md)
+* [大数据常用软件部署总结](note/linux/大数据常用软件部署总结.md)
 </details>
 
 <details>
