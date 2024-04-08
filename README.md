@@ -524,7 +524,6 @@
 * [This account is currently not available（用户当前不可用）](note/linux/用户当前不可用.md)
 * [Linux 集群时间同步](note/linux/CentOS集群时间同步.md)
 * [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
-* [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [Linux 更换镜像源](note/centos/更换镜像源)
 * [Linux 安装 JDK](note/linux/CentOS安装JDK.md)
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
