@@ -525,7 +525,7 @@
 * [Linux 集群时间同步](note/linux/CentOS集群时间同步.md)
 * [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
 * [Linux 修改主机和IP](note/centos/CentOS修改主机和IP.md)
-* [Linux 系统更换yum源镜像为国内镜像](note/centos/CentOS更换yum源镜像为国内镜像.md)
+* [Linux 更换镜像源](note/centos/更换镜像源)
 * [Linux 安装 JDK](note/linux/CentOS安装JDK.md)
 * [Linux 集群分发脚本](note/linux/Linux集群分发脚本.md)
 * [Linux 下卸载 MySQL](note/linux/Linux下卸载MySQL.md)
