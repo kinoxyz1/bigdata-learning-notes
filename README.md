@@ -234,6 +234,10 @@
 
 ---
 * [Chunjun on K8s 部署](note/flink/ChunjunOnKubernetes(Native).md)
+
+---
+* [Flink 搭建本地开发环境](note/flink/flink搭建本地开发环境.md)
+* [Flink source/sink]
 </details>
 
 
@@ -345,8 +349,8 @@
 <details>
 <summary>设计模式</summary>
 
-* [设计模式之工厂模式](note/设计模式/工厂模式.md)
 * [设计模式之单例模式](note/设计模式/单例模式.md)
+* [设计模式之工厂模式](note/设计模式/工厂模式.md)
 * [设计模式之代理模式](note/设计模式/代理模式.md)
 </details>
 
@@ -464,6 +468,7 @@
 * [docker 网络](note/docker/docker网络.md)
 * [docker 的 CI/CD](note/docker/docker的CICD.md)
 * [docker 常用安装m1版](note/docker/Docker常用安装m1版.md)
+* [docker 设置代理](note/docker/docker-proxy.md)
 </details>
 
 
