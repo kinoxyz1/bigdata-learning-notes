@@ -351,6 +351,7 @@
 
 * [设计模式之单例模式](note/设计模式/单例模式.md)
 * [设计模式之工厂模式](note/设计模式/工厂模式.md)
+* [设计模式之构建者模式](https://github.com/kinoxyz1/design-study/tree/main/src/main/java/com/kino/study/builder)
 * [设计模式之代理模式](note/设计模式/代理模式.md)
 </details>
 
@@ -553,6 +554,11 @@
 * [科学上网指南](note/科学上网/科学上网指南.md)
 * [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
 </details>  
+
+
+## AI
+[向量数据库Milvus](note/ai/Milvus-部署.md)
+
 
 ## Mac
 
