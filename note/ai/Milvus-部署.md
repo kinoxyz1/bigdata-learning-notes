@@ -93,7 +93,7 @@ http://your_ip:9081
 
 
 # Milvus Operator 部署
-Milvus Operator 部署的前提是要在k8s集群提前部署[StorageClass](../Kubernetes/volume.md#741-部署)
+Milvus Operator 部署的前提是要在k8s集群提前部署[StorageClass](../Kubernetes/volume.md#741-部署)并设置成默认StorageClass.
 
 
 ## 安装 Milvus Operator
