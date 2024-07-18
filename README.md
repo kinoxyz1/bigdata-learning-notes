@@ -237,7 +237,6 @@
 
 ---
 * [Flink 搭建本地开发环境](note/flink/flink搭建本地开发环境.md)
-* [Flink source/sink]
 </details>
 
 
@@ -420,6 +419,12 @@
 - [StarRocks数据导入--Insert into](https://www.955code.com/1984.html)
 </details>
 
+<details>
+<summary>Milvus</summary>
+
+- [向量数据库Milvus](note/ai/Milvus-部署.md)
+</details>
+
 
 <details>
 <summary>软件部署</summary>
@@ -553,12 +558,7 @@
 
 * [科学上网指南](note/科学上网/科学上网指南.md)
 * [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
-</details>  
-
-
-## AI
-[向量数据库Milvus](note/ai/Milvus-部署.md)
-
+</details>
 
 ## Mac
 

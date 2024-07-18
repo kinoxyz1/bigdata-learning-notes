@@ -92,4 +92,152 @@ networks:
 http://your_ip:9081
 
 
-# 使用
+# Milvus Operator 部署
+Milvus Operator 部署的前提是要在k8s集群提前部署[StorageClass](../Kubernetes/volume.md#741-部署)
+
+
+## 安装 Milvus Operator
+安装 cert-manager
+```bash
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.5.3/cert-manager.yaml
+```
+安装 Milvus Operator
+```bash
+kubectl apply -f https://raw.githubusercontent.com/zilliztech/milvus-operator/main/deploy/manifests/deployment.yaml
+```
+部署完之后可以看到集群有如下pod
+```bash
+kubectl get pods -n milvus-operator
+NAME                              READY   STATUS    RESTARTS   AGE
+milvus-operator-c564dbfd6-22cgp   1/1     Running   0          2d
+```
+部署Milvus cluster
+```bash
+kubectl apply -f https://raw.githubusercontent.com/zilliztech/milvus-operator/main/config/samples/milvus_cluster_default.yaml
+```
+部署完可以检查Milvus集群是否正常
+```bash
+kubectl get milvus my-release -o yaml
+status:
+  conditions:
+  - lastTransitionTime: "2024-07-16T07:41:22Z"
+    message: Etcd endpoints is healthy
+    reason: EtcdReady
+    status: "True"
+    type: EtcdReady
+  - lastTransitionTime: "2024-07-16T07:41:07Z"
+    reason: StorageReady
+    status: "True"
+    type: StorageReady
+  - lastTransitionTime: "2024-07-16T07:43:43Z"
+    message: MsgStream is ready
+    reason: MsgStreamReady
+    status: "True"
+    type: MsgStreamReady
+  - lastTransitionTime: "2024-07-18T07:43:43Z"
+    message: All Milvus components are healthy
+    reason: ReasonMilvusHealthy
+    status: "True"
+    type: MilvusReady
+  - lastTransitionTime: "2024-07-18T07:29:43Z"
+    message: Milvus components are all updated
+    reason: MilvusComponentsUpdated
+    status: "True"
+    type: MilvusUpdated
+  endpoint: milvus-release-milvus.milvus:19530
+```
+查看启动的容器
+```bash
+kubectl get pod -n milvus
+NAME                                                 READY   STATUS      RESTARTS   AGE
+attu-6f447557ff-nxh5v                                1/1     Running     0          47h
+milvus-release-etcd-0                                1/1     Running     0          2d
+milvus-release-etcd-1                                1/1     Running     0          2d
+milvus-release-etcd-2                                1/1     Running     0          2d
+milvus-release-milvus-datacoord-5d766b99f6-n9lqf     1/1     Running     0          2d
+milvus-release-milvus-datanode-8646766b5c-bxxq4      1/1     Running     0          2d
+milvus-release-milvus-indexcoord-745fd4bb78-4sjhz    1/1     Running     0          2d
+milvus-release-milvus-indexnode-cfd9688bf-sp9sw      1/1     Running     0          2d
+milvus-release-milvus-proxy-74cf6d8445-dwwh2         1/1     Running     0          2d
+milvus-release-milvus-proxy-74cf6d8445-qzpn4         1/1     Running     0          2d
+milvus-release-milvus-querycoord-6f549b9bd6-xhz5t    1/1     Running     0          2d
+milvus-release-milvus-querynode-0-6c54bc8664-v49qd   1/1     Running     0          2d
+milvus-release-milvus-rootcoord-77986849b8-mnp49     1/1     Running     0          2d
+milvus-release-minio-0                               1/1     Running     0          2d
+milvus-release-minio-1                               1/1     Running     0          2d
+milvus-release-minio-2                               1/1     Running     0          2d
+milvus-release-minio-3                               1/1     Running     0          2d
+milvus-release-pulsar-bookie-0                       1/1     Running     0          2d
+milvus-release-pulsar-bookie-1                       1/1     Running     0          2d
+milvus-release-pulsar-bookie-2                       1/1     Running     0          2d
+milvus-release-pulsar-bookie-init-phq2d              0/1     Completed   0          2d
+milvus-release-pulsar-broker-0                       1/1     Running     0          2d
+milvus-release-pulsar-proxy-0                        1/1     Running     0          2d
+milvus-release-pulsar-pulsar-init-sxv5k              0/1     Completed   0          2d
+milvus-release-pulsar-recovery-0                     1/1     Running     0          2d
+milvus-release-pulsar-zookeeper-0                    1/1     Running     0          2d
+milvus-release-pulsar-zookeeper-1                    1/1     Running     0          2d
+milvus-release-pulsar-zookeeper-2                    1/1     Running     0          2d
+```
+修改副本数(直接修改 deployment 里面的副本数是不生效的)
+```bash
+kubectl edit milvus -n milvus
+...
+spec:
+  components:
+    dataCoord:
+      paused: false
+      replicas: 1
+    dataNode:
+      paused: false
+      replicas: 3
+    disableMetric: false
+    image: milvusdb/milvus:v2.4.5
+    imageUpdateMode: rollingUpgrade
+    indexCoord:
+      paused: false
+      replicas: 1
+    indexNode:
+      paused: false
+      replicas: 3
+    metricInterval: ""
+    paused: false
+    proxy:
+      paused: false
+      replicas: 2
+      serviceType: ClusterIP
+    queryCoord:
+      paused: false
+      replicas: 1
+    queryNode:
+      paused: false
+      replicas: 3
+    rootCoord:
+      paused: false
+      replicas: 1
+    standalone:
+      paused: false
+      replicas: 0
+      serviceType: ClusterIP
+...
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
