@@ -222,12 +222,21 @@ spec:
 ...
 ```
 
+# 关于 Milvus 的配置
+[计算 Milvus 所需资源网站](https://milvus.io/tools/sizing)
+- 官方建议最好是使用 Kubernetes 部署 Milvus 集群, 因为这可以使得 Milvus 容易扩展.
 
 
+# 关于 Milvus 索引
+- WAND
+- 倒排索引: 适合关键词搜索
+- 稀疏索引
 
+# 关于 Milvus 集群组件说明
+[Milvus 集群组件说明](https://github.com/milvus-io/milvus/discussions/33854)
 
-
-
+# 关于 Milvus 数据丢失
+[Milvus 数据丢失](https://github.com/milvus-io/milvus/discussions/33616)
 
 
 
