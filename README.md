@@ -427,6 +427,12 @@
 
 
 <details>
+<summary>golang</summary>
+
+- [golang 安装](note/golang/install-golang.md)
+</details>
+
+<details>
 <summary>软件部署</summary>
 
 - [ubuntu部署ftp服务.md](note/软件部署/ubuntu部署ftp服务.md)
