@@ -373,7 +373,7 @@
 
 - [基础篇](note/JVM/黑马/基础篇.md)
 - [实战篇](note/JVM/黑马/实战篇.md)
-- [高级篇](note/JVM/黑马/高级片.md)
+- [高级篇](note/JVM/黑马/高级篇.md)
 - [原理篇](note/JVM/黑马/原理篇.md)
 - [面试篇](note/JVM/黑马/面试篇.md)
 
