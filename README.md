@@ -8,10 +8,8 @@
 * [Zookeeper3.4.5 分布式安装部署](note/zookeeper/zookeeper分布式安装部署.md)
 * [Zookeeper 常用命令行操作](note/zookeeper/zookeeper常用命令行操作.md)
 * [Zookeeper 实现分布式锁](note/zookeeper/zookeeper实现分布式锁.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Hadoop</summary>
@@ -19,8 +17,8 @@
 * [Hadoop3.0 完全分部署安装部署](note/hadoop/Hadoop3.0完全分部署安装部署.md)
 * [Hadoop 基准测试](note/hadoop/Hadoop基准测试.md)
 * [Hadoop 数据迁移](note/hadoop/Hadoop数据迁移.md)
-</details>
 
+</details>
 
 <details>
 <summary>git</summary>
@@ -30,23 +28,22 @@
 * [rpm方式 安装 gitlab](note/gitlab/rpm-gitlab.md)
 * [docker方式 安装 gitlab](note/gitlab/docker-gitlab.md)
 * [gitlab 关闭注册功能](note/gitlab/gitlab关闭注册功能.md)
-</details>
 
+</details>
 
 <details>
 <summary>Flume</summary>
 
 * [Flume 安装部署](note/flume/Flume安装部署.md)
+
 </details>
 
 <details>
 <summary>HBase</summary>
 
 * [HBase 生产环境调优](note/HBase/HBase生产环境调优.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Hive</summary>
@@ -58,18 +55,15 @@
 * [Unable to instantiate org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient](note/hive/Hive异常1.md)
 * [Hive DDL 数据定义](note/hive/Hive-DDL数据定义.md)
 * [Hive 查询](note/hive/Hive查询.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Kudu</summary>
 
 * [kudu异常](note/kudu/kudu异常.md)
+
 </details>
-
-
 
 <details>
 <summary>Kafka</summary>
@@ -79,6 +73,7 @@
 * [kafka 杂谈](note/kafka/kafka杂谈.md)
 * [kafka stop 脚本有时候不起作用的原因](note/kafka/kafka-stop脚本有时候不起作用的原因.md)
 * [kafka connector rest api](note/kafka/KafkaConnectorRestApi.md)
+
 </details>
 
 <details>
@@ -86,25 +81,23 @@
 
 * [使用 confluent 实现 SqlServer 实时同步数据到 PostGreSql](note/debezium/SqlServer-kafka-pgsql.md)
 * [confluent6.0.1 平台搭建](note/debezium/confluent6.0.1平台搭建.md)
-</details>
 
+</details>
 
 <details>
 <summary>Sentry</summary>
 
 * [CDH 安装配置Sentry](note/sentry/CDH安全之Sentry权限管理.md)
 * [hue: There are currently no roles defined](note/sentry/sentry异常1.md)
+
 </details>
-
-
 
 <details>
 <summary>Phoenix</summary>
 
 * [CDH 平台安装 Apache Phoenix](note/phoenix/CDH平台安装Apache-Phoenix.md)
+
 </details>
-
-
 
 <details>
 <summary>ClickHouse</summary>
@@ -114,27 +107,23 @@
 * [ClickHouse 数据类型](note/ClickHouse/ClickHouseDataType.md)
 * [ClickHouse 表引擎](note/ClickHouse/ClickHouseTableEngine.md)
 * [ClickHouse 表操作](note/ClickHouse/ClickHouseTableOpt.md)
+
 </details>
-
-
-
 
 <details>
 <summary>WaterDrop</summary>
 
 * [WaterDrop入门](note/WaterDrop/WaterDrop基本概述.md)
 * [Hive to Hdfs](note/WaterDrop/Hive2Hdfs.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Atlas</summary>
 
 * [Atlas 安装](note/Atlas/Atlas安装.md)
-</details>
 
+</details>
 
 <details>
 <summary>DolphinScheduler</summary>
@@ -142,8 +131,8 @@
 * [DolphinScheduler 安装](note/DolphinScheduler/DolphinScheduler安装.md)
 * [DolphinScheduler 使用](note/DolphinScheduler/DolphinScheduler使用.md)
 * [DolphinScheduler 本地开发环境搭建](note/DolphinScheduler/DolphinScheduler本地开发环境搭建.md)
-</details>
 
+</details>
 
 <details>
 <summary>CDH</summary>
@@ -152,9 +141,8 @@
 * [CentOS7.7 CDH6.2.1 安装教程](note/cdh/Centos7.7-CDH6.2.1安装教程.md)
 * [CDH 安装 Hue 连接不上MySQL](note/cdh/CDH安装Hue连接不上MySQL.md)
 * [CDH 查询 Hive执行过的SQL语句](note/cdh/CDH查询Hive执行过的SQL语句.md)
+
 </details>
-
-
 
 <details>
 <summary>Scala</summary>
@@ -176,10 +164,8 @@
 * [14.scala API](note/scala/scala-API.md)
 * [15.scala 数组](note/scala/scala数组.md)
 * [16.scala 值调用、名调用和控制抽象](note/scala/scala值调用、名调用和控制抽象.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Spark</summary>
@@ -194,22 +180,21 @@
 * [Spark 读取JDBC数据源优化和源码解析](note/spark/Spark读取JDBC数据源优化.md)
 * [Spark 读取JDBC数据Time类型字段异常解析](note/spark/Spark读取JDBC数据Time类型字段异常解析.md)
 
-
 &nbsp;&nbsp;&nbsp;&nbsp;**Spark 内核**
-  * [Spark 内核概述(待补充)]()
-  * [Spark 部署模式](note/spark/spark部署模式/spark部署模式.md)
-  * [Spark 任务调度机制](note/spark/spark任务调度机制/spark任务调度机制.md)
-  * [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
-  * [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
+
+* [Spark 内核概述(待补充)]()
+* [Spark 部署模式](note/spark/spark部署模式/spark部署模式.md)
+* [Spark 任务调度机制](note/spark/spark任务调度机制/spark任务调度机制.md)
+* [Spark Shuffle解析](note/spark/spark-memory/SparkShuffle解析.md)
+* [Spark 内存管理](note/spark/spark-memory/Spark内存管理.md)
 
 &nbsp;&nbsp;&nbsp;&nbsp;**Spark 性能优化和故障处理**
-  * [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
-  * [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
-  * [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
+
+* [Spark 性能优化](note/spark/Spark性能优化和故障处理/Spark性能优化.md)
+* [Spark 数据倾斜解决方案](note/spark/Spark性能优化和故障处理/Spark数据倾斜解决方案.md)
+* [Spark 问题及解决](note/spark/Spark性能优化和故障处理/Spark问题及解决.md)
+
 </details>
-
-
-
 
 <details>
 <summary>Flink</summary>
@@ -221,7 +206,7 @@
 * [Flink 并行度的划分](note/flink/flink并行度.md)
 * [Flink HelloWorld](note/flink/flink-HelloWorld.md)
 * [Flink Connectors](note/flink/Connectors.md)
-* [Flink Window&时间语义和Watermark](note/flink/Window&时间语义和Watermark.md)
+* [Flink Window&amp;时间语义和Watermark](note/flink/Window&时间语义和Watermark.md)
 * [Flink ProcessFunction](note/flink/ProcessFunction.md)
 * [Flink 多流转换](note/flink/flink多流转换.md)
 * [Flink State](note/flink/State.md)
@@ -229,36 +214,40 @@
 * [Flink 实时同步Oracle数据到Hive](note/flink/Flink实时同步Oracle数据到Hive.md)
 
 ---
+
 * [FLink CDC(Standalone)](note/flink/flinkcdc.md)
 * [Flink CDC 集成 Iceberg 入湖](note/flink/flinkcdc-iceberg入湖.md)
 
 ---
+
 * [Chunjun on K8s 部署](note/flink/ChunjunOnKubernetes(Native).md)
 
 ---
-* [Flink 搭建本地开发环境](note/flink/flink搭建本地开发环境.md)
-</details>
 
+* [Flink 搭建本地开发环境](note/flink/flink搭建本地开发环境.md)
+
+</details>
 
 <details>
 <summary>Canal</summary>
 
 * [使用 canal 实时监控 mysql 并读取到 Kafka(scala 版)](note/canal/使用canal实时监控mysql并读取到Kafka-scala版.md)
-</details>
 
+</details>
 
 <details>
 <summary>Elasticsearch</summary>
 
 * [Docker 安装Elasticsearch](note/elasticsearch/Docker安装Elasticsearch.md)
 * [Elasticsearch 常用操作](note/elasticsearch/Elasticsearch常用操作.md)
-</details>
 
+</details>
 
 <details>
 <summary>Kibana</summary>
 
 * [Docker 安装Kibana](note/kibana/Docker安装Kibana.md)
+
 </details>
 
 <details>
@@ -266,6 +255,7 @@
 
 * [Azkaban 安装部署](note/Azkaban/Azkaban安装部署.md)
 * [Azkaban 迁移机器找不到executor](note/Azkaban/Azkaban迁移机器找不到executor.md)
+
 </details>
 
 <details>
@@ -279,8 +269,8 @@
 * [MySQL 约束](note/MySQL/MySQL约束.md)
 * [MySQL基础(尚硅谷宋红康)](note/MySQL/mysql基础.md)
 * [MySQL高级(尚硅谷宋红康)](note/MySQL/mysql高级.md)
-</details>
 
+</details>
 
 <details>
 <summary>Iceberg</summary>
@@ -290,29 +280,30 @@
 * [Iceberg - 03 spark](note/iceberg/iceberg-03-spark.md)
 * [Iceberg - 04 基于 Hadoop 的数据存储结构(v2)](note/iceberg/iceberg-04-数据存储格式.md)
 * [Iceberg - 05 合并小文件](note/iceberg/iceberg-05-合并小文件.md)
+
 </details>
 
 ## Java
+
 <details>
 <summary>构建工具</summary>
 
 * [Maven maven-shade-plugin](note/maven/maven-shade-plugin.md)
 * [Gradle 安装整合Idea](note/gradle/gradle.md)
-</details>
 
+</details>
 
 <details>
 <summary>Nginx</summary>
 
 - [nginx 基础](note/nginx/nginx基础.md)
-
 - [nginx](note/nginx/nginx.md)
 - [nginx常用操作](note/nginx/nginx常用操作.md)
 - [alias和root的区别](note/nginx/alias和root的区别.md)
 - [nginx转发带有下划线的header异常](note/nginx/nginx转发带有下划线的header异常.md)
 - [nginx转发80端口到443](note/nginx/nginx转发80端口到443.md)
-</details>
 
+</details>
 
 <details>
 <summary>Redis</summary>
@@ -330,6 +321,7 @@
 * [redis 数据备份与恢复](note/redis/数据备份与恢复.md)
 * [redis 安全](note/redis/安全.md)
 * [redis 性能测试](note/redis/性能测试.md)
+
 </details>
 
 <details>
@@ -337,12 +329,14 @@
 
 * [Doris 编译安装(填坑)](note/doris/Doris编译安装.md)
 * [Doris 备份还原](note/doris/Doris备份还原.md)
+
 </details>
 
 <details>
 <summary>Idea</summary>
 
 * [Idea 常用配置](note/idea/idea常用配置.md)
+
 </details>
 
 <details>
@@ -352,6 +346,7 @@
 * [设计模式之工厂模式](note/设计模式/工厂模式.md)
 * [设计模式之构建者模式](https://github.com/kinoxyz1/design-study/tree/main/src/main/java/com/kino/study/builder)
 * [设计模式之代理模式](note/设计模式/代理模式.md)
+
 </details>
 
 <details>
@@ -368,52 +363,52 @@
 * [Java8](note/java/java8.md)
 * [Java日志框架发展史](https://segmentfault.com/a/1190000041842868?utm_source=sf-backlinks)
 * [spring6](note/java/spring6.md)
+
 </details>
-
-
 
 <details>
 <summary>JVM</summary>
 
-### 黑马
-* [基础篇](note/JVM/黑马/基础篇.md)
-* [实战篇](note/JVM/黑马/实战篇.md)
-* [高级篇](note/JVM/黑马/高级片.md)
-* [原理篇](note/JVM/黑马/原理篇.md)
-* [面试篇](note/JVM/黑马/面试篇.md)
+<h3> 黑马 </h3>
 
+- [基础篇](note/JVM/黑马/基础篇.md)
+- [实战篇](note/JVM/黑马/实战篇.md)
+- [高级篇](note/JVM/黑马/高级片.md)
+- [原理篇](note/JVM/黑马/原理篇.md)
+- [面试篇](note/JVM/黑马/面试篇.md)
 
---- 
-#### 尚硅谷
-* [内存与垃圾回收-1.类加载机制](note/JVM/内存与垃圾回收/1.类加载机制.md)
-* [内存与垃圾回收-2.运行时数据区和程序计数器](note/JVM/内存与垃圾回收/2.运行时数据区和程序计数器.md)
-* [内存与垃圾回收-3.虚拟机栈](note/JVM/内存与垃圾回收/3.虚拟机栈.md)
-* [内存与垃圾回收-4.本地方法接口和本地方法栈](note/JVM/内存与垃圾回收/4.本地方法接口和本地方法栈.md)
-* [内存与垃圾回收-5.堆](note/JVM/内存与垃圾回收/6.堆.md)
-* [内存与垃圾回收-6.方法区](note/JVM/内存与垃圾回收/7.方法区.md)
-* [内存与垃圾回收-7.对象的实例化和直接内存](note/JVM/内存与垃圾回收/8.对象的实例化和直接内存.md)
-* [内存与垃圾回收-8.执行引擎](note/JVM/内存与垃圾回收/8.执行引擎.md)
-* [内存与垃圾回收-9.String Table](note/JVM/内存与垃圾回收/9.String_Table.md)
-* [内存与垃圾回收-10.垃圾回收概述和算法](note/JVM/内存与垃圾回收/10.垃圾回收概述和算法.md)
-* [内存与垃圾回收-11.垃圾回收相关概念](note/JVM/内存与垃圾回收/11.垃圾回收相关概念.md)
-* [内存与垃圾回收-12.垃圾回收器](note/JVM/内存与垃圾回收/12.垃圾回收器.md)
-* [字节码与类的加载-1.Class 文件结构](note/JVM/字节码与类的加载/1.Class文件结构.md)
-* [字节码与类的加载-2.字节码指令集与解析举例](note/JVM/字节码与类的加载/2.字节码指令集与解析举例.md)
-* [字节码与类的加载-3.类的加载过程(类的生命周期)详解](note/JVM/字节码与类的加载/3.类的加载过程(类的生命周期)详解.md)
-* [字节码与类的加载-4.再谈类的加载器](note/JVM/字节码与类的加载/4.再谈类的加载器.md)
-* [性能监控与调优-1.概述](note/JVM/性能监控与调优/1.概述.md)
-* [性能监控与调优-2.JVM监控及诊断工具-命令行](note/JVM/性能监控与调优/2.JVM监控及诊断工具-命令行.md)
-* [性能监控与调优-3.JVM监控及诊断工具-GUI](note/JVM/性能监控与调优/3.JVM监控及诊断工具-GUI.md)
-* [性能监控与调优-4.JVM运行时参数](note/JVM/性能监控与调优/4.JVM运行时参数.md)
-* [性能监控与调优-5.分析GC日志](note/JVM/性能监控与调优/5.分析GC日志.md)
-* [性能监控与调优-6.补充:浅堆深堆与内存泄漏](note/JVM/性能监控与调优/6.浅堆深堆与内存泄漏.md)
-* [性能监控与调优-7.补充:使用OQL语言查询对象信息](note/JVM/性能监控与调优/7.使用OQL语言查询对象信息.md)
+---
 
+<h3> 尚硅谷 </h3>
 
+- [内存与垃圾回收-1.类加载机制](note/JVM/内存与垃圾回收/1.类加载机制.md)
+- [内存与垃圾回收-2.运行时数据区和程序计数器](note/JVM/内存与垃圾回收/2.运行时数据区和程序计数器.md)
+- [内存与垃圾回收-3.虚拟机栈](note/JVM/内存与垃圾回收/3.虚拟机栈.md)
+- [内存与垃圾回收-4.本地方法接口和本地方法栈](note/JVM/内存与垃圾回收/4.本地方法接口和本地方法栈.md)
+- [内存与垃圾回收-5.堆](note/JVM/内存与垃圾回收/6.堆.md)
+- [内存与垃圾回收-6.方法区](note/JVM/内存与垃圾回收/7.方法区.md)
+- [内存与垃圾回收-7.对象的实例化和直接内存](note/JVM/内存与垃圾回收/8.对象的实例化和直接内存.md)
+- [内存与垃圾回收-8.执行引擎](note/JVM/内存与垃圾回收/8.执行引擎.md)
+- [内存与垃圾回收-9.String Table](note/JVM/内存与垃圾回收/9.String_Table.md)
+- [内存与垃圾回收-10.垃圾回收概述和算法](note/JVM/内存与垃圾回收/10.垃圾回收概述和算法.md)
+- [内存与垃圾回收-11.垃圾回收相关概念](note/JVM/内存与垃圾回收/11.垃圾回收相关概念.md)
+- [内存与垃圾回收-12.垃圾回收器](note/JVM/内存与垃圾回收/12.垃圾回收器.md)
+- [字节码与类的加载-1.Class 文件结构](note/JVM/字节码与类的加载/1.Class文件结构.md)
+- [字节码与类的加载-2.字节码指令集与解析举例](note/JVM/字节码与类的加载/2.字节码指令集与解析举例.md)
+- [字节码与类的加载-3.类的加载过程(类的生命周期)详解](note/JVM/字节码与类的加载/3.类的加载过程(类的生命周期)详解.md)
+- [字节码与类的加载-4.再谈类的加载器](note/JVM/字节码与类的加载/4.再谈类的加载器.md)
+- [性能监控与调优-1.概述](note/JVM/性能监控与调优/1.概述.md)
+- [性能监控与调优-2.JVM监控及诊断工具-命令行](note/JVM/性能监控与调优/2.JVM监控及诊断工具-命令行.md)
+- [性能监控与调优-3.JVM监控及诊断工具-GUI](note/JVM/性能监控与调优/3.JVM监控及诊断工具-GUI.md)
+- [性能监控与调优-4.JVM运行时参数](note/JVM/性能监控与调优/4.JVM运行时参数.md)
+- [性能监控与调优-5.分析GC日志](note/JVM/性能监控与调优/5.分析GC日志.md)
+- [性能监控与调优-6.补充:浅堆深堆与内存泄漏](note/JVM/性能监控与调优/6.浅堆深堆与内存泄漏.md)
+- [性能监控与调优-7.补充:使用OQL语言查询对象信息](note/JVM/性能监控与调优/7.使用OQL语言查询对象信息.md)
 
 </details>
 
 ## 运维/云原生
+
 <details>
 <summary>StarRocks</summary>
 
@@ -422,19 +417,21 @@
 - [StarRocks-Profile分析及优化指南](https://forum.mirrorship.cn/t/topic/2367)
 - [[查询]Profile分析（非pipeline版本）](https://forum.mirrorship.cn/t/topic/4925/2)
 - [StarRocks数据导入--Insert into](https://www.955code.com/1984.html)
+
 </details>
 
 <details>
 <summary>Milvus</summary>
 
 - [向量数据库Milvus](note/ai/Milvus-部署.md)
-</details>
 
+</details>
 
 <details>
 <summary>golang</summary>
 
 - [golang 安装](note/golang/install-golang.md)
+
 </details>
 
 <details>
@@ -460,14 +457,15 @@
 * [Zabbix5.0 中文乱码](note/zabbix/Zabbix5.0中文乱码.md)
 * [Zabbix: 添加被监控主机、创建主机、监控项、触发器、图形和模板](note/zabbix/Zabbix添加被监控主机、创建主机、监控项、触发器、图形和模板.md)
 * [Zabbix: 自定义邮件告警](note/zabbix/Zabbix自定义邮件告警.md)
+
 </details>
 
 <details>
 <summary>Prometheus & Grafana</summary>
 
-* [Prometheus & Grafana 部署监控](note/prometheus/prometheus.md)
+* [Prometheus &amp; Grafana 部署监控](note/prometheus/prometheus.md)
   </details>
-  
+
 <details>
 <summary>Docker</summary>
 
@@ -486,8 +484,8 @@
 * [docker 的 CI/CD](note/docker/docker的CICD.md)
 * [docker 常用安装m1版](note/docker/Docker常用安装m1版.md)
 * [docker 设置代理](note/docker/docker-proxy.md)
-</details>
 
+</details>
 
 <details>
 <summary>Kubernetes</summary>
@@ -515,13 +513,16 @@
 * [Jenkins 动态感知部署](note/Kubernetes/动态感知部署.md)
 * [Kubernetes 更换证书](https://www.jianshu.com/p/4c9581b69ee2)
 * [Kubernetes context 上下文配置](note/Kubernetes/k8s-context管理.md)
-***
+
+---
+
 **旧版**
+
 * [Kubernetes label](note/Kubernetes/k8s-label.md)
 * [Kubernetes Volume挂载相关](note/Kubernetes/k8s-Volume.md)
 * [Kubernetes 特殊 Volume](note/Kubernetes/k8s-特殊Volume.md)
 * [Kubernetes PodPreset预设置](note/Kubernetes/k8s-PodPreset预设置.md)
-* [Kubernetes 副本机制和水平扩展&滚动更新](note/Kubernetes/k8s-副本机制和水平扩展&滚动更新.md)
+* [Kubernetes 副本机制和水平扩展&amp;滚动更新](note/Kubernetes/k8s-副本机制和水平扩展&滚动更新.md)
 * [Kubernetes Controller](note/Kubernetes/k8s-Controller.md)
 * [Kubernetes statefulset](note/Kubernetes/k8s-statefulset.md)
 * [Kubernetes DaemonSet](note/Kubernetes/k8s-DaemonSet.md)
@@ -533,9 +534,8 @@
 * [Kubernetes 声明PodPreset异常](note/Kubernetes/k8s-声明PodPreset异常.md)
 * [Kubernetes 常见问题](note/Kubernetes/k8s常见问题.md)
 * [Kubernetes 链路整合(待补完)](note/Kubernetes/install-all.md)
+
 </details>
-
-
 
 <details>
 <summary>Linux</summary>
@@ -555,6 +555,7 @@
 * [frp+openvpn+docker 搭建](note/linux/openvpn.md)
 * [curl使用指南](note/linux/curl使用指南.md)
 * [大数据常用软件部署总结](note/linux/大数据常用软件部署总结.md)
+
 </details>
 
 <details>
@@ -562,13 +563,15 @@
 
 * [内网穿透-暴露内网端口](note/内网穿透/暴露内网端口.md)
 * [内网穿透-frp开启web服务](note/内网穿透/frp开启web服务.md)
-</details> 
+
+</details>
 
 <details>
 <summary>科学上网</summary>
 
 * [科学上网指南](note/科学上网/科学上网指南.md)
 * [Centos7.x科学上网](note/科学上网/centos7科学上网.md)
+
 </details>
 
 ## Mac
@@ -580,5 +583,5 @@
 * [mac iterm2 批量删除主题](note/mac/delete主题.md)
 * [mac 自动登录服务器](note/mac/自动登录服务器.md)
 * [mac oh-my-zsh](note/mac/ohmyzsh.md)
-</details>
 
+</details>
