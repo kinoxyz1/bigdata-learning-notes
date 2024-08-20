@@ -259,7 +259,7 @@ GRANT 权限1,权限2,...权限n ON 数据库名称.表名称 TO 用户名@用�
 示例
 ```mysql
 -- 授予 zhangsan 用户在 kinodb 数据库下所有表的增删改查的权限
-GREANT SELECT, INSERT, DELETE, UPDATE ON kiondb.* TO 'zhangsan'@'%';
+GRANT SELECT, INSERT, DELETE, UPDATE ON kiondb.* TO 'zhangsan'@'%';
 
 -- 授予 zhangsan 用户所有库所有表的所有权限
 GRANT ALL PRIVILEGES ON *.* TO 'zhangsan'@'%' IDENTIFIED BY '123456';
