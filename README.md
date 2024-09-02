@@ -299,7 +299,6 @@
 - [nginx 基础](note/nginx/nginx基础.md)
 - [nginx](note/nginx/nginx.md)
 - [nginx常用操作](note/nginx/nginx常用操作.md)
-- [alias和root的区别](note/nginx/alias和root的区别.md)
 - [nginx转发80端口到443](note/nginx/nginx转发80端口到443.md)
 
 </details>

@@ -717,3 +717,42 @@ systemctl start keepalived.service
 systemctl status keepalived.service
 ```
 访问nginx: http://192.168.149.100:8080, 停止启动一个nginx, 再次查看效果
+
+
+
+# 十一、解决SEE流缓存
+使用了nginx网关,可能会出现nginx缓冲sse流的问题,导致的现象是,客户端调用sse接口时,流数据并不是一条条出现的,而是一口气出现的。
+
+nginx 增加如下配置:
+```bash
+server {
+    listen 80;
+    server_name xxxx;
+    charset utf-8;
+    
+    # 增加如下三个配置
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    
+    location / {
+      # 增加如下三个配置
+      proxy_cache off;
+      proxy_buffering off;
+      add_header X-Accel-Buffering "no";
+      
+      include /usr/local/nginx/conf/proxy;
+      proxy_pass http://xxxxx:xxxx;
+    }
+}
+```
+如果是 ingress nginx 增加如下配置:
+```bash
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_cache off;
+      add_header X-Accel-Buffering "no";
+```
