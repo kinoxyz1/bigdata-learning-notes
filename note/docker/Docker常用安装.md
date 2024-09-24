@@ -181,7 +181,7 @@ mysql               5.7                 718a6da099d8        3 weeks ago         
 ```
 ## 3.4 运行镜像
 ```bash
-[root@docker1 ~]# docker run -p 12345:3306 --name mysql -v /kino/mysql/conf:/etc/mysql/conf.d -v /kino/mysql/logs:/logs -v /kino/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -d mysql:5.7
+[root@docker1 ~]# docker run -p 12345:3306 --name mysql -v /kino/mysql/conf:/etc/mysql/conf.d -v /kino/mysql/logs:/logs -v /kino/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -e TZ=Asia/Shanghai -d mysql:5.7
 5b8945f51078561cc9f10b7bb145975d198a71413db7015e2a344753ef9bb9c4
 ```
 ## 3.5 连接 mysql
