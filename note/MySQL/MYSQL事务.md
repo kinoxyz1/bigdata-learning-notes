@@ -86,7 +86,7 @@ update account set money = money + 100 where name = 'BB';
 
 - 活动的（active）
 
-事务对应的数据库操作正在执行过程中时，我们就说该事务处在 活动的 状态。
+  > 事务对应的数据库操作正在执行过程中时，我们就说该事务处在 活动的 状态。
 
 - 部分提交的（partially committed）
 
