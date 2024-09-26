@@ -408,18 +408,18 @@ CREATE TABLE test2(i int) engine = MYISAM;
 
 # 针对于 innodb
 BEGIN
-  INSERT INTO test1 VALUES(1);
+INSERT INTO test1 VALUES(1);
 ROLLBACK;
 SELECT * FROM test1;
 
 # 针对 MYISAM
 BEGIN
-  INSERT INTO test2 VALUES(1);
+INSERT INTO test2 VALUES(1);
 ROLLBACK;
 SELECT * FROM test2;
 ```
 
-结论：通过创建两张表分别为Innodb和MYisam存储引擎，最后得出结论，开启事务，执行操作，然后回滚，对myism存储引擎失效，所以myisam存储引擎没有事务概念。
+结论：通过创建两张表分别为Innodb和MYisam存储引擎，最后得出结论，开启事务，执行操作，然后回滚，对myisam存储引擎失效，所以myisam存储引擎没有事务概念。
 
 ## 2.6 使用举例3：SAVEPOINT
 
