@@ -116,7 +116,7 @@ UPDATE accounts SET money = money + 50 WHERE NAME = 'BB';
 
 一个基本的状态转换图如下所示：
 
-![事务的提交状态](/Users/kino/works/kino/bigdata-learning-notes/img/mysql/mysql事务/2.事务的提交状态.png)
+![事务的提交状态](../../img/mysql/mysql事务/2.事务的提交状态.png)
 
 图中可见，只有当事务处于提交的或者中止的状态时，一个事务的生命周期才算是结束了。对于已经提交的事务来说，该事务对数据库所做的修改将永久生效，对于处于中止状态的事务，该事务对数据库所做的所有修改都会被回滚到没执行该事务之前的状态。
 
