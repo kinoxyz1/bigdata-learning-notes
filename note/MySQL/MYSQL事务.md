@@ -226,47 +226,47 @@ SET autocommit = 0;
 
 - 数据定义语言（Data definition language，缩写为：DDL）
 
-数据库对象，指的就是数据库、表、视图、存储过程等结构。当我们使用CREATE、ALTER、DROP等语句去修改数据库对象时，就会隐式的提交前边语句所属于的事务。即:
+  > 数据库对象，指的就是数据库、表、视图、存储过程等结构。当我们使用CREATE、ALTER、DROP等语句去修改数据库对象时，就会隐式的提交前边语句所属于的事务。即:
 
-```sql
-BEGIN;
-SELECT *** # 事务中的一条语句
-UPDATE *** # 事务中的一条语句
-...        # 事务中的其他语句
-CREATE TABLE ...  # 此语句会隐式的提交前边语句所属于的事务
-```
+  ```sql
+  BEGIN;
+  SELECT *** # 事务中的一条语句
+  UPDATE *** # 事务中的一条语句
+  ...        # 事务中的其他语句
+  CREATE TABLE ...  # 此语句会隐式的提交前边语句所属于的事务
+  ```
 
 - 隐式使用或修改mysql数据库中的表
 
-当我们使用ALTER USER、CREATE USER、DROP USER、GRANT、RENAME USER、REVOKE、SETPASSWORD 等语句时也会隐式的提交前边语句所属于的事务。
+  > 当我们使用ALTER USER、CREATE USER、DROP USER、GRANT、RENAME USER、REVOKE、SETPASSWORD 等语句时也会隐式的提交前边语句所属于的事务。
 
 - 事务控制或关于锁定的语句
 
-​	① 当我们在一个事务还没提交或者回滚时就又使用 START TRANSACTION 或者 BEGIN 语句开启了另一个事务时，会 隐式的提交 上一个事务。即：
+   ① 当我们在一个事务还没提交或者回滚时就又使用 START TRANSACTION 或者 BEGIN 语句开启了另一个事务时，会 隐式的提交 上一个事务。即：
 
-```sql
-BEGIN;
-SELECT *** # 事务中的一条语句
-UPDATE *** # 事务中的一条语句
-...        # 事务中的其他语句
-BEGIN;
-```
+  ```sql
+  BEGIN;
+  SELECT *** # 事务中的一条语句
+  UPDATE *** # 事务中的一条语句
+  ...        # 事务中的其他语句
+  BEGIN;
+  ```
 
-​	② 当前的 autocommit 系统变量的值为 OFF ，我们手动把它调为 ON 时，也会 隐式的提交 前边语句所属的事务。
+  ② 当前的 autocommit 系统变量的值为 OFF ，我们手动把它调为 ON 时，也会 隐式的提交 前边语句所属的事务。
 
-​	③ 使用 LOCK TABLES 、 UNLOCK TABLES 等关于锁定的语句也会 隐式的提交 前边语句所属的事务。	
+  ③ 使用 LOCK TABLES 、 UNLOCK TABLES 等关于锁定的语句也会 隐式的提交 前边语句所属的事务。	
 
 - 加载数据的语句
 
-​	使用LOAD DATA语句来批量往数据库中导入数据时，也会隐式的提交前边语句所属的事务。
+  > 使用LOAD DATA语句来批量往数据库中导入数据时，也会隐式的提交前边语句所属的事务。
 
 - 关于MySQL复制的一些语句
 
-​	使用START SLAVE、STOP SLAVE、RESET SLAVE、CHANGE MASTER TO等语句时会隐式的提交前边语句所属的事务。
+  > 使用START SLAVE、STOP SLAVE、RESET SLAVE、CHANGE MASTER TO等语句时会隐式的提交前边语句所属的事务。
 
 - 其它的一些语句
 
-​	使用ANALYZE TABLE、CACHE INDEX、CHECK TABLE、FLUSH、LOAD INDEX INTO CACHE、OPTIMIZE TABLE、REPAIR TABLE、RESET等语句也会隐式的提交前边语句所属的事务。
+  > 使用ANALYZE TABLE、CACHE INDEX、CHECK TABLE、FLUSH、LOAD INDEX INTO CACHE、OPTIMIZE TABLE、REPAIR TABLE、RESET等语句也会隐式的提交前边语句所属的事务。
 
 ## 2.4 使用举例1：提交与回滚
 
