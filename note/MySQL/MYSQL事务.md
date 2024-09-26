@@ -668,7 +668,7 @@ SET [GLOBAL|SESSION] TRANSACTION_ISOLATION = '隔离级别'
 
 
 
-## 3.6 不同隔离级别举
+## 3.6 不同隔离级别举例
 
 ```sql
 # 初始化数据
