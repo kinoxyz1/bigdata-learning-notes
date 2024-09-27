@@ -164,14 +164,16 @@ mysql> show variables like 'innodb_flush_log_at_trx_commit';
 ![不同刷盘策略2](../../img/mysql/mysql事务日志/8.不同刷盘策略2.png)
 
 > 小结innodb_flush_log_at_trx_commit=2
+> 
 > 为2时，只要事务提交成功，redo log buffer中的内容只写入文件系统缓存（page cache )。
 > 如果仅仅只是MySQL挂了不会有任何数据丢失，但是操作系统宕机可能会有1秒数据的丢失，这种情况下无法满足ACID中的D。但是数值2肯定是效率最高的。
 
 ![不同刷盘策略3](../../img/mysql/mysql事务日志/9.不同刷盘策略3.png)
 
-> 小结: innodb_flush_log_at_trx_commit=o
+> 小结: innodb_flush_log_at_trx_commit=0
+> 
 > 为0时，master thread中每1秒进行一次重做日志的fsync操作，因此实例crash最多丢失1秒钟内的事务。(master thread是负责将缓冲池中的数据异步刷新到磁盘，保证数据的一致性)
-> 数值o的话，是一种折中的做法，它的I0效率理论是高于1的，低于2的，这种策略也有丢失数据的风险，也无法保证D
+> 数值0的话，是一种折中的做法，它的I0效率理论是高于1的，低于2的，这种策略也有丢失数据的风险，也无法保证D
 
 ### 2. 举例
 
