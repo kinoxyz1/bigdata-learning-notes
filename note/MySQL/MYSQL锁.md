@@ -1172,12 +1172,13 @@ next-key lock的加锁规则
 我们以表test作为例子，建表语句和初始化语句如下：其中id为主键索引
 
 ```mysql
+drop table if exists test;
 CREATE TABLE `test` (
 `id` int( 11 ) NOT NULL,
 `col1` int( 11 ) DEFAULT NULL,
 `col2` int( 11 ) DEFAULT NULL,
 PRIMARY KEY (`id`),
-KEY `c` (`c`)
+KEY `c` (`col1`)
 ) ENGINE=InnoDB;
 insert into test values( 0 , 0 , 0 ),( 5 , 5 , 5 ),
 ( 10 , 10 , 10 ),( 15 , 15 , 15 ),( 20 , 20 , 20 ),( 25 , 25 , 25 );
