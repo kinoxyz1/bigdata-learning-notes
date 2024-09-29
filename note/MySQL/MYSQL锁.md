@@ -129,7 +129,7 @@
 
 ### 3. 1 从数据操作的类型划分：读锁、写锁
 
-对于数据库中并发事务的`读-读`情况并不会引起什么问题。对于`写-写`、`读-写`或`写-读`这些情况可能会引起一些问题，需要使用`MVCC`或者`加锁`的方式来解决它们。在使用`加锁`的方式解决问题时，由于既要允许`读-读`情况不受影响，又要使`写-写`、`读-写`或写-读情况中的操作相互阻塞，所以MySQL实现一个由两种类型的锁组成的锁系统来解决。这两种类型的锁通常被称为**共享锁(Shared Lock，SLock)**和**排他锁(Exclusive Lock，XLock),**也叫读锁(readlock)和写锁(write lock)。
+对于数据库中并发事务的`读-读`情况并不会引起什么问题。对于`写-写`、`读-写`或`写-读`这些情况可能会引起一些问题，需要使用`MVCC`或者`加锁`的方式来解决它们。在使用`加锁`的方式解决问题时，由于既要允许`读-读`情况不受影响，又要使`写-写`、`读-写`或写-读情况中的操作相互阻塞，所以MySQL实现一个由两种类型的锁组成的锁系统来解决。这两种类型的锁通常被称为**共享锁(Shared Lock，SLock)** 和 **排他锁(Exclusive Lock，XLock),** 也叫读锁(readlock)和写锁(write lock)。
 
 - `读锁`：也称为`共享锁`、英文用`S`表示。针对同一份数据，多个事务的读操作可以同时进行而不会互相影响，相互不阻塞的。
 
@@ -179,33 +179,40 @@ SELECT ... FOR UPDATE;
   - 那么NOWAIT会立即报错返回（等不到锁立即返回）
   - 而SKIP LOCKED也会立即返回，只是返回的结果中不包含被锁定的行。（）
 
-```mysql
-SELECT. FOR UPDATE NOWAIT
-```
-
-
-
-
-
 测试：
 
 ```mysql
+# 创建表
 CREATE TABLE `account` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(32) DEFAULT NULL,
-  `balance` decimal(10,2) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3;
+`id` int NOT NULL AUTO_INCREMENT,
+`name` varchar(32) DEFAULT NULL,
+`balance` decimal(10,2) DEFAULT NULL,
+PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 
 insert into account(name, balance) VALUES 
 ("张三", 40),
 ("李四", 0),
 ("王五", 100);
+
+# client1
+mysql> begin;
+mysql> select * from account where id = 1 for update;  # 加 x锁
+
+# client2
+mysql> begin;
+mysql> select * from account for update nowait;
+ERROR 3572 (HY000): Statement aborted because lock(s) could not be acquired immediately and NOWAIT is set. 
+
+mysql> select * from account for update skip locked;
++----+------+---------+
+| id | name | balance |
++----+------+---------+
+|  2 |      |    0.00 |
+|  3 |      |  100.00 |
++----+------+---------+
+2 rows in set (0.00 sec)
 ```
-
-
-
-
 
 #### 2.写操作
 
