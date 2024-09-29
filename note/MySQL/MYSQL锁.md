@@ -1198,11 +1198,11 @@ insert into test values( 0 , 0 , 0 ),( 5 , 5 , 5 ),
 
 **案例二：非唯一索引等值查询锁**
 
-| sessionA                                                     | sessionB                                         | sessionC                                 |
-| ------------------------------------------------------------ | ------------------------------------------------ | ---------------------------------------- |
-| begin; select id from test where col1 = 5 lock in share mode; |                                                  |                                          |
-|                                                              | update test col2 = col2+1 where id=5; (Query OK) |                                          |
-|                                                              |                                                  | insert into test values(7,7,7) (blocked) |
+| sessionA                                                     | sessionB                                             | sessionC                                 |
+| ------------------------------------------------------------ |------------------------------------------------------| ---------------------------------------- |
+| begin; select id from test where col1 = 5 lock in share mode; |                                                      |                                          |
+|                                                              | update test set col2 = col2+1 where id=5; (Query OK) |                                          |
+|                                                              |                                                      | insert into test values(7,7,7) (blocked) |
 
 这里 session A 要给索引 col1 上 col1=5 的这一行加上读锁。
 
