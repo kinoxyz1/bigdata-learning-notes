@@ -701,7 +701,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM `type` LEFT JOIN book ON type.card = b
 ## 3.3 采用内连接
 ```mysql
 drop index X on type; 
-drop index Y on book;（如果已经删除了可以不用再执行该操作）
+drop index Y on book; -- 如果已经删除了可以不用再执行该操作
 ```
 换成 inner join（MySQL自动选择驱动表）
 ```mysql
@@ -716,7 +716,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book
 ```
 添加索引优化
 ```mysql
-ALTER TABLE book ADD INDEX Y ( card);
+mysql> ALTER TABLE book ADD INDEX Y ( card);
 
 mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
 +----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
@@ -726,9 +726,9 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book
 |  1 | SIMPLE      | book  | NULL       | ref  | Y             | Y    | 4       | kinodb.type.card |    1 |   100.00 | Using index |
 +----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
 2 rows in set, 2 warnings (0.00 sec)
-```
-```mysql
-ALTER TABLE type ADD INDEX X (card);
+
+
+mysql> ALTER TABLE type ADD INDEX X (card);
 
 mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
 +----+-------------+-------+------------+-------+---------------+------+---------+------------------+------+----------+-------------+
@@ -754,7 +754,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book
 ```
 接着：
 ```mysql
-#向表中再添加2日条记录
+#向表中再添加20条记录
 INSERT INTO book(card) VALUES( FLOOR( 1 +(RAND() * 20) ) );
 INSERT INTO book(card) VALUES(FLOOR(1 +(RAND() * 20) ) ) ;
 INSERT INTO book(card) VALUES( FLOOR( 1 + (RAND() * 20) ) );
@@ -776,7 +776,7 @@ INSERT INTO book(card) VALUES( FLOOR( 1 +(RAND( ) * 20) ) );
 INSERT INTO book(card) VALUES( FLOOR(1 +(RAND( ) * 20) ) );
 INSERT INTO book(card) VALUES( FLOOR(1 +(RAND( ) * 20) ) ) ;
 
-ALTER TABLE book ADD INDEX Y ( card) ;
+ALTER TABLE type ADD INDEX Y ( card) ;
 
 mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
 +----+-------------+-------+------------+------+---------------+------+---------+------------------+------+----------+-------------+
@@ -788,6 +788,21 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book
 2 rows in set, 2 warnings (0.00 sec)
 ```
 图中发现，由于type表数据大于book表数据，MySQL选择将type作为被驱动表。也就是小表驱动大表。
+
+把 book 的索引去掉, 然后添加10万条记录进去, 再执行上面的 inner join 会得到如下结果
+```sql
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM type INNER JOIN book ON type.card=book.card;
++----+-------------+-------+------------+------+---------------+------+---------+------------------+--------+----------+-------------+
+| id | select_type | table | partitions | type | possible_keys | key  | key_len | ref              | rows   | filtered | Extra       |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+--------+----------+-------------+
+|  1 | SIMPLE      | book  | NULL       | ALL  | NULL          | NULL | NULL    | NULL             | 133572 |   100.00 | NULL        |
+|  1 | SIMPLE      | type  | NULL       | ref  | Y             | Y    | 4       | kinodb.book.card |      1 |   100.00 | Using index |
++----+-------------+-------+------------+------+---------------+------+---------+------------------+--------+----------+-------------+
+2 rows in set, 2 warnings (0.00 sec)
+```
+book 表的数据显然是大于 type 表, 但是没有遵循 `小表驱动大表` 的情况, MySQL 优化器认为 book 全表在  type 表(join 字段有索引)中过滤的性能是高于 book 表做被驱动的。
+
+所以如果 两张表join, 其中一张表 join 的字段没有索引, 另一个表的 join 字段有索引, 那么没有索引的就是驱动表.
 
 ## 3.4 join语句原理
 join方式连接多个表，本质就是各个表之间数据的循环匹配。MySQL5.5版本之前，MySQL只支持一种表间关联方式，就是嵌套循环(Nested Loop Join)。如果关联表的数据量很大，则join关联的执行时间会非常长。在MySQL5.5以后的版本中，MySQL通过引入BNLJ算法来优化嵌套执行。
@@ -953,6 +968,189 @@ EXPLAIN SELECT * FROM t1 STRAIGHT_JOIN t2 ON (t1.a=t2.a);
 > 两个结论：
 > 1. 使用join语句，性能比强行拆成多个单表执行SQL语句的性能要好；
 > 2. 如果使用join语句的话，需要让小表做驱动表。
+
+### 7. 不同Join算法性能测试
+#### 准备环境
+```sql
+mysql> select version();
++-----------+
+| version() |
++-----------+
+| 8.4.2     |
++-----------+
+1 row in set (0.00 sec)
+
+mysql> show variables like 'join_buffer_size';
++------------------+--------+
+| Variable_name    | Value  |
++------------------+--------+
+| join_buffer_size | 262144 |   -- 默认的 256kb
++------------------+--------+
+1 row in set (0.00 sec)
+```
+准备数据: 以上面的 student、class 两张表为主.
+
+
+#### 使用Hash join
+```sql
+mysql> explain select sql_no_cache count(1) from student join class on student.classId = class.monitor;
++----+-------------+---------+------------+-------+---------------+----------------------+---------+------+---------+----------+---------------------------------------------------------+
+| id | select_type | table   | partitions | type  | possible_keys | key                  | key_len | ref  | rows    | filtered | Extra                                                   |
++----+-------------+---------+------------+-------+---------------+----------------------+---------+------+---------+----------+---------------------------------------------------------+
+|  1 | SIMPLE      | class   | NULL       | ALL   | NULL          | NULL                 | NULL    | NULL |  105915 |   100.00 | NULL                                                    |
+|  1 | SIMPLE      | student | NULL       | index | NULL          | idx_age_name_classid | 73      | NULL | 4987260 |    10.00 | Using where; Using index; Using join buffer (hash join) |
++----+-------------+---------+------------+-------+---------------+----------------------+---------+------+---------+----------+---------------------------------------------------------+
+2 rows in set, 2 warnings (0.00 sec)
+```
+Explain format=tree或explain analyze看到hash join关键字
+```sql
+mysql> explain format=tree select sql_no_cache count(1) from student join class on student.classId = class.monitor;
++----------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------+
+| -> Aggregate: count(1)  (cost=58.1e+9 rows=1)
+    -> Inner hash join (student.classId = class.monitor)  (cost=52.8e+9 rows=52.8e+9)
+        -> Covering index scan on student using idx_age_name_classid  (cost=0.769 rows=4.99e+6)
+        -> Hash
+            -> Table scan on class  (cost=10805 rows=105915)
+ |
++----------------------------------------------------------------------------------------------------------------------+
+1 row in set, 1 warning (0.00 sec)
+```
+#### 测试外连接
+```sql
+mysql> explain format=tree select sql_no_cache count(1) from student left join class on student.classId = class.monitor;
++----------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------+
+| -> Aggregate: count(1)  (cost=106e+9 rows=1)
+    -> Left hash join (class.monitor = student.classId)  (cost=52.8e+9 rows=528e+9)
+        -> Covering index scan on student using idx_age_name_classid  (cost=509189 rows=4.99e+6)
+        -> Hash
+            -> Table scan on class  (cost=0.00624 rows=105915)
+ |
++----------------------------------------------------------------------------------------------------------------------+
+1 row in set, 1 warning (0.00 sec)
+```
+#### 测试不等连接
+```sql
+mysql> explain format=tree select sql_no_cache count(1) from student join class on student.classId < class.monitor;
++----------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------+
+| -> Aggregate: count(1)  (cost=70.4e+9 rows=1)
+    -> Filter: (student.classId < class.monitor)  (cost=52.8e+9 rows=176e+9)
+        -> Inner hash join (no condition)  (cost=52.8e+9 rows=176e+9)
+            -> Covering index scan on student using idx_age_name_classid  (cost=1.87 rows=4.99e+6)
+            -> Hash
+                -> Table scan on class  (cost=10805 rows=105915)
+ |
++----------------------------------------------------------------------------------------------------------------------+
+1 row in set, 1 warning (0.00 sec)
+```
+可以看到在MySQL 8.4.2版本中已经支持非等值连接、外连接等Join。
+
+
+Join字段添加索引
+```sql
+-- t1表添加索引
+mysql> create index idx_monitor on class(monitor);
+mysql> explain format=tree select sql_no_cache count(1) from student join class on student.classId = class.monitor;
++----------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------+
+| -> Aggregate: count(1)  (cost=7.1e+6 rows=1)
+    -> Nested loop inner join  (cost=6.3e+6 rows=8.02e+6)
+        -> Filter: (student.classId is not null)  (cost=509189 rows=4.99e+6)
+            -> Covering index scan on student using idx_age_name_classid  (cost=509189 rows=4.99e+6)
+        -> Covering index lookup on class using idx_monitor (monitor=student.classId)  (cost=1 rows=1.61)
+ |
++----------------------------------------------------------------------------------------------------------------------+
+1 row in set, 1 warning (0.00 sec)
+
+-- 清理索引
+mysql> drop index idx_monitor on class;
+```
+已经变成Index Nested Loop Join
+
+使用hint（BNL和NO_BNL）将hash join启用和关闭
+
+使用NO_BNL(t1,t2)退化为Nested loop inner join
+
+```sql
+mysql> explain format=tree select /*+ NO_BNL(t1,t2)*/ count(1) from student join class on student.classId = class.monitor;
++----------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                              |
++----------------------------------------------------------------------------------------------------------------------+
+| -> Aggregate: count(1)  (cost=7.1e+6 rows=1)
+    -> Nested loop inner join  (cost=6.3e+6 rows=8.02e+6)
+        -> Filter: (student.classId is not null)  (cost=509189 rows=4.99e+6)
+            -> Covering index scan on student using idx_age_name_classid  (cost=509189 rows=4.99e+6)
+        -> Covering index lookup on class using idx_monitor (monitor=student.classId)  (cost=1 rows=1.61)
+ |
++----------------------------------------------------------------------------------------------------------------------+
+1 row in set, 2 warnings (0.00 sec)
+```
+几种Join算法性能对比如下：
+T1表记录50000条，T2表记录1000条，各种Join算法执行情况如上表：
+
+- 使用Hash Join：查询时间0.0299s、Rows_examined记录51000条，为T1+T2表记录和
+- 使用简单Nested loop join：查询时间20.64s、Rows_examined记录50001000条，为T1*T2笛卡尔积
+- Index Nested loop join（小表index）：查询时间0.125s、Rows_examined记录50517条
+- Index Nested loop join（大表index）：查询时间0.007s、Rows_examined记录1517条
+- Index Nested loop join（两表都有index）：查询时间0.0064s、Rows_examined记录1517条
+
+可以看到使用hash join比普通的netsted loop join性能好很多，而index Nested loop join如果索引使用不当或者索引字段过滤系数不高，性能并不能比hash join好。通过explain analyze分析下上面两个场景：
+
+```sql
+-- Hash join结果
+mysql> explain analyze select * from student join class on student.classId = class.monitor;
++-----------------------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN          -------------                                                                                                    |
++-----------------------------------------------------------------------------------------------------------------------------------+
+| -> Inner hash join (student.classId = class.monitor)  (cost=52.8e+9 rows=52.8e+9) (actual time=33.8..2443 rows=5.38e+6 loops=1)
+    -> Table scan on student  (cost=8 rows=4.99e+6) (actual time=0.357..1198 rows=5e+6 loops=1)
+    -> Hash
+        -> Table scan on class  (cost=10691 rows=105915) (actual time=0.029..22.3 rows=110000 loops=1)
+ |
++-----------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (3.08 sec)
+
+
+
+-- Hash join结果
+mysql> explain analyze select /*+ BNL(student, class) */ * from student join class on student.classId = class.monitor;
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| EXPLA                                                                                                                                                         |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| -> Nested loop inner join  (cost=3.32e+6 rows=8.04e+6) (actual time=0.375..12782 rows=5.38e+6 loops=1)
+    -> Filter: (student.classId is not null)  (cost=507183 rows=4.99e+6) (actual time=0.36..1599 rows=5e+6 loops=1)
+        -> Table scan on student  (cost=507183 rows=4.99e+6) (actual time=0.359..1393 rows=5e+6 loops=1)
+    -> Index lookup on class using idx_monitor (monitor=student.classId)  (cost=0.403 rows=1.61) (actual time=0.00189..0.00213 rows=1.08 loops=5e+6)
+ |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (13.54 sec)
+```
+对比看到hash join时候，student表和class表进行的是table scan，但是只需要loop一次；而在index Nested loop join时候，虽然class表走了index lookup，但是需要loops=5e+6次，也就是对student表的所有记录循环比对，整个过程下来性能相比较差了很多。如果class表的索引匹配效率不高，这个执行效率会更差。
+
+
+MySQL 8.0.25版本中当两张表进行等值Join时候，没有索引的情况下默认会使用到hash join算法。当对Join连接字段添加索引后，MySQL优化器使用index Nested loop join算法，但是当小表使用到索引并且过滤系数不高的时候，会进行大量的loop操作，进而导致整个执行效率变差。因此在Join查询优化的时候，加索引并不一定能提升效率，有可能会适得其反，这些都是MySQL优化器控制的。
+
+将 INDEX Nested loop inner join 强制转为 hash join:
+```sql
+mysql> explain analyze select /*+ BNL(student, class) */ * from student join class IGNORE INDEX (idx_monitor) on student.classId = class.monitor;
++--------------------------------------------------------------------------------------------------------------------------------------------+
+| EXPLAIN                                                                                                                                    |
++--------------------------------------------------------------------------------------------------------------------------------------------+
+| -> Inner hash join (class.monitor = student.classId)  (cost=52.8e+9 rows=8.04e+6) (actual time=1651..2553 rows=5.38e+6 loops=1)
+    -> Table scan on class  (cost=0.0297 rows=105915) (actual time=0.0359..23.9 rows=110000 loops=1)
+    -> Hash
+        -> Table scan on student  (cost=506029 rows=4.99e+6) (actual time=0.386..1212 rows=5e+6 loops=1)
+ |
++--------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (3.19 sec)
+```
+
 
 ## 3.5 小结
 - 保证被驱动表的JOIN字段已经创建了索引
