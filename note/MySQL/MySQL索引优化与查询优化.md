@@ -240,18 +240,28 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE classid=4 AND student.ag
 
 如果索引了多列，要遵守最左前缀法则。指的是查询从索引的最左前列开始并且不跳过索引中的列。
 ```mysql
+-- mysql5
 mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND student.name ='abcd';
-+----+-------------+---------+------------+------+----------------------------------------------+----------------------+---------+-------+-------+----------+-----------------------+
-| id | select_type | table   | partitions | type | possible_keys                                | key                  | key_len | ref   | rows  | filtered | Extra                 |
-+----+-------------+---------+------------+------+----------------------------------------------+----------------------+---------+-------+-------+----------+-----------------------+
-|  1 | SIMPLE      | student | NULL       | ref  | idx_age_classid_name,idx_age,idx_age_classid | idx_age_classid_name | 5       | const | 81778 |    10.00 | Using index condition |
-+----+-------------+---------+------------+------+----------------------------------------------+----------------------+---------+-------+-------+----------+-----------------------+
++----+-------------+---------+------------+------+----------------------------------------------+---------+---------+-------+--------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys                                | key     | key_len | ref   | rows   | filtered | Extra       |
++----+-------------+---------+------------+------+----------------------------------------------+---------+---------+-------+--------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ref  | idx_age,idx_age_classid,idx_age_classid_name | idx_age | 5       | const | 185618 |    10.00 | Using where |
++----+-------------+---------+------------+------+----------------------------------------------+---------+---------+-------+--------+----------+-------------+
+1 row in set, 2 warnings (0.00 sec)
+
+-- mysql8 
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND student.name ='abcd';
++----+-------------+---------+------------+------+------------------------------+----------------------+---------+-------+--------+----------+-----------------------+
+| id | select_type | table   | partitions | type | possible_keys                | key                  | key_len | ref   | rows   | filtered | Extra                 |
++----+-------------+---------+------------+------+------------------------------+----------------------+---------+-------+--------+----------+-----------------------+
+|  1 | SIMPLE      | student | NULL       | ref  | idx_age,idx_age_classid_name | idx_age_classid_name | 5       | const | 192098 |    10.00 | Using index condition |
++----+-------------+---------+------------+------+------------------------------+----------------------+---------+-------+--------+----------+-----------------------+
 1 row in set, 2 warnings (0.00 sec)
 ```
 虽然可以正常使用，但是只有部分被使用到了。
 
 ```mysql
-mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.classid=1 AND student.name ='abcd ' ;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.classid=1 AND student.name ='abcd';
 +----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
 | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows    | filtered | Extra       |
 +----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
@@ -261,7 +271,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.classid=1 AND st
 ```
 此时，完全没有使用上索引。
 
-> 结论:MySQL可以为多个字段创建索引，一个索引可以包括16个字段。对于多列索引，过滤条件要使用索引必须按照索引建立时的顺序，依次满足，一旦跳过某个字段，索引后面的字段都无法被使用。如果查询条件中没有使用这些字段中第1个字段时，多列(或联合)索引不会被使用。
+> 结论: MySQL可以为多个字段创建索引，一个索引可以包括16个字段。对于多列索引，过滤条件要使用索引必须按照索引建立时的顺序，依次满足，一旦跳过某个字段，索引后面的字段都无法被使用。如果查询条件中没有使用这些字段中第1个字段时，多列(或联合)索引不会被使用。
 
 > 拓展：Alibaba《Java开发手册》: 索引文件具有 B-Tree 的最左前缀匹配特性，如果左边的值未确定，那么无法使用此索引。
 
@@ -274,9 +284,9 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.classid=1 AND st
 
 ![主键顺序插入1](../../img/mysql/mysql索引优化与查询优化/1.主键顺序插入2.png)
 
-可这个数据页已经满了，再插进来咋办呢？我们需要把当前 页面分裂 成两个页面，把本页中的一些记录移动到新创建的这个页中。页面分裂和记录移位意味着什么？意味着： 性能损耗 ！所以如果我们想尽量避免这样无谓的性能损耗，最好让插入的记录的 主键值依次递增 ，这样就不会发生这样的性能损耗了。
+可这个数据页已经满了，再插进来咋办呢？我们需要把当前 页面分裂 成两个页面，把本页中的一些记录移动到新创建的这个页中。页面分裂和记录移位意味着什么？意味着: 性能损耗! 所以如果我们想尽量避免这样无谓的性能损耗，最好让插入的记录的 主键值依次递增 ，这样就不会发生这样的性能损耗了。
 
-所以我们建议：让主键具有 AUTO_INCREMENT ，让存储引擎自己为表生成主键，而不是我们手动插入 ，比如： person_info 表：
+所以我们建议: 让主键具有 AUTO_INCREMENT, 让存储引擎自己为表生成主键, 而不是我们手动插入, 比如: person_info 表：
 ```mysql
 CREATE TABLE person_info( 
 	id INT UNSIGNED NOT NULL AUTO_INCREMENT, 
@@ -311,8 +321,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.name LIKE 'abc%'
 |  1 | SIMPLE      | student | NULL       | range | idx_name      | idx_name | 63      | NULL |  181 |   100.00 | Using index condition |
 +----+-------------+---------+------------+-------+---------------+----------+---------+------+------+----------+-----------------------+
 1 row in set, 2 warnings (0.00 sec)
-```
-```mysql
+
 mysql> SELECT SQL_NO_CACHE * FROM student WHERE student.name LIKE 'abc%';
 181 rows in set, 1 warning (0.00 sec)
 ```
@@ -325,8 +334,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE LEFT(student.name,3) = '
 |  1 | SIMPLE      | student | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 3990115 |   100.00 | Using where |
 +----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
 1 row in set, 2 warnings (0.00 sec)
-```
-```mysql
+
 mysql> SELECT SQL_NO_CACHE * FROM student WHERE LEFT(student.name,3) = 'abc';
 ```
 type为“ALL”，表示没有使用到索引，查询时间为 3.62 秒，查询效率较之前低很多。
@@ -420,9 +428,14 @@ name=123发生类型转换，索引失效。
 
 如果系统经常出现的sql如下:
 ```mysql
+-- mysql5
 ALTER TABLE student DROP INDEX idx_name; 
 ALTER TABLE student DROP INDEX idx_age; 
 ALTER TABLE student DROP INDEX idx_age_classid;
+-- mysql8 
+ALTER TABLE student ALTER INDEX idx_name INVISIBLE;
+ALTER TABLE student ALTER INDEX idx_age INVISIBLE;
+ALTER TABLE student ALTER INDEX idx_age_classid INVISIBLE;
 
 mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND student.classId>20 AND student.name = 'abc' ;
 +----+-------------+---------+------------+-------+----------------------+----------------------+---------+------+-------+----------+----------------------------------+
@@ -432,7 +445,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND stude
 +----+-------------+---------+------------+-------+----------------------+----------------------+---------+------+-------+----------+----------------------------------+
 1 row in set, 2 warnings (0.00 sec)
 ```
-可以看到, ken_len 是 10, 原因是 age、classid 用到了索引，name 没有用到索引，age和classid为 int 类型的字段占4个字节，且可以为NULL占1个字节，加起来就是10字节。如果name用到了索引，那应该加上 name 占的63字节(varchar占3字节，varchar是可变的占2字节，name是可以为NULL的占用1字节)，三个字段都用到索引后，key_len的总大小应该是73。
+可以看到, ken_len 是 10, 原因是 age、classid 用到了索引，name 没有用到索引，age和classid为 int 类型的字段占4个字节，且可以为NULL占1个字节，加起来就是10字节。如果name用到了索引，那应该加上 name 占的63字节(utf8mb3中一个字符占3字节, 且varchar是变长的, 要占2字节, 且 name 可以为 NULL占用1字节)，三个字段都用到索引后，key_len的总大小应该是73。
 
 那么索引 idx_age_classid_name 就不能正常使用了(name 未使用到索引)。
 
@@ -452,7 +465,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE student.age=30 AND stude
 +----+-------------+---------+------------+-------+-------------------------------------------+----------------------+---------+------+------+----------+-----------------------+
 1 row in set, 2 warnings (0.00 sec)
 ```
-> 应用开发中范围查询，例如:金额查询，日期查询往往都是范围查询。应将查询条件放置where语句最后。
+> 应用开发中范围查询，例如: 金额查询，日期查询往往都是范围查询, 应将查询条件放置where语句最后。
 
 ## 2.7 不等于(!= 或者<>)索引失效
 为name字段创建索引
@@ -502,10 +515,10 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age IS NOT NULL;
 +----+-------------+---------+------------+------+-------------------------------------------+------+---------+------+---------+----------+-------------+
 1 row in set, 2 warnings (0.00 sec)
 ```
-> 结论:最好在设计数据表的时候就将字段设置为NOT NULL 约束，比如你可以将INT类型的字段，默认值设置为0。将字符类型的默认值设置为空字符串('')。
+> 结论: 最好在设计数据表的时候就将字段设置为NOT NULL 约束，比如你可以将INT类型的字段，默认值设置为0。将字符类型的默认值设置为空字符串('')。
 
 ## 2.9 like以通配符%开头索引失效
-在使用LIKE关键字进行查询的查询语句中，如果匹配字符串的第一个字符为“%”，索引就不会起作用。只有“%"不在第一个位置，索引才会起作用。
+在使用LIKE关键字进行查询的查询语句中，如果匹配字符串的第一个字符为`'%'`，索引就不会起作用。只有`'%'`不在第一个位置，索引才会起作用。
 
 使用到索引
 ```mysql
@@ -562,7 +575,7 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 10 OR name = 'Abel
 统一使用utf8mb4( 5.5.3版本以上支持)兼容性更好，统一字符集可以避免由于字符集转换产生的乱码。不同的 字符集 进行比较前需要进行 转换 会造成索引失效。
 
 ## 2.12 练习及一般性建议
-练习:假设: index(a,b,c)
+练习: 假设: index(a,b,c)
 
 ![练习](../../img/mysql/mysql索引优化与查询优化/2.练习.png)
 
@@ -573,7 +586,6 @@ mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 10 OR name = 'Abel
 - 在选择组合索引的时候，如果某个字段可能出现范围查询时，尽量把这个字段放在索引次序的最后面。
 
 总之，书写SQL语句时，尽量避免造成索引失效的情况。
-
 
 # 三、关联查询优化
 ## 3.1 数据准备
