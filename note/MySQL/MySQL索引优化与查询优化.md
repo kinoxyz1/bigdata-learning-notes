@@ -1051,7 +1051,7 @@ mysql> explain format=tree select sql_no_cache count(1) from student join class 
 可以看到在MySQL 8.4.2版本中已经支持非等值连接、外连接等Join。
 
 
-Join字段添加索引
+#### Join字段添加索引
 ```sql
 -- t1表添加索引
 mysql> create index idx_monitor on class(monitor);
@@ -1073,7 +1073,7 @@ mysql> drop index idx_monitor on class;
 ```
 已经变成Index Nested Loop Join
 
-使用hint（BNL和NO_BNL）将hash join启用和关闭
+#### 使用hint（BNL和NO_BNL）将hash join启用和关闭
 
 使用NO_BNL(t1,t2)退化为Nested loop inner join
 
