@@ -1251,7 +1251,7 @@ EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age,classid limit 10;
 过程二: order by 时不 limit, 索引失效
 ```mysql
 # 创建索引
-CREATE TINDEX idx_age_classid_name ON student (age, classid, name);
+CREATE INDEX idx_age_classid_name ON student (age, classid, name);
 
 # 不限制，索引失效
 EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age, classid;
@@ -1276,8 +1276,7 @@ EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age limit 10;
 ```mysql
 EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid ASC LIMIT 10;
 EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY classid DESC, name DESC LIMIT 10;
-EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid DESC LIMIT 10;
-EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid DESC LIMIT 10;
+EXPLAIN SELECT SQL_NO_CACHE * FROM student ORDER BY age DESC, classid DESC LIMIT 10;  -- Backward index scan(倒序索引)
 ```
 结论: order by 子句，尽量使用 Index 方式排序，避免使用 FileSort 方式排序。
 
@@ -1290,7 +1289,8 @@ EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE classid = 45 ORDER BY age limit
 ```
 小结:
 ```sql
-INDEX a_b_c(a,b,c) order by 能使用索引最左前缀
+INDEX a_b_c(a,b,c) 
+order by 能使用索引最左前缀
 - ORDER BY a
 - ORDER BY a,b
 - ORDER BY a,b,c
@@ -1306,7 +1306,7 @@ INDEX a_b_c(a,b,c) order by 能使用索引最左前缀
 - WHERE a in (...) ORDER BY b,c /*对于排序来说，多个相等条件也是范围查询*/
 ```
 ## 5.3 案例实战
-执行案例前先清楚 student 上的索引，只留主键
+执行案例前先清除 student 上的索引，只留主键
 ```mysql
 drop index idx_age on student;
 drop index idx_age_classid_stuno on student;
@@ -1317,13 +1317,43 @@ call proc_drop_index('kinodb','student');
 ```
 场景:查询年龄为30岁的，且学生编号小于101000的学生，按用户名称排序
 ```mysql
-EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
+mysql> explain SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
++----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows    | filtered | Extra       |
++----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ALL  | NULL          | NULL | NULL    | NULL | 4987260 |     3.33 | Using where |
++----+-------------+---------+------------+------+---------------+------+---------+------+---------+----------+-------------+
+1 row in set, 2 warnings (0.00 sec)
+            
+mysql> SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME;
++----------+
+| count(1) |
++----------+
+|        0 |
++----------+
+1 row in set, 1 warning (1.10 sec)
 ```
 > type 是 ALL，即最坏的情况。Extra 里还出现了 Using filesort，也是最坏的情况，优化是必须的。
 
 优化方案一: 为了去掉 filesort， 可以把索引建成
 ```mysql
 create index idx_age_name on student(age,name);
+
+mysql> explain SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
++----+-------------+---------+------------+------+---------------+--------------+---------+-------+--------+----------+-------------+
+| id | select_type | table   | partitions | type | possible_keys | key          | key_len | ref   | rows   | filtered | Extra       |
++----+-------------+---------+------------+------+---------------+--------------+---------+-------+--------+----------+-------------+
+|  1 | SIMPLE      | student | NULL       | ref  | idx_age_name  | idx_age_name | 5       | const | 201372 |    33.33 | Using where |
++----+-------------+---------+------------+------+---------------+--------------+---------+-------+--------+----------+-------------+
+1 row in set, 2 warnings (0.00 sec)
+
+mysql> SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
++----------+
+| count(1) |
++----------+
+|        0 |
++----------+
+1 row in set, 1 warning (7.67 sec)
 ```
 优化方案二: 尽量让 where 的过滤条件和排序使用上索引
 
@@ -1333,23 +1363,66 @@ create index idx_age_name on student(age,name);
 DROP INDEX idx_age_name ON student; 
 
 # 创建索引
-CREATE INDEX idx_age_stuno_name ON student (age,stuno,NAME); 
+CREATE INDEX idx_age_stuno_name ON student (age,stuno,NAME);
 
-EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 30 AND stuno <101000 ORDER BY NAME ;
+mysql> EXPLAIN SELECT SQL_NO_CACHE * FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
++----+-------------+---------+------------+-------+---------------------------------+--------------------+---------+------+------+----------+-------------------------+
+| id | select_type | table   | partitions | type  | possible_keys                   | key                | key_len | ref  | rows | filtered | Extra                   |
++----+-------------+---------+------------+-------+---------------------------------+--------------------+---------+------+------+----------+-------------------------+
+|  1 | SIMPLE      | student | NULL       | range | idx_age_name,idx_age_stuno_name | idx_age_stuno_name | 9       | NULL |    1 |   100.00 | Using indeUsing filesort |
++----+-------------+---------+------------+-------+---------------------------------+--------------------+---------+------+------+----------+-------------------------+
+1 row in set, 2 warnings (0.00 sec)
+            
+mysql> SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
++----------+
+| count(1) |
++----------+
+|        0 |
++----------+
+1 row in set, 1 warning (0.00 sec)
 ```
 结果竟然有 filesort的 sql 运行速度， 超过了已经优化掉 filesort的 sql ，而且快了很多，几乎一瞬间就出现了结果.
 
 > 结论: 
-> 1. 两个索引同时存在，mysql自动选择最优的方案。（对于这个例子，mysql选择idx_age_stuno_name）。但是， 随着数据量的变化，选择的索引也会随之变化的 。
+> 1. 两个索引同时存在，mysql自动选择最优的方案. (对于这个例子，mysql选择idx_age_stuno_name). 但是, 随着数据量的变化, 选择的索引也会随之变化的 。
 > 2. 当【范围条件】和【group by 或者 order by】的字段出现二选一时，优先观察条件字段的过滤数量，如果过滤的数据足够多，而需要排序的数据并不多时，优先把索引放在范围字段上。反之，亦然。
 
 思考：这里我们使用如下索引，是否可行？
 ```mysql
-DROP INDEX idx_age_stuno_name ON student; 
+mysql> DROP INDEX idx_age_stuno_name ON student;
 
-CREATE INDEX idx_age_stuno ON student(age,stuno);
+mysql> CREATE INDEX idx_age_stuno ON student(age,stuno);
+mysql> SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 101000 ORDER BY NAME ;
 ```
+答: 如果age和stuno两个条件能过滤掉绝大部分数据, 那可行. 否则索引最好加上 name, 因为没有过滤掉大部分数据, 还要 order by, 需要 filesort.
+```mysql
+mysql> explain SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno > 1 ORDER BY NAME ;
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+--------+----------+----------------------------------+
+| id | select_type | table   | partitions | type  | possible_keys | key           | key_len | ref  | rows   | filtered | Extra                            |
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+--------+----------+----------------------------------+
+|  1 | SIMPLE      | student | NULL       | range | idx_age_stuno | idx_age_stuno | 9       | NULL | 209708 |   100.00 | Using index condition; Using MRR |
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+--------+----------+----------------------------------+
+1 row in set, 2 warnings (0.00 sec)
 
+mysql> explain SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno < 1 ORDER BY NAME ;
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+------+----------+-----------------------+
+| id | select_type | table   | partitions | type  | possible_keys | key           | key_len | ref  | rows | filtered | Extra                 |
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+------+----------+-----------------------+
+|  1 | SIMPLE      | student | NULL       | range | idx_age_stuno | idx_age_stuno | 9       | NULL |    1 |   100.00 | Using index condition |
++----+-------------+---------+------------+-------+---------------+---------------+---------+------+------+----------+-----------------------+
+1 row in set, 2 warnings (0.00 sec)
+
+mysql> CREATE INDEX idx_age_stuno_name ON student(age,stuno, name);
+
+mysql>
+mysql> explain SELECT SQL_NO_CACHE count(1) FROM student WHERE age = 30 AND stuno > 1 ORDER BY NAME ;
++----+-------------+---------+------------+-------+----------------------------------+--------------------+---------+------+--------+----------+--------------------------+
+| id | select_type | table   | partitions | type  | possible_keys                    | key                | key_len | ref  | rows   | filtered | Extra                    |
++----+-------------+---------+------------+-------+----------------------------------+--------------------+---------+------+--------+----------+--------------------------+
+|  1 | SIMPLE      | student | NULL       | range | idx_age_stuno,idx_age_stuno_name | idx_age_stuno_name | 9       | NULL | 192098 |   100.00 | Using where; Using index |
++----+-------------+---------+------------+-------+----------------------------------+--------------------+---------+------+--------+----------+--------------------------+
+1 row in set, 2 warnings (0.01 sec)
+```
 
 ## 5.4 filesort算法：双路排序和单路排序
 排序的字段若如果不在索引列上，则filesort会有两种算法:双路排序和单路排序
