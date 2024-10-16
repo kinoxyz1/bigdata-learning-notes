@@ -16,7 +16,7 @@
 - [第10章：索引优化与查询优化](MySQL索引优化与查询优化.md)
 - [第11章：数据库的设计规范](MySQL数据库的设计规范.md)
 - [第12章：数据库其他调优策略](MySQL数据库其它调优策略.md)
-- [额外增加: MySQL 调优整体思路](https://cloud.tencent.com/developer/article/1115909)
+- [额外增加: MySQL 调优整体思路](https://cloud.tencent.com/developer/article/1357879)
 ## 事物篇
 - [第13章：事物基础知识](MYSQL事务.md)
 - [第14章：MySQL事务日志](MYSQL事务日志.md)
