@@ -423,7 +423,7 @@
 <summary>Milvus</summary>
 
 - [向量数据库Milvus](note/ai/Milvus-部署.md)
-- [向量数据库Milvus备份还原](note/ai/Milvus-备份还原)
+- [向量数据库Milvus备份还原](note/ai/Milvus-备份还原.md)
 
 </details>
 
