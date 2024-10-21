@@ -420,6 +420,13 @@
 </details>
 
 <details>
+<summary>Ansible</summary>
+
+- [Ansible 安装使用](note/Ansible/Ansible安装使用.md)
+
+</details>
+
+<details>
 <summary>Milvus</summary>
 
 - [向量数据库Milvus](note/ai/Milvus-部署.md)
@@ -469,7 +476,7 @@
 <details>
 <summary>Docker</summary>
 
-* [CentOS7 YUM安装 docker](note/docker/CentOS7安装Docker.md)
+* [CentOS7 YUM安装 docker](note/docker/CentOS7安装Dosupercker.md)
 * [CentOS7 离线安装 docker](note/docker/CentOS7离线安装Docker.md)
 * [CentOS7 降级 Docker](note/docker/CentOS7降级Docker.md)
 * [Docker 常用命令](note/docker/Docker常用命令.md)
