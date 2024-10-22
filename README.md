@@ -270,6 +270,7 @@
 * [MySQL 约束](note/MySQL/MySQL约束.md)
 * [MySQL基础(尚硅谷宋红康)](note/MySQL/mysql基础.md)
 * [MySQL高级(尚硅谷宋红康)](note/MySQL/mysql高级.md)
+* [MySQL 修改redo log参数](note/MySQL/修改redolog参数.md)
 
 </details>
 
@@ -476,7 +477,7 @@
 <details>
 <summary>Docker</summary>
 
-* [CentOS7 YUM安装 docker](note/docker/CentOS7安装Dosupercker.md)
+* [CentOS7 YUM安装 docker](note/docker/CentOS7安装Docker.md)
 * [CentOS7 离线安装 docker](note/docker/CentOS7离线安装Docker.md)
 * [CentOS7 降级 Docker](note/docker/CentOS7降级Docker.md)
 * [Docker 常用命令](note/docker/Docker常用命令.md)
