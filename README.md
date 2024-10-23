@@ -271,6 +271,7 @@
 * [MySQL基础(尚硅谷宋红康)](note/MySQL/mysql基础.md)
 * [MySQL高级(尚硅谷宋红康)](note/MySQL/mysql高级.md)
 * [MySQL 修改redo log参数](note/MySQL/修改redolog参数.md)
+* [MySQL 性能测试(sysbench)](note/MySQL/性能测试.md)
 
 </details>
 
