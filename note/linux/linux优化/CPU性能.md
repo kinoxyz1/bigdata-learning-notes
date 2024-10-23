@@ -336,7 +336,12 @@ $ tcpdump -i docker0 -n tcp
 
 
 
+# 总结
+![CPU性能指标总结](../../../img/linux/CPU性能指标/CPU性能指标总结.png)
 
+![CPU性能指标总结2](../../../img/linux/CPU性能指标/CPU性能指标总结2.png)
+
+![CPU性能指标总结3](../../../img/linux/CPU性能指标/CPU性能指标总结3.png)
 
 
 
