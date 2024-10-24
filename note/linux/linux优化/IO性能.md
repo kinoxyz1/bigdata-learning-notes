@@ -8,6 +8,9 @@
 
 # 一、iowait 过高的情况
 如下一段python程序在运行(**直接复制粘贴先不要看写的什么, 避免看问题的时候会先入为主**)
+
+运行 python 之前先运行: `echo 3 > /proc/sys/vm/drop_caches` 把缓存清理了
+
 ```bash
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
