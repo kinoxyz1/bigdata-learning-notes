@@ -4,8 +4,8 @@ docker
 mkdir -p /etc/systemd/system/docker.service.d
 tee /etc/systemd/system/docker.service.d/http-proxy.conf << EOF
 [Service]
-Environment="HTTP_PROXY=http://your_proxy_ip:your_proxy_port"
-Environment="HTTPS_PROXY=http://your_proxy_ip:your_proxy_port"
+Environment="HTTP_PROXY=http://127.0.0.1:7890"
+Environment="HTTPS_PROXY=http://127.0.0.1:7890"
 Environment="NO_PROXY=localhost,127.0.0.1"
 EOF
 
