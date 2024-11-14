@@ -186,18 +186,52 @@ MiB Swap:      0.0 total,      0.0 free,      0.0 used.   6751.1 avail Mem
 
 
 # 三、CPU使用率
+Linux 作为一个多任务操作系统，将每个 CPU 的时间划分为很短的时间片，再通过调度器轮流分配给各个任务使用，因此造成多任务同时运行的错觉。
 
+Linux 通过事先定义的节拍率（内核中表示为 HZ），触发时间中断，并使用全局变量 Jiffies 记录了开机以来的节拍数。每发生一次时间中断，Jiffies 的值就加 1。
 
+节拍率 HZ 是内核的可配选项，可以设置为 100、250、1000 等。不同的系统可能设置不同数值，你可以通过查询 /boot/config 内核选项来查看它的配置值。
+```bash
+$ grep 'CONFIG_HZ=' /boot/config-$(uname -r)
+CONFIG_HZ=250
+```
 
+CPU 使用率，就是除了空闲时间外的其他时间占总 CPU 时间的百分比，用公式来表示就是：
 
+CPU 使用率=1-$\frac{空闲时间new-空闲时间old}{总cpu时间new-总cpu时间old}$
 
+top查看cpu使用率
+```bash
+# 默认每3秒刷新一次
+$ top
+top - 11:58:59 up 9 days, 22:47,  1 user,  load average: 0.03, 0.02, 0.00
+Tasks: 123 total,   1 running,  72 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.3 us,  0.3 sy,  0.0 ni, 99.3 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :  8169348 total,  5606884 free,   334640 used,  2227824 buff/cache
+KiB Swap:        0 total,        0 free,        0 used.  7497908 avail Mem
 
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+    1 root      20   0   78088   9288   6696 S   0.0  0.1   0:16.83 systemd
+    2 root      20   0       0      0      0 S   0.0  0.0   0:00.05 kthreadd
+    4 root       0 -20       0      0      0 I   0.0  0.0   0:00.00 kworker/0:0H
+...
+```
+第三行 %Cpu 就是系统的 CPU 使用率, top 默认显示的是所有 CPU 的平均值，这个时候你只需要按下数字 1 ，就可以切换到每个 CPU 的使用率了
 
+继续往下看，空白行之后是进程的实时信息，每个进程都有一个 %CPU 列，表示进程的 CPU 使用率。它是用户态和内核态 CPU 使用率的总和，包括进程用户空间使用的 CPU、通过系统调用执行的内核空间 CPU 、以及在就绪队列等待运行的 CPU。在虚拟化环境中，它还包括了运行虚拟机占用的 CPU。
 
+pidstat 查看进程cpu使用率
+```bash
+# 每隔1秒输出一组数据，共输出5组
+$ pidstat 1 5
+15:56:02      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+15:56:03        0     15006    0.00    0.99    0.00    0.00    0.99     1  dockerd
 
+...
 
-
-
+Average:      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+Average:        0     15006    0.00    0.99    0.00    0.00    0.99     -  dockerd
+```
 
 
 
