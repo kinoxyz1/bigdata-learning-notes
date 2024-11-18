@@ -233,11 +233,213 @@ Average:      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Comma
 Average:        0     15006    0.00    0.99    0.00    0.00    0.99     -  dockerd
 ```
 
+## 3.1 cpu使用率案例
+安装: `apt install docker.io sysstat linux-tools-common apache2-utils`
 
+```bash
+$ docker run --name nginx -p 10000:80 -itd feisky/nginx:sp
+$ docker run --name phpfpm -itd --network container:nginx feisky/php-fpm:sp
+```
+使用 curl 访问 http://[VM1 的 IP]:10000，确认 Nginx 已正常启动。你应该可以看到 It works! 的响应。
+```bash
+$ curl http://127.0.0.1:10000/
+It works!
+```
+测试一下这个 Nginx 服务的性能。在第二个终端运行下面的 ab 命令。要注意，与上次操作不同的是，这次我们需要并发 100 个请求测试 Nginx 性能，总共测试 1000 个请求。
+```bash
+# 并发100个请求测试Nginx性能，总共测试1000个请求
+$ ab -c 100 -n 1000 http://127.0.0.1:10000/
+This is ApacheBench, Version 2.3 <$Revision: 1706008 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, 
+...
+Requests per second:    87.86 [#/sec] (mean)
+Time per request:       1138.229 [ms] (mean)
+...
+```
+从 ab 的输出结果我们可以看到，Nginx 能承受的每秒平均请求数，只有 87 多一点，是不是感觉它的性能有点差呀。那么，到底是哪里出了问题呢？我们再用 top 和 pidstat 来观察一下。
 
+这次，我们在第二个终端，将测试的并发请求数改成 5，同时把请求时长设置为 10 分钟（-t 600）。这样，当你在第一个终端使用性能分析工具时， Nginx 的压力还是继续的。
 
+继续在第二个终端运行 ab 命令：
+```bash
+$ ab -c 5 -t 600 http://127.0.0.1:10000/
+```
+在第一个终端运行 top 命令，观察系统的 CPU 使用情况：
+```bash
+$ top
+...
+%Cpu(s): 80.8 us, 15.1 sy,  0.0 ni,  2.8 id,  0.0 wa,  0.0 hi,  1.3 si,  0.0 st
+...
 
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 6882 root      20   0    8456   5052   3884 S   2.7  0.1   0:04.78 docker-containe
+ 6947 systemd+  20   0   33104   3716   2340 S   2.7  0.0   0:04.92 nginx
+ 7494 daemon    20   0  336696  15012   7332 S   2.0  0.2   0:03.55 php-fpm
+ 7495 daemon    20   0  336696  15160   7480 S   2.0  0.2   0:03.55 php-fpm
+10547 daemon    20   0  336696  16200   8520 S   2.0  0.2   0:03.13 php-fpm
+10155 daemon    20   0  336696  16200   8520 S   1.7  0.2   0:03.12 php-fpm
+10552 daemon    20   0  336696  16200   8520 S   1.7  0.2   0:03.12 php-fpm
+15006 root      20   0 1168608  66264  37536 S   1.0  0.8   9:39.51 dockerd
+ 4323 root      20   0       0      0      0 I   0.3  0.0   0:00.87 kworker/u4:1
+...
+```
+CPU 使用率最高的进程也只不过才 2.7%，看起来并不高。系统的整体 CPU 使用率是比较高的：用户 CPU 使用率（us）已经到了 80%，系统 CPU 为 15.1%，而空闲 CPU （id）则只有 2.8%。
 
+为什么用户 CPU 使用率这么高呢？我们再重新分析一下进程列表，看看有没有可疑进程：
+- docker-containerd 进程是用来运行容器的，2.7% 的 CPU 使用率看起来正常；
+- Nginx 和 php-fpm 是运行 Web 服务的，它们会占用一些 CPU 也不意外，并且 2% 的 CPU 使用率也不算高；
+- 再往下看，后面的进程呢，只有 0.3% 的 CPU 使用率，看起来不太像会导致用户 CPU 使用率达到 80%。
+
+在第一个终端，运行 pidstat 命令：
+```bash
+# 间隔1秒输出一组数据（按Ctrl+C结束）
+$ pidstat 1
+...
+04:36:24      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+04:36:25        0      6882    1.00    3.00    0.00    0.00    4.00     0  docker-containe
+04:36:25      101      6947    1.00    2.00    0.00    1.00    3.00     1  nginx
+04:36:25        1     14834    1.00    1.00    0.00    1.00    2.00     0  php-fpm
+04:36:25        1     14835    1.00    1.00    0.00    1.00    2.00     0  php-fpm
+04:36:25        1     14845    0.00    2.00    0.00    2.00    2.00     1  php-fpm
+04:36:25        1     14855    0.00    1.00    0.00    1.00    1.00     1  php-fpm
+04:36:25        1     14857    1.00    2.00    0.00    1.00    3.00     0  php-fpm
+04:36:25        0     15006    0.00    1.00    0.00    0.00    1.00     0  dockerd
+04:36:25        0     15801    0.00    1.00    0.00    0.00    1.00     1  pidstat
+04:36:25        1     17084    1.00    0.00    0.00    2.00    1.00     0  stress
+04:36:25        0     31116    0.00    1.00    0.00    0.00    1.00     0  atopacctd
+...
+```
+所有进程的 CPU 使用率也都不高啊，最高的 Docker 和 Nginx 也只有 4% 和 3%，即使所有进程的 CPU 使用率都加起来，也不过是 21%，离 80% 还差得远
+
+回到第一个终端，重新运行 top 命令，并观察一会儿：
+```bash
+$ top
+top - 04:58:24 up 14 days, 15:47,  1 user,  load average: 3.39, 3.82, 2.74
+Tasks: 149 total,   6 running,  93 sleeping,   0 stopped,   0 zombie
+%Cpu(s): 77.7 us, 19.3 sy,  0.0 ni,  2.0 id,  0.0 wa,  0.0 hi,  1.0 si,  0.0 st
+KiB Mem :  8169348 total,  2543916 free,   457976 used,  5167456 buff/cache
+KiB Swap:        0 total,        0 free,        0 used.  7363908 avail Mem
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 6947 systemd+  20   0   33104   3764   2340 S   4.0  0.0   0:32.69 nginx
+ 6882 root      20   0   12108   8360   3884 S   2.0  0.1   0:31.40 docker-containe
+15465 daemon    20   0  336696  15256   7576 S   2.0  0.2   0:00.62 php-fpm
+15466 daemon    20   0  336696  15196   7516 S   2.0  0.2   0:00.62 php-fpm
+15489 daemon    20   0  336696  16200   8520 S   2.0  0.2   0:00.62 php-fpm
+ 6948 systemd+  20   0   33104   3764   2340 S   1.0  0.0   0:00.95 nginx
+15006 root      20   0 1168608  65632  37536 S   1.0  0.8   9:51.09 dockerd
+15476 daemon    20   0  336696  16200   8520 S   1.0  0.2   0:00.61 php-fpm
+15477 daemon    20   0  336696  16200   8520 S   1.0  0.2   0:00.61 php-fpm
+24340 daemon    20   0    8184   1616    536 R   1.0  0.0   0:00.01 stress
+24342 daemon    20   0    8196   1580    492 R   1.0  0.0   0:00.01 stress
+24344 daemon    20   0    8188   1056    492 R   1.0  0.0   0:00.01 stress
+24347 daemon    20   0    8184   1356    540 R   1.0  0.0   0:00.01 stress
+...
+```
+就绪队列中居然有 6 个 Running 状态的进程（6 running）,再仔细看进程列表，这次主要看 Running（R） 状态的进程。你有没有发现， Nginx 和所有的 php-fpm 都处于 Sleep（S）状态，而真正处于 Running（R）状态的，却是几个 stress 进程。这几个 stress 进程就比较奇怪了，需要我们做进一步的分析。
+
+还是使用 pidstat 来分析这几个进程，并且使用 -p 选项指定进程的 PID。首先，从上面 top 的结果中，找到这几个进程的 PID。比如，先随便找一个 24344，然后用 pidstat 命令看一下它的 CPU 使用情况：
+```bash
+$ pidstat -p 24344
+
+16:14:55      UID       PID    %usr %system  %guest   %wait    %CPU   CPU  Command
+```
+奇怪，居然没有任何输出。难道是 pidstat 命令出问题了吗？之前我说过，在怀疑性能工具出问题前，最好还是先用其他工具交叉确认一下。那用什么工具呢？ ps 应该是最简单易用的。我们在终端里运行下面的命令，看看 24344 进程的状态：
+```bash
+# 从所有进程中查找PID是24344的进程
+$ ps aux | grep 24344
+root      9628  0.0  0.0  14856  1096 pts/0    S+   16:15   0:00 grep --color=auto 24344
+```
+还是没有输出。现在终于发现问题，原来这个进程已经不存在了，所以 pidstat 就没有任何输出。既然进程都没了，那性能问题应该也跟着没了吧。我们再用 top 命令确认一下：
+```bash
+$ top
+...
+%Cpu(s): 80.9 us, 14.9 sy,  0.0 ni,  2.8 id,  0.0 wa,  0.0 hi,  1.3 si,  0.0 st
+...
+
+  PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
+ 6882 root      20   0   12108   8360   3884 S   2.7  0.1   0:45.63 docker-containe
+ 6947 systemd+  20   0   33104   3764   2340 R   2.7  0.0   0:47.79 nginx
+ 3865 daemon    20   0  336696  15056   7376 S   2.0  0.2   0:00.15 php-fpm
+  6779 daemon    20   0    8184   1112    556 R   0.3  0.0   0:00.01 stress
+...
+```
+结果还跟原来一样，用户 CPU 使用率还是高达 80.9%，系统 CPU 接近 15%，而空闲 CPU 只有 2.8%，Running 状态的进程有 Nginx、stress 等。
+
+刚刚我们看到 stress 进程不存在了，怎么现在还在运行呢？再细看一下 top 的输出，原来，这次 stress 进程的 PID 跟前面不一样了，原来的 PID 24344 不见了，现在的是 6779。
+
+进程的 PID 在变，这说明什么呢？在我看来，要么是这些进程在不停地重启，要么就是全新的进程，这无非也就两个原因：
+- 第一个原因，进程在不停地崩溃重启，比如因为段错误、配置错误等等，这时，进程在退出后可能又被监控系统自动重启了。
+- 第二个原因，这些进程都是短时进程，也就是在其他应用内部通过 exec 调用的外面命令。这些命令一般都只运行很短的时间就会结束，你很难用 top 这种间隔时间比较长的工具发现（上面的案例，我们碰巧发现了）。
+
+用 pstree 就可以用树状形式显示所有进程之间的关系：
+```bash
+$ pstree | grep stress
+        |-docker-containe-+-php-fpm-+-php-fpm---sh---stress
+        |         |-3*[php-fpm---sh---stress---stress]
+```
+从这里可以看到，stress 是被 php-fpm 调用的子进程，并且进程数量不止一个（这里是 3 个）。找到父进程后，我们能进入 app 的内部分析了。
+
+从代码中可以看到，给请求加入 verbose=1 参数后，就可以查看 stress 的输出。你先试试看，在第二个终端运行：
+```bash
+$ curl http://127.0.0.1:10000?verbose=1
+Server internal error: Array
+(
+    [0] => stress: info: [19607] dispatching hogs: 0 cpu, 0 io, 0 vm, 1 hdd
+    [1] => stress: FAIL: [19608] (563) mkstemp failed: Permission denied
+    [2] => stress: FAIL: [19607] (394) <-- worker 19608 returned error 1
+    [3] => stress: WARN: [19607] (396) now reaping child worker processes
+    [4] => stress: FAIL: [19607] (400) kill error: No such process
+    [5] => stress: FAIL: [19607] (451) failed run completed in 0s
+)
+```
+看错误消息 mkstemp failed: Permission denied ，以及 failed run completed in 0s。原来 stress 命令并没有成功，它因为权限问题失败退出了。看来，我们发现了一个 PHP 调用外部 stress 命令的 bug：没有权限创建临时文件。
+
+从这里我们可以猜测，正是由于权限错误，大量的 stress 进程在启动时初始化失败，进而导致用户 CPU 使用率的升高。
+
+在第一个终端中运行 perf record -g 命令 ，并等待一会儿（比如 15 秒）后按 Ctrl+C 退出。然后再运行 perf report 查看报告：
+```bash
+# 记录性能事件，等待大约15秒后按 Ctrl+C 退出
+$ perf record -g
+
+# 查看报告
+$ perf report
+```
+这样，你就可以看到下图这个性能报告：
+```bash
+Samples: 204K of event 'cpu-clock:ppp', Event count (approx.): 51246750000
+  Children      Self  Command          Shared Object                                         Symbol
+    21.89%    21.57%  stress           libc-2.24.so                                          [.] random                                                                                       ◆
+    16.50%    16.27%  stress           libc-2.24.so                                          [.] random_r                                                                                     ▒
++    6.17%     0.00%  php-fpm          [kernel.kallsyms]                                     [k] entry_SYSCALL_64_after_hwframe                                                               ▒
++    6.17%     0.02%  php-fpm          [kernel.kallsyms]                                     [k] do_syscall_64                                                                                ▒
++    6.08%     0.00%  php-fpm          [kernel.kallsyms]                                     [k] x64_sys_call                                                                                 ▒
+     5.55%     5.46%  stress           libc-2.24.so                                          [.] rand                                                                                         ▒
++    3.68%     0.00%  stress           [kernel.kallsyms]                                     [k] asm_exc_page_fault                                                                           ▒
++    3.68%     0.00%  stress           [kernel.kallsyms]                                     [k] exc_page_fault                                                                               ▒
++    3.63%     0.70%  stress           [kernel.kallsyms]                                     [k] do_user_addr_fault                                                                           ▒
++    3.31%     0.01%  php-fpm          libc-2.24.so                                          [.] _IO_proc_open                                                                                ▒
++    2.90%     0.02%  php-fpm          libc-2.24.so                                          [.] __libc_fork
+...
+```
+你看，stress 占了所有 CPU 时钟事件的 21%，而 stress 调用调用栈中比例最高的，是随机数生成函数 random()，看来它的确就是 CPU 使用率升高的元凶了。随后的优化就很简单了，只要修复权限问题，并减少或删除 stress 的调用，就可以减轻系统的 CPU 压力。
+
+## 3.2 execsnoop
+execsnoop 是一个专为短时进程设计的工具。它通过 ftrace 实时监控进程的 exec() 行为，并输出短时进程的基本信息，包括进程 PID、父进程 PID、命令行参数以及执行的结果。
+```bash
+# 按 Ctrl+C 结束
+$ execsnoop
+PCOMM            PID    PPID   RET ARGS
+sh               30394  30393    0
+stress           30396  30394    0 /usr/local/bin/stress -t 1 -d 1
+sh               30398  30393    0
+stress           30399  30398    0 /usr/local/bin/stress -t 1 -d 1
+sh               30402  30400    0
+stress           30403  30402    0 /usr/local/bin/stress -t 1 -d 1
+sh               30405  30393    0
+stress           30407  30405    0 /usr/local/bin/stress -t 1 -d 1
+...
+```
 
 # 四、不可中断
 - 中断: 由硬件或软件触发信号, 通知CPU需要处理某个任务. 中断可以打断当前正在执行的程序, 以便处理更加紧急的任务, 例如设备输入、系统调用等。处理完中断之后, CPU会恢复到之前的任务.
