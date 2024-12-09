@@ -286,7 +286,10 @@ KiB Swap:        0 total,        0 free,        0 used. 63211820 avail Mem
 
 
 
+参考文章:
+[Java and Docker, the limitations](https://www.royvanrijn.com/blog/2018/05/java-and-docker-memory-limits/)
 
+[Memory inside Linux containers](https://fabiokung.com/2014/03/13/memory-inside-linux-containers/)
 
 
 
