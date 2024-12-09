@@ -493,6 +493,7 @@
 * [docker 的 CI/CD](note/docker/docker的CICD.md)
 * [docker 常用安装m1版](note/docker/Docker常用安装m1版.md)
 * [docker 设置代理](note/docker/docker-proxy.md)
+* [Java和Docker资源限制](note/docker/Java和Docker资源限制.md)
 
 </details>
 
