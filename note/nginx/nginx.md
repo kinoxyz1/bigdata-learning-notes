@@ -4,16 +4,15 @@
 
 
 
----
-# 一、Nginx 简介
-[中文简介文档](https://www.nginx.cn/doc/general/overview.html)
 
-# 二、Centos 安装 Nginx
-## 2.1 安装编译工具及库文件
+---
+# 一、Nginx 安装部署
+## 1.1 安装编译工具及库文件
 ```bash
 $ yum -y install make zlib zlib-devel gcc-c++ libtool  openssl openssl-devel
 ```
-## 2.2 安装 pcre 
+
+## 1.2 安装 pcre
 pcre 作用是 Nginx 支持 Rewrite 功能
 ```bash
 $ cd /usr/local/src
@@ -26,9 +25,8 @@ $ pcre-config --version
 8.35
 ```
 
-## 2.3 编译安装 nginx
+## 1.3 编译安装 nginx
 [Nginx 下载地址](http://nginx.org/)
-
 ```bash
 # 查看编译的帮助文档
 $ ./configure --help
@@ -84,10 +82,25 @@ drwxr-xr-x. 2 root root    6 8月  20 18:56 logs
 drwxr-xr-x. 2 root root   19 8月  20 18:56 sbin
 ```
 
+# 二、Nginx 目录结构
+```bash
+$ cd /usr/local/nginx && ls 
+client_body_temp conf fastcgi_temp html logs proxy_temp sbin scgi_temp uwsgi_temp
+```
+
+其中这几个文件夹在刚安装后是没有的，主要用来存放运行过程中的临时文件
+```bash
+client_body_temp fastcgi_temp proxy_temp scgi_temp
+```
+- conf: 用来存放配置文件相关
+- html: 用来存放静态文件的默认目录 html、css等
+- sbin: nginx的主程序
+
 # 三、Nginx 常用命令
 ```bash
 $ cd /usr/local/nginx/
 ```
+
 ## 3.1 帮助
 ```bash
 $ sbin/nginx -help
@@ -120,7 +133,7 @@ nobody    17990  17989  0 18:49 ?        00:00:00 nginx: worker process
 root      17992  11127  0 18:49 pts/0    00:00:00 grep --color=auto nginx
 ```
 
-## 3.3 暴力停止 
+## 3.3 暴力停止
 ```bash
 $ sbin/nginx -s stop
 ```
@@ -140,38 +153,55 @@ $ sbin/nginx -s reload
 $ sbin/nginx -c /usr/local/nginx/conf/nginx.conf
 ```
 
-## 3.6 热部署
+# 四、location 中的正则表达式
+## 4.1 location 的作用
+location 指令的作用是根据 用户请求的URI 进行匹配, 匹配到了就执行相关操作。
+
+## 4.2 location 语法
 ```bash
+location [=|~|~*|^~] /uri/ {
+   ......
+}
 ```
 
-# 四、Nginx 配置文件
-## 4.1 配置文件路径
+## 4.3 location 正则
+1. `/` 通用匹配, 任何请求都会匹配到.
+2. `=` 精确匹配.
+3. `~` 正则匹配, 区分大小写.
+4. `~*` 正则匹配, 不区分大小写.
+5. `^~` 非正则匹配, 匹配以指定模式开头的 location.
+6. `*` 代表'任意字符'.
+7. `$` 以'什么结尾的匹配'.
+8. `^` 以'什么开头'的匹配.
+9. `!~*` 不区分大小写匹配失败.
+10. `!~` 区分大小写匹配'失败-->!(取反)'.
+
+**备注： `~`开头的都是`正则匹配`,例如`^~`不是正则匹配.**
+
+## 4.4 location 转义
 ```bash
-$ cd /usr/local/nginx/conf
-$ ll
-总用量 68
-...
--rw-r--r--. 1 root root 2656 1月   9 18:45 nginx.conf
-...
+~^/prefix/.*\.html$ 
+ 
+解释：~ 表示后面跟的是'正则',而且是区分大小写的（ "~ "区分大小写,"~* "不区分大小写）
+ 
+~^/prefix/.*\.html$  就是'正则表达式了'
+ 
+1) ^在正则里表示,以什么'开始'
+ 
+2) /prefix/ 表示符合这个'文件夹路径的'
+ 
+3) ".*" 表示匹配'单个字符多次'
+ 
+4) "\." 表示转义 "."  采用 "." 本身,而非他在'正则里'的意思（非\r\n的单个字符）。
+ 
+5) $ 表示以什么'结尾'
 ```
 
-## 4.2 配置文件内容
-配置文件包含如下三部分:
-1. 全局块:
-   
-   比如处理并发数的配置 -> `worker_processes  1;`
-2. events 块: 影响 Nginx 服务器与用户的网络连接
-   
-    由 events 标签括起来的内容, 比如支持最大的连接数 -> `worker_connections  1024;`
-3. http 块
-    1. http 全局块
-    2. server 块
-
-
-# 五、反向代理1
+# 五、反向代理
+## 5.1 示例1
 效果: 在浏览器中输入 `www.kino.com` 跳转到 tomcat 主页面中
 
-## 5.1 部署 tomcat
+### 5.1.1 部署 tomcat
 
 [下载tomcat](https://tomcat.apache.org/download-90.cgi)
 
@@ -195,21 +225,14 @@ $ firewall-cmd --reload
 
 ![tomcat-8080](../../img/nginx/tomcat-80.png)
 
-## 5.2 配置 Nginx
+### 5.1.2 配置 Nginx
 ```config
 $ vim conf/nginx.conf
 server {
         listen       80;
         server_name  192.168.220.111;
-
-        #charset koi8-r;
-
-        #access_log  logs/host.access.log  main;
-
         location / {
-            root   html;
             proxy_pass  http://192.168.220.111:8080;
-            index  index.html index.htm;
         }
 ...
 ```
@@ -221,7 +244,8 @@ $ sbin/nginx -s reload
 
 ![反向代理1](../../img/nginx/kino-com.png)
 
-# 六、反向代理2
+
+## 5.2 示例2
 效果: 根据不同的路径跳转到不同的端口服务中, nginx 监听 9091端口, 访问: `192.168.220.111:9091/edu` 跳转到 8080的tomcat, 访问 `192.168.220.111:9092/vod` 跳转到 8081 端口的tomcat
 
 准备两个tomcat, 修改 tomcat 配置文件改端口
@@ -318,8 +342,40 @@ $ sbin/nginx -s reload
 
 ![vod](../../img/nginx/vod.png)
 
+## 5.3 动静分离
+如果用户请求为静态资源, 直接通过nginx获取不用将请求转发到后端接口。
+```bash
+server {
+        listen       9091;
+        server_name  192.168.220.111;
+        
+        location / {
+            proxy_pass  http://192.168.220.111:8080;
+        }
+        
+        location /css {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+        location /img {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+        location /js {
+            root /usr/local/nginx/static;
+            index index.html index.htm;
+        }
+}
+```
+使用一个 location(正则) 转发 `/css、/img、/js`.
+```bash
+location ~*/(css|img|js) {
+  root /usr/local/nginx/static;
+  index index.html index.htm;
+}
+```
 
-# 七、负载均衡
+# 六、负载均衡
 效果: 在浏览器中输入 `192.168.220.111/edu/login.html`, 平均分配到 8080 和 8081 端口上
 
 准备如上两个tomcat, 将 vod 修改成 edu
@@ -347,7 +403,6 @@ http {
         server 192.168.220.111:8081;
     }
 
-
     server {
         listen       80;
         server_name  192.168.220.111;
@@ -367,29 +422,421 @@ http {
 ```bash
 $ sbin/nginx -s reload
 ```
-在浏览器中输入: `192.168.220.111/edu/login.html`, nginx 将以轮询(默认)的方式进行负载均衡
+在浏览器中输入: `192.168.220.111/edu/login.html`, nginx 将以**轮询(默认)**的方式进行负载均衡。
 
-此外 upstream 还有另外两种分配策略:
-- 按权重(weight): 指定轮询几率, weight 和访问率成正比, 用于服务器性能不均的情况;
-  ```bash
+## 6.1 负载均衡策略
+1. 轮询(默认): 默认情况下使用轮询方式，逐一转发，这种方式适用于无状态请求;
+2. weight: 指定轮询几率, weight 和访问率成正比, 用于服务器性能不均的情况;
+   ```bash
    upstream kinoserver{
         server 192.168.220.111:8080 weight=5;
         server 192.168.220.111:8081 weight=10;
     }
-  ```
-- 按IP hash(ip_hash): 按每个请求的ip进行hash结果分配, 这样每个访客固定一个后端服务器, 可以解决 Session 问题;
-  ```bash
+   ```
+3. ip_hash: 按每个请求的ip进行hash结果分配, 这样每个访客固定一个后端服务器, 可以解决 Session 问题;
+   ```bash
    upstream kinoserver{
         ip_hash;
         server 192.168.220.111:8080;
         server 192.168.220.111:8081;
     }
-  ```
-- 第三方(fair): 按后台服务器的响应时间来分配请求, 响应时间短的游侠分配, 和 weight 分配策略类似;
+   ```
+4. fair: 按后台服务器的响应时间来分配请求, 响应时间短的游侠分配, 和 weight 分配策略类似;
    ```bash
    upstream kinoserver{
+     server 192.168.220.111:8080;
+     server 192.168.220.111:8081;
+     fair;
+   }
+   ```
+5. url_hash: 根据用户访问的url定向转发请求
+   ```bash
+   upstream kinoserver{
+        url_hash;
         server 192.168.220.111:8080;
         server 192.168.220.111:8081;
-        fair;
     }
-  ```
+   ```
+
+# 七、root 和 alias 区别
+## 示例1
+```bash
+server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location /nginx/ {
+            root /opt/nginx/;
+        }
+```
+- 在 alias 目录配置下, 访问 192.168.220.111:9091/nginx/a.html 实际上访问的是 /opt/nginx/a.html
+- 在 root 目录配置下, 访问 192.168.220.111:9091/nginx/a.html 实际上访问的是 /opt/nginx/nginx/a.html
+
+## 示例2
+当 location 匹配访问的path 和 alias 设置的目录名不一致时
+```bash
+    server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location /nginx1/ {
+            alias /opt/nginx/;
+        }
+```
+在浏览器中输入: 192.168.220.111:9091/nginx1/a.html 此时可以正常访问
+
+当 location 匹配访问的path 和 root 设置的目录名不一致时
+```bash
+    server {
+        listen       9091;
+        server_name  192.168.220.111;
+
+        location /nginx1/ {
+            root /opt;
+        }
+```
+在浏览器中输入: 192.168.220.111:9091/nginx1/a.html 此时不能正常访问, 查看 nginx 日志发现实际访问的路径是 `/opt/nginx1/a.html`
+```bash
+2021/01/09 20:48:19 [error] 22304#0: *148 open() "/opt/nginx1/a.html" failed (2: No such file or directory), client: 192.168.220.1, server: 192.168.220.111, request: "GET /nginx1/a.html HTTP/1.1", host: "192.168.220.111:9091"
+```
+
+区别:
+- 在 alias 目录配置下, 访问的是 **alias + location<font color='red'>上一级</font>** 组合的地址
+- 在 root 目录配置下, 访问的是 **alias + location** 组合的地址
+- 当 location 匹配目录 和 alias 目录不一致时, 访问的本地目录还是 alias 配置的目录
+- 当 location 匹配目录 和 root 目录不一致时, 需要将 **本地目录名 和 location 匹配访问的path名保持一致**
+
+
+
+# 八、Nginx 斜杠(/) 说明
+1. location 中的字符有没有 `/` 都没有影响。也就是说 `/user` 和 `/user/` 是一样的。
+2. 如果 URL 结构是 `http://domain.com/` 的形式, 尾部有没有 `/` 都不会重定向。因为浏览器在发起请求的时候, 默认加了 `/`。虽然很多浏览器在地址栏里也不会显示 `/`。
+3. 如果 URL 的结构是 `http://domain.com/some-dir/`。尾部缺少 `/` 将导致重定向。因为根据约定，URL 尾部的 `/` 表示目录，没有 `/` 表示文件, 当找不到的话会将 some-dir 当成目录, 重定向到 `/some-dir/`,去该目录下找默认文件。
+
+## 8.1 proxy_pass 末尾带/
+测试地址: http://localhost/test/hello.html
+
+```bash
+测试地址：http://192.168.171.129/test/tes.jsp
+ 
+'场景一'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080/server/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server/tes.jsp -->'test由于匹配,所以会去除,然后拼接未匹配的'
+ 
+'场景二'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/server/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server//tes.jsp
+ 
+'场景三'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080/;
+}
+代理后实际访问地址：http://192.168.171.129:8080/tes.jsp
+ 
+'场景四':
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/;
+}
+代理后实际访问地址：http://192.168.171.129:8080//tes.jsp
+```
+
+## 8.2 proxy_pass 末尾不带/
+测试地址: http://localhost/test/hello.html
+```bash
+### 末尾不带/
+
+proxy_pass配置中'url末尾不带/时',如url中'不包含path',则直接将'原uri拼接'在proxy_pass中url之后；如url中'包含path',则将原uri'去除location匹配表达式后的内容'拼接在proxy_pass中的url之后
+
+ 测试地址：http://192.168.171.129/test/tes.jsp
+'场景一'：
+ location ^~ /test/{
+	proxy_pass http://192.168.171.129:8080/server;
+ }
+ 代理后实际访问地址：http://192.168.171.129:8080/'servertes.jsp' -->'去除"/test/",然后拼接'
+'场景二'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080/server;
+}
+代理后实际访问地址：http://192.168.171.129:8080/server/tes.jsp   -->'去除"/test",然后拼接"/tes.jsp"-->场景一和场景二的区别'
+ 
+'场景三'：
+location ^~ /test/ {
+    proxy_pass http://192.168.171.129:8080;
+}
+代理后实际访问地址：http://192.168.171.129:8080/test/tes.jsp     -->'场景三和场景四常用'
+ 
+'场景四'：
+location ^~ /test {
+    proxy_pass http://192.168.171.129:8080;
+}
+代理后实际访问地址：http://192.168.171.129:8080/test/tes.jsp
+```
+# 九、UrlRewrite
+
+# 十、Nginx+Keepalived
+安装 keepalived
+```bash
+yum install -y keepalived
+```
+配置nginx1
+```bash
+vim /etc/nginx/conf.d/web.conf 
+server{
+        listen 8080;
+        root /usr/local/nginx/html;
+        index test.html;
+}
+echo "<h1>This is web1</h1>"  > /usr/local/nginx/html/test.html
+```
+配置nginx2
+```bash
+vim /etc/nginx/conf.d/web.conf 
+server{
+        listen 8080;
+        root /usr/local/nginx/html;
+        index test.html;
+}
+echo "<h1>This is web2</h1>"  > /usr/local/nginx/html/test.html
+```
+启动两个nginx
+```bash
+cd $NGINX_HOME
+./nginx
+```
+配置 keepalived(nginx1)
+```bash
+vim /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+vrrp_script nginx_check {
+  script "/tools/nginx_check.sh"
+  interval 1
+}
+vrrp_instance VI_1 {
+  state MASTER
+  interface ens33
+  virtual_router_id 52
+  priority 100
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass test
+  }
+  virtual_ipaddress {
+    192.168.149.100
+  }
+  track_script {
+    nginx_check
+  }
+  notify_master /tools/master.sh
+  notify_backup /tools/backup.sh
+  notify_fault /tools/fault.sh
+  notify_stop /tools/stop.sh
+}
+```
+配置 keepalived(nginx2)
+```bash
+vim /etc/keepalived/keepalived.conf
+! Configuration File for keepalived
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.200.1
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+   vrrp_skip_check_adv_addr
+   vrrp_garp_interval 0
+   vrrp_gna_interval 0
+}
+vrrp_script nginx_check {
+  script "/tools/nginx_check.sh"
+  interval 1
+}
+vrrp_instance VI_1 {
+  state BACKUP
+  interface ens33
+  virtual_router_id 52
+  priority 99
+  advert_int 1
+  authentication {
+    auth_type PASS
+    auth_pass test
+  }
+  virtual_ipaddress {
+    192.168.149.100
+  }
+  track_script {
+    nginx_check
+  }
+  notify_master /tools/master.sh
+  notify_backup /tools/backup.sh
+  notify_fault /tools/fault.sh
+  notify_stop /tools/stop.sh
+}
+```
+健康检查脚本
+```bash
+vim /etc/keepalived/nginx_check.sh
+#!/bin/bash
+if [ -f /usr/local/nginx/logs/nginx.pid ]; then
+  echo "success"
+  exit 0
+else
+  echo "failed"
+  exit 1
+fi
+
+chmod +x /etc/keepalived/nginx_check.sh
+```
+启动keepalived
+```bash
+vim /etc/keepalived/keepalived.conf
+systemctl stop keepalived.service
+systemctl start keepalived.service
+systemctl status keepalived.service
+```
+访问nginx: http://192.168.149.100:8080, 停止启动一个nginx, 再次查看效果
+
+
+
+# 十一、解决SEE流缓存
+使用了nginx网关,可能会出现nginx缓冲sse流的问题,导致的现象是,客户端调用sse接口时,流数据并不是一条条出现的,而是一口气出现的。
+
+nginx 增加如下配置:
+```bash
+server {
+    listen 80;
+    server_name xxxx;
+    charset utf-8;
+    
+    # 增加如下三个配置
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    
+    location / {
+      # 增加如下三个配置
+      proxy_cache off;
+      proxy_buffering off;
+      add_header X-Accel-Buffering "no";
+      
+      include /usr/local/nginx/conf/proxy;
+      proxy_pass http://xxxxx:xxxx;
+    }
+}
+```
+如果是 ingress nginx 增加如下配置:
+```bash
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_cache off;
+      add_header X-Accel-Buffering "no";
+```
+
+# 十二、默认转发443端口
+
+nginx 的 https 协议是需要 SSL 模块支持的。
+
+检查 nginx 是否安装了 SSL 模块, 如果没有 SSL 模块, 需要重新编译, 然后替换当前的 nginx。
+```bash
+$ ./sbin/nginx -V
+nginx version: nginx/1.18.0
+built by gcc 4.8.5 20150623 (Red Hat 4.8.5-44) (GCC) 
+built with OpenSSL 1.0.2k-fips  26 Jan 2017
+TLS SNI support enabled
+configure arguments: --prefix=/app/nginx/ --with-http_ssl_module
+```
+
+conf 文件, 省略了证书相关步骤
+```bash
+server {
+    listen       80;
+    server_name  raomin.com;
+    rewrite ^(.*) https://$server_name$1 permanent;
+}
+server {
+    listen 443;
+    server_name raomin.com;
+    # 配置你的 ssl
+    ssl on;
+    ssl_certificate      key/server.crt;
+    ssl_certificate_key  key/server.key;
+    ssl_session_cache    shared:SSL:1m;
+    ssl_session_timeout  5m;
+    # ssl_ciphers  HIGH:!aNULL:!MD5;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:HIGH:!aNULL:!MD5:!RC4:!DHE;
+    ssl_prefer_server_ciphers  on;
+
+
+    location / {
+        proxy_redirect ~(.*)http://(.*) $1https://$2;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header Host  $host;
+        proxy_set_header X-Request-Id $request_id;
+        proxy_pass  https://xxxxx; # 你的服务
+    }
+}
+```
+重启 nginx 即可
+```bash
+$ ./sbin/nginx -s reload 
+```
+
+
+# 十三、nginx 缓存
+## 强制缓存
+```bash
+server {
+    listen 80;
+    server_name 127.0.0.1;
+    location ~* \.(jps|png|gif|woff2)$ {
+#       add_header Cache-Control "private, max-age=3600";
+#       add_header Pragma "no-cache";
+       expires 1y;
+       etag off;
+       add_header Last-Modified "";
+       root /Users/kino/Downloads/;
+    }
+}
+```
+
+
+## 协商缓存
+```bash
+server {
+    listen 80;
+    server_name 127.0.0.1;
+    location ~* \.(jps|png|gif|woff2)$ {
+       etag on;
+       root /Users/kino/Downloads/;
+    }
+}
+```

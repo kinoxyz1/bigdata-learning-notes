@@ -299,10 +299,8 @@
 <details>
 <summary>Nginx</summary>
 
-- [nginx 基础](note/nginx/nginx基础.md)
-- [nginx](note/nginx/nginx.md)
-- [nginx常用操作](note/nginx/nginx常用操作.md)
-- [nginx转发80端口到443](note/nginx/nginx转发80端口到443.md)
+- [nginx 基础](note/nginx/nginx.md)
+- [nginx 进程管理](note/nginx/nginx进程管理.md)
 
 </details>
 
