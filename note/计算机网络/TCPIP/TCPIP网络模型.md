@@ -6,16 +6,32 @@
 
 # 一、应用层
 ## 1.1 HTTP
-...
+### 1.1.1 HTTP 是什么
+HTTP 是超文本传输协议，也就是HyperText Transfer Protocol。
+
+- `超文本`: 网页文本、音频、视频、图片、压缩包 的混合体,并且有超链接, 可以从一个超文本跳转到另一个超文本中.
+- `传输`: 把 `超文本` 从 A 传输 到 B, 也可以从 B 传输到 A。这是双向的。
+- `协议`: `协` 表示至少有2个以上的参与者, `议` 表示对行为的约定和规范。
+
+总结就是: HTTP 是计算机世界中, 在 `两点` 之间 `传输` 文字、图片、音频等 `超文本` 数据的约定和规范.
+
+### 1.1.2 GET 和 POST 区别
+
+### 1.1.3 HTTP 缓存技术
+
+### 1.1.4 HTTP 特性
+
+### 1.1.5 HTTP1、HTTP2、HTTP3
+
+### 1.1.6 HTTP 如何优化
 
 ## 1.2 HTTPS
 
-### 1.2.1 HTTPS 握手
+### 1.2.1 HTTP 和 HTTPS
 
-#### 1.2.1.1 HTTPS RSA 握手
+### 1.2.2 HTTPS RSA 握手过程
 
-
-#### 1.2.1.2 HTTPS ECDHE 握手
+### 1.2.3 HTTPS ECDHE 握手过程
 
 ##### 第一次握手
 ###### client hello
@@ -89,6 +105,28 @@
 
 ###### 2.Encrypted Handshake Message
 ![第四次握手_Encrypted_Handshake_Message](../../../img/计算机网络/TCPIP/10.第四次握手_Encrypted_Handshake_Message.png)
+
+
+### 1.2.4 HTTPS 如何优化
+
+1. 硬件优化: 使用更好的CPU, 如支持 AES_NI 指令集的处理器.
+2. 软件优化: 升级内核、openssl.
+3. 协议优化: 
+   4. 使用 ECDHE 协议, 不使用 RSA 协议.
+   4. 秘钥交换算法优化: 使用 x25519 椭圆曲线.
+   5. TLS 升级 v1.3.
+4. 证书优化
+   5. 证书传输优化.
+   6. 证书验证优化.
+5. 会话复用
+   6. Session ID
+   7. Session Ticket
+   8. Pre-shared Key
+
+## 1.3 HTTP 和 RPC
+
+## 1.4 HTTP 和 WebSocket
+
 
 # 二、传输层
 
