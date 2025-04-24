@@ -82,6 +82,34 @@ server {
 
 
 #### 协商缓存
+协商缓存 区别于 强制缓存 的地方在, 协商缓存必定会向服务器发起请求, 是否使用缓存取决于服务器端, 协商缓存有两种实现:
+
+第一种: Request Header 的 `If-Modified-Since` 字段与 Response Header 的 `Last-Modified` 字段
+- Response Header 的 `Last-Modified` 表示这个响应资源的最后修改时间.
+- Header Header 的 `If-Modified-Since` 当资源过期了, 发现响应头中有 `Last-Modified` 则再次发起请求的时候带上 `Last-Modified` 的时间, 服务器收到请求后发现有 `If-Modified-Since` 则与被请求资源的最后修改时间进行对比(`Last-Modified`), 如果最后修改时间大, 说明资源被修改过, 则返回最新的资源, HTTP 200 OK; 如果最后修改时间小, 说明资源没有修改过, 响应 HTTP 304 走缓存.
+
+第二种: Request Header 的 `If-None-Match` 和 Response Header 的 `ETag` 字段
+- Response Header 的 `ETag`, 响应资源的唯一标识。
+- Request Header 的 `If-None-Match`, 当资源过期时, 浏览器发现响应头里有 ETag, 则再次向服务器发起请求时, 会将请求头 `If-None-Match` 值设置成 ETag 值。服务器收到请求后进行对比, 如果资源没有变化返回 304, 变化了返回 200.
+
+两种协商缓存的方式都依赖于强制缓存的 Cache-Control 字段来使用, 在未命中强制缓存之后, 才能发起带有协商缓存字段的请求, 在两种协商缓存种, ETag 的优先级 高于 第一种时间对比 的方式.
+
+强制缓存和协商缓存的工作流程：
+
+![强制缓存和协商缓存工作流程](../../../img/计算机网络/TCPIP/13.强制缓存和协商缓存工作流程.png)
+
+当使用 ETag 字段实现的协商缓存的过程：
+- 当浏览器第一次请求访问服务器资源时, 服务器会在返回这个资源的同时, 在 Response Header 加上 ETag 唯一标识, 这个唯一标识的值是根据当前请求的资源生成的.
+- 当浏览器再次请求访问服务器中的该资源时, 首先会检查强制缓存是否过期:
+  - 如果没有过期, 则直接使用本地缓存.
+  - 如果缓存过期, 会在 Request Header 加上 `If-None-Match` 字段, 该字段的值就是 ETag 唯一标识。
+- 服务器再次收到请求后, 会根据请求中的 `If-None-Match` 字段, 与当前请求的资源生成的唯一标识进行对比:
+  - 如果值相等: 则返回 304 Not Modified, 不会返回资源.
+  - 如果不相等: 则返回 200 状态码和返回资源, 并在 Response Header 中加上新的 ETag 唯一标识;
+- 如果浏览器收到 304 的请求响应状态码, 则会从本地缓存中加载资源, 否则更新资源.
+
+
+
 
 ### 1.1.4 HTTP 特性
 
