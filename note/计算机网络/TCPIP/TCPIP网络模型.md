@@ -13,11 +13,75 @@ HTTP 是超文本传输协议，也就是HyperText Transfer Protocol。
 - `传输`: 把 `超文本` 从 A 传输 到 B, 也可以从 B 传输到 A。这是双向的。
 - `协议`: `协` 表示至少有2个以上的参与者, `议` 表示对行为的约定和规范。
 
-总结就是: HTTP 是计算机世界中, 在 `两点` 之间 `传输` 文字、图片、音频等 `超文本` 数据的约定和规范.
+总结就是: HTTP 是计算机世界中, 在 `两点` 之间 `传输` 文字、图片、音频等 `超文本` 数据的`约定`和`规范`.
 
 ### 1.1.2 GET 和 POST 区别
+在 RFC 协议中, GET 是从服务器获取资源的. POST 是根据请求报文, 对指定资源做处理的.
+
+GET 传输的数据在URL中(也可以在 body 中), 是明文的, 且有大小限制；
+
+POST 传输的数据可以在URL中, 也可以在 body 中, body 无大小限制.
+
+从 RFC 规范协议的语义上来讲, GET 请求是 安全且幂等 的. 因为 GET 是`只读`操作, 无论操作多少次, 服务器上的数据都是安全的, 且每次结果相同。 所以可以对 GET请求的数据做缓存, 比如缓存可以做到浏览器本身, 也可以做到代理上(nginx), 而且在浏览器中的 GET 请求可以保存为书签。
+
+而 POST 请求是`新增或者提交`数据, 会修改服务器上的资源, 所以是不安全的, 且多次提交数据就会创建多个资源, 所以也不是幂等的.
+
+但是在实际的开发中, 也有人用 GET 请求保存数据, 有人用 POST 请求读取数据.
 
 ### 1.1.3 HTTP 缓存技术
+
+#### 强制缓存
+强制缓存生效的话, 不会向服务器发起请求.
+
+强制缓存是只要浏览器判断缓存没有过期, 则直接使用浏览器本地缓存, 决定是否使用缓存的主动性在于浏览器.
+
+![强制缓存](../../../img/计算机网络/TCPIP/11.强制缓存.png)
+
+强制缓存利用 HTTP 响应头部字段实现:
+1. `Cache-Control` 相对时间. 优先级高于 `Expires`
+2. `Expires` 绝对时间.
+
+强制缓存的流程:
+1. 第一次请求服务器资源, 服务器会在返回资源的时候, 在 Response header 加上 Cache-Control, Cache-Control 设置了过期时间大小;
+2. 再次请求服务器资源, 会先通过请求资源的时间 和 Cache-Control 中设置的过期时间, 来计算出资源是否过期, 如果没有, 就使用缓存, 否则重新请求服务器;
+3. 服务器再次收到请求, 会再次更新 Response header 的 Cache-Control.
+
+
+nginx 配置强制缓存
+```bash
+# a.html 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fetch Login</title>
+</head>
+<body>
+  <h2>nginx 强制缓存测试</h2>
+</body>
+</html>
+
+
+# nginx config
+server {
+    listen 80;
+    server_name 192.168.1.168;
+    location /a.html {
+       add_header Cache-Control "max-age=600";  # 设置缓存时间为 600s, max-age 需要加引号
+       add_header Last-Modified "";             # 关闭协商缓存
+       etag off;                                # 关闭ETag
+       root /Users/kino/;
+    }
+}
+```
+在浏览器中访问结果:
+
+![强制缓存测试1](../../../img/计算机网络/TCPIP/12.强制缓存测试1.png)
+
+> 注意: 在浏览器中, 要按回车键才能使用到强制缓存, 按刷新按钮或者f5, 会走协商缓存, 原因是浏览器会在 Request Headers 中添加: `Cache-Control: max-age=0`, 告诉服务端帮我确认该资源是否过期, 也就是说浏览器是真的会发出请求的.
+
+
+#### 协商缓存
 
 ### 1.1.4 HTTP 特性
 
