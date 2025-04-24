@@ -108,8 +108,75 @@ server {
   - 如果不相等: 则返回 200 状态码和返回资源, 并在 Response Header 中加上新的 ETag 唯一标识;
 - 如果浏览器收到 304 的请求响应状态码, 则会从本地缓存中加载资源, 否则更新资源.
 
+nginx 配置协商缓存
+```bash
+# vim a.html 
+与强制缓存一致
 
+# nginx config
+server {
+    listen 80;
+    server_name 192.168.1.168;
+    location /a.html {
+       add_header Cache-Control "public max-age=600";
+       etag on;
+       root /Users/kino/;
+    }
+}
+```
+在浏览器中第一次请求的请求头和响应头如下(去除无关信息):
+```bash
+# Request Headers
+GET /a.html HTTP/1.1
+Cache-Control: no-cache
+Connection: keep-alive
+Pragma: no-cache
 
+# Response Headers
+HTTP/1.1 200 OK                                # 正常响应, 未走缓存
+Date: Thu, 24 Apr 2025 06:59:25 GMT            # 请求时间
+Last-Modified: Thu, 24 Apr 2025 06:34:40 GMT   # 资源最后一次修改的时间
+Connection: keep-alive
+ETag: "6809db80-124"                           # 资源的唯一标识
+Cache-Control: public max-age=600              # 缓存 600s
+```
+在浏览器中第二次请求的请求头和响应头如下(去除无关信息):
+```bash
+# Request Headers
+GET /a.html HTTP/1.1
+Cache-Control: max-age=0                           # 询问服务器该资源是否过期
+Connection: keep-alive
+If-Modified-Since: Thu, 24 Apr 2025 06:34:40 GMT   # 资源最后一次修改的时间
+If-None-Match: "6809db80-124"                      # 资源的唯一标识
+
+# Response Headers
+HTTP/1.1 304 Not Modified                          # 304 Not Modified 表示使用协商缓存
+Last-Modified: Thu, 24 Apr 2025 06:34:40 GMT       # 资源最后一次修改的时间
+Connection: keep-alive
+ETag: "6809db80-124"                               # 资源的唯一标识
+Cache-Control: public max-age=600                  # 缓存 600s
+```
+尝试修改资源文件的最后一次修改时间:
+```bash
+touch -mt 202504241508 a.html
+```
+在浏览器中第三次请求的请求头和响应头如下(去除无关信息):
+```bash
+# Request Headers
+GET /a.html HTTP/1.1
+Connection: keep-alive
+If-Modified-Since: Thu, 24 Apr 2025 06:34:40 GMT  # 资源最后一次修改的时间
+If-None-Match: "6809db80-124"                     # 资源的唯一标识
+
+# Response Headers
+HTTP/1.1 200 OK                                   # 没有走缓存
+Last-Modified: Thu, 24 Apr 2025 07:08:00 GMT      # 资源最后一次修改时间( 和 Request Header 中的不一样了)
+Connection: keep-alive
+ETag: "6809e350-124"                              # 资源的唯一标识( 和 Request Header 中的不一样了)
+Cache-Control: public max-age=600                 # 缓存 600s
+```
+
+> 这里有个有意思的地方, 在上面解释过浏览器的刷新和回车的区别, 这里配置上协商缓存之后, 在浏览器点击刷新, 会发现是先使用了协商缓存, 再回车走的是强制缓存。
 
 ### 1.1.4 HTTP 特性
 
