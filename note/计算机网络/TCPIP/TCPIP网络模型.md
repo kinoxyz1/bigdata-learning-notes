@@ -348,7 +348,7 @@ Cipher Suite: TLS_RSA_WITH_AES_128_GCM_SHA256, 这个基本格式是: 秘钥交�
 
 ![RSA第二次握手+done](../../../img/计算机网络/TCPIP/24.RSA第二次握手+done.png)
 
-##### 第三次握手
+##### 客户端验证证书
 
 客户端拿到服务端的数字证书后, 会通过CA机构验证真实性. 
 
@@ -390,6 +390,37 @@ CA 签发证书的过程:
 ![RSA第三次握手+证书信任链](../../../img/计算机网络/TCPIP/27.RSA第三次握手+证书信任链.png)
 
 之所以需要这么麻烦的证书链, 是因为为了确保根证书的绝对安全性, 将根证书隔离的越严格越好, 不然根证书如果失守, 那么整个信任链都会有问题。
+
+##### 第三次握手
+客户端验证完证书后, 认为可信, 则继续第三次握手.
+
+客户端会生成一个随机数(pre-master), 用服务器的RSA公钥加密该随机数, 通过 Client Key Exchange 消息传递给服务端.
+
+![RSA第三次握手+pre-master](../../../img/计算机网络/TCPIP/28.RSA第三次握手+pre-master.png)
+
+服务端收到后, 用 RSA 私钥解密, 得到客户端发来的随机数(pre-master)
+
+至此, 客户端和服务端双方都有了 Client Random、Server Random、pre-master。
+
+于是双方根据已经得到的三个随机数, 生成 会话秘钥(Master Secret), 它是对称秘钥, 用于对后续的 HTTP 请求/响应 的数据加解密.
+
+生成完 会话秘钥 后, 然后客户端发送一个 Change Cipher Spec, 告诉服务端开始使用对称加密方式发送消息.
+
+![RSA第三次握手+ChangeCipherSpec](../../../img/计算机网络/TCPIP/29.RSA第三次握手+ChangeCipherSpec.png)
+
+然后客户端再发送一个 Encrypted Handshake Message(Finished)消息, 把之前所有发送的数据做个摘要, 再用 会话秘钥(master secret)加密, 让服务器做个验证, 验证加密通信 是否可用 和 之前握手信息是否有被中途篡改过.
+
+![RSA第三次握手+摘要](../../../img/计算机网络/TCPIP/30.RSA第三次握手+摘要.png)
+
+可以发现, Change Cipher Spec 之前传输的 TLS 握手数据都是明文, 之后都是对称秘钥加密的密文。
+
+##### 第四次握手
+
+
+
+
+
+
 
 
 
