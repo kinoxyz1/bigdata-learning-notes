@@ -501,19 +501,55 @@ RSA 算法最大的问题在于不支持向前保密, 因为 客户端和服务�
 
 ### 1.2.4 HTTPS 如何优化
 
-1. 硬件优化: 使用更好的CPU, 如支持 AES_NI 指令集的处理器.
-2. 软件优化: 升级内核、openssl.
-3. 协议优化: 
-   4. 使用 ECDHE 协议, 不使用 RSA 协议.
-   4. 秘钥交换算法优化: 使用 x25519 椭圆曲线.
-   5. TLS 升级 v1.3.
-4. 证书优化
-   5. 证书传输优化.
-   6. 证书验证优化.
-5. 会话复用
-   6. Session ID
-   7. Session Ticket
-   8. Pre-shared Key
+### 1.2.4.1 硬件优化
+HTTPS 连接过程中, 有大量需要计算密钥的过程, 可以使用更好的CPU, 如支持 AES_NI 指令集的处理器, 因为这种款式的CPU能在指令级别优化AES算法。
+
+查看 CPU 是否支持 AES_NI 指令集:
+```bash
+$ sort -u /proc/crypto | grep module | grep aes
+module       : aesni_intel
+```
+
+如果 CPU 支持 AES_NI 特性, 那么对于对称加密的算法应该算则 AES 算法。否则可以选择 ChaCha20 对称加密算法, 因为 ChaCha20算法的运算指令相比 AES 算法会对 CPU 更加友好一点.
+
+### 1.2.4.2 软件优化
+- 将 Linux 内核从 2.x 升级到 4.x;
+    ```bash
+    $ uname -r
+    5.4.0-150-generic
+    ```
+- 将 OpenSSL 从 1.0.1 升级到 1.1.1;
+    ```bash
+    $ openssl version
+    OpenSSL 1.1.1  11 Sep 2018 
+    ```
+
+### 1.2.4.3 协议优化: 
+TLS/1.2 默认使用的是 RSA 秘钥交换算法, TLS/1.3 默认使用 ECDHE 秘钥交换算法, 所以可以升级 TLS 版本到 TLS/1.3, 理由如下:
+1. TLS/1.2 默认使用 RSA 秘钥交换算法, 需要 4次 握手, 也就是 2RTT 才能进行数据传输, 而且 RSA 秘钥交换算法不具备向前安全性.
+2. TLS/1.3 默认使用 ECDHE 秘钥交换算法, 客户端可以在 TLS 协议的第3次握手后, 第4次握手前, 发送加密的应用数据, 这样 TLS 握手的消息往返由 2RTT 减少到了 1RTT, 而且安全性也高, 具备向前安全性.
+
+不同的椭圆曲线性能也不同, 应该尽量选择 `x25519` 曲线, 该曲线是目前最快的椭圆曲线.
+
+在 Nginx 上, 可以使用 `ssl_ecdh_curve` 指令配置想使用的椭圆曲线, 把优先使用的放在前面:
+```bash
+ssl_ecdh_curve X25519:secp384r1;
+```
+对于对称加密方面, 如果对安全性不是特别高的要求, 可以选用 AES_128_GCM, 它比 AES_256_GCM 快一些, 因为秘钥的长度短一些.
+
+在 Nginx 上, 可以这样配置
+```bash
+ssl_ciphers 'EECDH+ECDSA+AES128+SHA:RSA+AES128+SHA'; 
+```
+
+
+### 1.2.4.4 证书优化
+- 证书传输优化.
+- 证书验证优化.
+### 1.2.4.5 会话复用
+- Session ID
+- Session Ticket
+- Pre-shared Key
 
 ## 1.3 HTTP 和 RPC
 
