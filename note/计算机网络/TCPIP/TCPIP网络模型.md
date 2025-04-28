@@ -334,19 +334,139 @@ Index | Header Field Name | Header Field Value
 60 | via |
 61 | www-authenticate |
 
+Index 表示索引(Key), Header Value 表示索引对应的 Value, Header Name 表示字段的名字, 比如 Index 为 2 代表 GET, Index 为 8 代表状态码 200.
 
 
+举个例子, 使用 Nginx 做一个 HTTP/1.1 和 HTTP/2 的代理
+```bash
+# Nginx config
+server {
+    listen 80;
+    server_name 192.168.1.168;
+    location ~* \.(html)$ {   # HTTP/1.1
+       add_header Cache-Control "public max-age=600";
+       etag on;
+       root /home/;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name 192.168.1.168;
+    ssl_certificate     /opt/homebrew/etc/nginx/conf.d/tls/server.crt;
+    ssl_certificate_key /opt/homebrew/etc/nginx/conf.d/tls/server.key;
+    ssl_session_timeout 5m;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+ 
+    location ~* \.(html)$ {  # HTTP/2
+       add_header Cache-Control "public, max-age=3600";
+       etag off;
+       root /home/;
+    }
+}
+
+# b.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HTTP2 Header Compression Test</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const bigToken = 'Bearer ' + 'a'.repeat(1000); // 生成一个1000字符的超长token
+      const bigCookie = 'SESSIONID=' + 'b'.repeat(500) + '; path=/;'; // 500字符的大Cookie
+
+      // 设置自定义Header
+      const customHeaders = {
+        'Authorization': bigToken,
+        'X-Custom-Client': 'TestClient',
+        'Accept': 'application/json'
+      };
+
+      // 创建很多请求
+      for (let i = 0; i < 100; i++) {
+        fetch(`/api/test?id=${i}`, {
+          method: 'GET',
+          headers: customHeaders,
+          credentials: 'include' // 让浏览器自动带上Cookie
+        }).then(response => response.text())
+          .then(data => {
+            console.log(`Response ${i}:`, data);
+          }).catch(err => {
+            console.error(`Request ${i} failed`, err);
+          });
+      }
+
+      // 动态设置Cookie（必须在服务端设置才真正生效，这里模拟一下）
+      document.cookie = bigCookie;
+    });
+  </script>
+</head>
+<body>
+  <h1>HTTP2 Header Compression Test</h1>
+  <p>Sending 100 requests with big headers...</p>
+</body>
+</html>
+```
+打开wireshark进行抓包, 网卡选 `lo0`
+```bash
+$ ip addr
+1: lo0: <UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384 status UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8
+    inet6 ::1/128
+    inet6 fe80::1/64
+```
+在浏览器中分别访问 `http://192.168.1.168/b.html` 和 `https://192.168.1.168/b.html`
+
+HTTP/1.1 的响应头中有如下字段
+```bash
+server: nginx/1.27.4\r\n
+```
+![wireshark抓包1](../../../img/计算机网络/TCPIP/31.wireshark抓包1.png)
 
 
+共占用 22 字节, 而使用了静态表和Huffman编码, 可以将它压缩成 11 字节, 压缩率大概是 50%
 
 
+HTTP/2 的响应头对应的内容如下:
 
+![wireshark抓包2](../../../img/计算机网络/TCPIP/32.wireshark抓包2.png)
 
+根据 RFC7541 规范, 如果头部字段属于静态范围, 并且 value 是变化的, 那么它的 HTTP/2 头部前 2 位固定位 `01`, 所以整个头部格式如图:
 
+![wireshark抓包3](../../../img/计算机网络/TCPIP/33.wireshark抓包3.png)
 
+由于 HTTP/2 头部由二进制编码, 就不需要冒号空格和末尾的\r\n作为分隔符, 于是改用表示字符串长度(Value Length)来分割 Index 和 Value
 
+接下来根据合格头部格式来分析上面抓包的 server 头部数据
 
+首先, 能从静态表中查到 server 头部字段的 Index 是 54, 二进制为 110110, 再加上固定 01, 头部格式第1个字节就是 `01110110`, 这就是上面抓包红色下划线标注的二进制数据.
 
+接着第二个字符的收个比特位表示 Value 是否经过 Huffman 编码, 剩余的 7 位表示 Value 的长度, 比如这个例子的第二个字节为 `10001001`, 首尾比特位为1表示Value字符串是经过Huffman编码的, 经过 Huffman 编码的 Value 长度为 9.
+
+最后, 字符串 nginx/1.27.4 经过 Huffman 编码后压缩成了 9 个字节。
+
+经过查找 [RFC7541文档的静态Huffman表](https://tex2e.github.io/rfc-translater/html/rfc7541.html), 可以找到每个字符对应的 Huffman 编码:
+
+| 原字符 | Huffman 编码 |
+| --- | --- |
+| 'n' (110) |  101010 (6位)  |
+| 'g' (103) |  100110 (6位)  |
+| 'i' (105) |  00110 (5位)  |
+| 'n' (110) |  101010 (6位)  |
+| 'x' (120) |  1111001 (7位)  |
+| '/' (47)  | 011000 (6位)  |
+| '1' (49)  | 00001 (5位)  |
+| '.' (46)  | 010111 (6位)  |
+| '2' (50)  | 00010 (5位)  |
+| '7' (55)  | 011101 (6位)  |
+| '.' (46)  | 010111 (6位)  |
+| '4' (52)  | 011010 (6位)  |
+
+经过补位后, 可以得到: `10101010 01100011 01010101 11100101 10000000 10101110 00100111 01010111 01101000`
 
 
 
