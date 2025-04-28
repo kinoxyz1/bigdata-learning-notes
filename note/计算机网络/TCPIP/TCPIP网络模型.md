@@ -544,8 +544,8 @@ ssl_ciphers 'EECDH+ECDSA+AES128+SHA:RSA+AES128+SHA';
 
 
 ### 1.2.4.4 证书优化
-- 证书传输优化.
-- 证书验证优化.
+- 证书传输优化: 服务器证书选择椭圆曲线(ECDHE)证书, 而不是RSA证书, 因为在相同安全强度下, ECC秘钥长度比RSA短的多.
+- 证书验证优化
 ### 1.2.4.5 会话复用
 - Session ID
 - Session Ticket
