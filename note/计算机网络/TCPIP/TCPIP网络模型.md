@@ -226,7 +226,147 @@ HTTP/1.1 相比 HTTP/1.0 做了以下改进:
 
 ### 1.1.6 HTTP/2
 
+
+
+HTTP/1.1 存在着上面说的那些问题, HTTPS 解决的是网络传输中的安全问题, 而 HTTP 这种当年因为传输文本而诞生的协议, 本质上传输的数据还是文本文件, HTTP 诞生至今, 网站相对于以前变化的非常多, 比如:
+1. 消息的大小变大: 从 `kb` 变成了 `mb`;
+2. 页面资源变多: 每个网页内嵌着几个、几十个资源;
+3. 内容样式多变: 从最开始的纯文本, 到现在的图片、音频、视频等内容;
+4. 实时性要求变高: 对页面的实时性要求的应用越来越多;
+
+这带来了多种影响:
+1. 并发连接有限: chrome 浏览器默认最大并发连接数是6个,而每一个连接都要经过 TCP和TLS握手, 以及 TCP 慢启动过程给流量带来的影响;
+2. 队头阻塞问题: 同一个连接只能完成一个 HTTP 事物(请求和响应) 之后, 在能处理下一个事物;
+3. HTTP 头部巨大并且重复: 由于 HTTP 协议是无状态的, 每个请求都需要携带 HTTP 头部, 特别是对于有携带 Cookie 的头部, 而 Cookie 的大小通常很大;
+4. 不支持服务器推送消息: 当客户端需要获取通知时, 只能通过定时器不断地拉去消息, 这会浪费大量带宽和服务器资源.
+
+HTTP/1.1 相关的优化, 通常也只能像上面说的那样优化(不发请求、少发请求、压缩), 但是这解决不了 `并发连接`、`对头阻塞`、`HTTP头部巨大`、`服务器主动推送` 等问题, 这些本质上还是 HTTP/1.1 协议内部的问题, 要解决这些问题, 就必须重新设计 HTTP 协议, 于是 HTTP/2 就来了。
+
+#### 1.1.6.1 兼容 HTTP/1.1
+
+HTTP/2 在使用上, 和 HTTP 一致, 仍然是 `http://` 和 `https://`, 用户无需关注, 协议升级由浏览器和服务器自动完成. 
+
 ![HTTP2](../../../img/计算机网络/TCPIP/14.HTTP2.png)
+
+
+#### 1.1.6.2 头部压缩
+HTTP 协议的报文是由 Header+Body 构成的, 对于 Body 部分, HTTP/1.1 协议可以使用头部字段 Content-Encoding 指定 Body 的压缩方式, 比如 gzip, 但是对于 Header, 是没有办法优化的。
+
+在 HTTP/1.1 中, Header 存在以下问题:
+1. 很多固定字段, 比如 Cookie、User Agent、Accept 等, 这些字段很大, 所以需要压缩.
+2. 大量请求和响应有很多相同的字段都是重复的, 这会造成数据冗余, 所以需要避免重复.
+3. 字段是 ASCII 编码的, 虽然易于观察, 但是效率低, 所以要改成 二进制编码.
+
+HTTP/2 开发了 HPACK 算法来压缩头部, HPACK 算法主要包含三个部分:
+1. 静态字典;
+2. 动态字典;
+3. Huffman 编码(压缩算法);
+
+客户端和服务端 都会建立和维护字典, 用长度较小的索引号表示重复的字符串, 再用 Huffman 编码压缩数据, 可以达到 50%~90% 的高压缩率.
+
+
+##### 静态字典
+HTTP/2 为高频出现的头部字段建立了一张静态表, 它是写入到 HTTP/2 框架里的,不会变化, 静态表里共有 61 组, 如下:
+
+https://httpwg.org/specs/rfc7541.html#static.table.definition
+
+Index | Header Field Name | Header Field Value
+ -- | -- | --
+1 | :authority |
+2 | :method | GET
+3 | :method | POST
+4 | :path | /
+5 | :path | /index.html
+6 | :scheme | http
+7 | :scheme | https
+8 | :status | 200
+9 | :status | 204
+10 | :status | 206
+11 | :status | 304
+12 | :status | 400
+13 | :status | 404
+14 | :status | 500
+15 | accept-charset |
+16 | accept-encoding | gzip, deflate
+17 | accept-language |
+18 | accept-ranges |
+19 | accept |
+20 | access-control-allow-origin |
+21 | age |
+22 | allow |
+23 | authorization |
+24 | cache-control |
+25 | content-disposition |
+26 | content-encoding |
+27 | content-language |
+28 | content-length |
+29 | content-location |
+30 | content-range |
+31 | content-type |
+32 | cookie |
+33 | date |
+34 | etag |
+35 | expect |
+36 | expires |
+37 | from |
+38 | host |
+39 | if-match |
+40 | if-modified-since |
+41 | if-none-match |
+42 | if-range |
+43 | if-unmodified-since |
+44 | last-modified |
+45 | link |
+46 | location |
+47 | max-forwards |
+48 | proxy-authenticate |
+49 | proxy-authorization |
+50 | range |
+51 | referer |
+52 | refresh |
+53 | retry-after |
+54 | server |
+55 | set-cookie |
+56 | strict-transport-security |
+57 | transfer-encoding |
+58 | user-agent |
+59 | vary |
+60 | via |
+61 | www-authenticate |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 HTTP2 是基于 HTTPS 的, 所以 HTTP2 的安全性是有保障的.
 
