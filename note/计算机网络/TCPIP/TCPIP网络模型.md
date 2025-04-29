@@ -541,29 +541,51 @@ HTTP/2 二进制帧的结构如图:
 
 
 #### 1.1.6.4 并发传输
+HTTP/2 通过多个 Stream 复用一条 TCP 连接, 达到并发的效果, 解决了 HTTP/1.1 队头阻塞的问题, 提高了 HTTP 传输的吞吐量.
 
+![并发传输](../../../img/计算机网络/TCPIP/41.并发传输.png)
+
+- 1 个 TCP 连接包含 1 个或者 多个 Stream, Stream 是 HTTP/2 并发的关键技术;
+- Stream 里包含 1 个 或 多个 Message, Message 对应 HTTP/1 中的请求或响应, 由 HTTP 头部和包体构成;
+- Message 里包含 1条 或者 多个 Frame, Frame 是 HTTP/2 最小单位, 以二进制压缩格式存放 HTTP/1 中的内容(头部和包体);
+
+> 多个 Stream 跑在一个 TCP 连接, 同一个 HTTP 请求与响应是跑在同一个 Stream 中, HTTP 消息可以由多个 Frame 构成, 一个 Frame 可以由多个 TCP 报文构成
+
+![并发传输2](../../../img/计算机网络/TCPIP/42.并发传输2.png)
+
+在 HTTP/2 中, 不同 Stream 的帧是可以乱序发送的(因此可以并发不同的 Stream), 因为每个帧的头部会携带 Stream ID, 所以接收端可以通过 Stream ID 有序组装成 HTTP 消息, 而同一 Stream 内部的帧必须是严格有序的.
+
+服务端并行交错地发起两个响应: Stream 1 和 Stream 3, 这两个 Stream 都是跑在一个 TCP 连接上, 客户端收到后, 会根据相同的 Stream ID 有序组装成 HTTP 消息.
+
+![并发传输3](../../../img/计算机网络/TCPIP/43.并发传输3.png)
+
+客户端和服务器双方都可以建立 Stream, 因为服务端可以主动推送资源给客户端, 客户端建立的 Stream 必须是奇数号, 而服务器建立的 Stream 必须是偶数号.
+
+比如下图, Stream 1 是客户端向服务端请求的资源, 属于客户端建立的Stream, 所以该 Stream ID 是奇数1; Stream 2 和 4 都是服务端主动向客户端推送的资源, 属于服务端建立的 Stream, 这两个 Stream 的 ID 是偶数(2和4)
+
+![并发传输4](../../../img/计算机网络/TCPIP/44.并发传输4.png)
+
+同一个连接中的 Stream ID 是不能复用的, 只能顺序递增, 所以当 Stream ID 耗尽时, 需要发一个控制帧 `GOAWAY`, 用来关闭TCP连接.
+
+在 Nginx 中, 可以通过 `http2_max_concurrent_Streams` 配置来设置 Stream 的上线, 默认是 128 个.
+
+HTTP/2 实现 100 个并发 Stream, 只需要建立一次 TCP 连接, 而 HTTP/1.1 需要建立 100 个 TCP 连接, 每个 TCP 连接都需要经过 TCP 握手、慢启动以及TLS握手过程, 这都是很耗时的.
+
+HTTP/2 还可以设置每个 Stream 的优先级, 帧头中的 标志位 可以设置优先级, 比如客户端访问 HTML/CSS 和图片资源时, 希望服务器先传递 HTML/CSS, 再传图片, 那么就可以通过设置 Stream 的优先级来实现, 以此来提高用户体验。
 
 
 #### 1.1.6.4 服务器主动推送
+Nginx 配置主动推送
+```bash
+location /a.html {
+  http2_push /a.css;
+}
+```
+客户端发起的请求, 必须使用的是奇数号 Stream, 服务器主动的推送, 使用的是偶数号 Stream。服务器在推送资源时, 会通过 `PUSH_PROMISE`帧传输 HTTP 头部, 并通过帧中的 `Promised Stream ID`字段告知客户端, 接下来会在哪个偶数号 Stream 中发送包体
+
+![服务器主动推送](../../../img/计算机网络/TCPIP/45.服务器主动推送.png)
 
 
-
-
-
-
-
-
-
-
-HTTP2 是基于 HTTPS 的, 所以 HTTP2 的安全性是有保障的.
-
-HTTP2 相比 HTTP/1.1 在性能上的改进:
-1. 头部压缩: 如果同时发起多个请求, 它们的头是一样或者是相似, 那么协议会消除重复的部分.
-    > 这就是 `HPACK` 算法: 在客户端和服务端同时维护一张头信息表, 所有字段都会存入这个表, 生成一个索引号, 以后就不用发送同样的字段只发索引号.
-2. 二进制格式: HTTP2报文全面采用二进制格式, 头信息和数据主体都是二进制, 统称为帧(Frame): 头信息帧(Headers Frame) 和 数据帧(Data Frame)
-   > ![HTTP2二进制格式](../../../img/计算机网络/TCPIP/15.HTTP2二进制格式.png)
-3. 并发传输
-4. 服务器主动推送资源
 
 ### 1.1.7 HTTP/3
 
