@@ -147,11 +147,162 @@ $ sbin/nginx -s quit
 ```bash
 $ sbin/nginx -s reload
 ```
+reload 流程:
+1. 向 master 进程发送 HUP 信号(reload 命令)
+2. master 进程校验配置语法是否正确
+3. master 进程打开新的监听端口
+4. master 进程用新配置启动新的 worker 子进程
+5. master 进程向老 worker 子进程发送 QUIT 信号
+6. 老 worker 进程关闭监听句柄, 处理完当前连接后, 结束进程
+
+**nginx worker进程长期处于 worker process is shutting down状态的问题**
+```bash
+root     30261     1  0 3月13 ?       00:00:00 nginx: master process /usr/local/nginx/sbin/nginx
+nginx    30262 30261  0 3月13 ?       00:49:57 nginx: worker process is shutting down
+nginx    30263 30261  0 3月13 ?       00:11:15 nginx: worker process is shutting down
+nginx    30266 30261  0 3月13 ?       00:06:33 nginx: worker process is shutting down
+nginx    30267 30261  0 3月13 ?       00:05:18 nginx: worker process is shutting down
+nginx    30410 30261  0 3月14 ?       02:50:27 nginx: worker process is shutting down
+```
+Nginx 配置中如果有 WebSocket 或者 upstream 反向代理时, reload 之后, 长连接一直处于未断开状态, 导致每次reload都无法让worker进程退出.
+
+解决办法:
+```bash
+$ vim nginx.conf
+# 增加配置
+worker_shutdown_timeout 10s;
+```
+
+worker 进程优雅关闭的流程:
+1. 设置定时器: worker_shutdown_timeout
+2. 关闭监听句柄
+3. 关闭空闲连接
+4. 在循环中等待全部连接关闭
+5. 退出进程
+
 
 ## 3.5 指定启动的配置文件
 ```bash
 $ sbin/nginx -c /usr/local/nginx/conf/nginx.conf
 ```
+
+## 3.6 Nginx 日志切割
+```bash
+$ ll
+drwxr-xr-x  2 nginx nginx         4096 5月  20 10:44 ./
+drwxrwxr-x 16 root  syslog        4096 5月  20 00:05 ../
+-rw-r--r--  1 root  root   10603437739 5月  20 10:41 access.log
+-rw-r--r--  1 nginx root       1628903 5月  20 10:44 error.log
+-rw-r--r--  1 nginx root     449966635 5月  20 10:44 tcp-access.log
+
+$ mv access.log access.log.bak
+$ ./sbin/nginx -s reopen
+$ ll 
+drwxr-xr-x  2 nginx nginx         4096 5月  20 10:44 ./
+drwxrwxr-x 16 root  syslog        4096 5月  20 00:05 ../
+-rw-r--r--  1 root  root   10603437739 5月  20 10:41 access.log.bak
+-rw-r--r--  1 nginx root       1628903 5月  20 10:44 error.log
+-rw-r--r--  1 nginx root     449966635 5月  20 10:44 tcp-access.log
+-rw-r--r--  1 nginx root          1333 5月  20 10:46 access.log
+```
+mv 到 reopen 之间会不会丢失句? 只要没有在 mv 和 reopen 之间重启 Nginx 或 kill worker 进程, 就不会丢失日志记录.
+
+因为 Nginx 打开日志文件时, 会持有一个指向日志文件的文件描述符, 这个文件描述符绑定到文件的 iNode(而不是路径).
+
+在执行 mv access.log access.log.bak 时, 只是把文件的路径指针改了, 对于Nginx来说, 它任然持有旧的文件描述符, 日志会继续写入原来的文件, 不会修饰日志.
+
+## 3.7 热升级
+
+![nginx 信号](../../img/nginx/nginx信号/NGINX信号.png)
+
+
+| 信号       | 作用        |
+|----------|-----------|
+| TERM/INT | 立即关闭整个服务  |
+| QUIT     | "优雅"地关闭整个服务 | 
+| HUP      | 重读配置文件并使用服务对新配置项生效 |
+| USR1 | 重新打开日志文件, 可以用来进行日志切割 | 
+| USR2 | 平滑升级到最新版的nginx | 
+| WINCH | 所有子进程不在接收处理新链接, 相当于给 worker 进程发送 QUIR 指令 | 
+
+
+
+升级Nginx的时候, 可以做到新Nginx进程和旧Nginx进程同时提供服务.
+
+```bash
+$ /usr/local/nginx/sbin# ll
+total 13272
+-rwxr-xr-x 1 nginx nginx 6812410 12月  9  2021 nginx.old   # 当前运行的Nginx
+-rwxr-xr-x 1 nginx nginx 6791672 12月  9  2021 nginx       # 新编译出来的Nginx
+
+# 查看当前Nginx进程
+$ ps -ef|grep nginx 
+root     30261     1  0 3月13 ?       00:00:00 nginx: master process /usr/local/nginx/sbin/nginx
+nginx      867 30261  0 5月16 ?       00:23:12 nginx: worker process
+nginx      868 30261  0 5月16 ?       00:00:13 nginx: worker process
+nginx      869 30261  0 5月16 ?       00:00:01 nginx: worker process
+nginx      870 30261  0 5月16 ?       00:00:00 nginx: worker process
+
+# 向当前Nginx master 发送热升级指令, 新master/worker启动之后, 请求将不会再去旧进程中.
+$ kill -USR2 30261
+$ ps -ef|grep nginx 
+root     30261     1  0 3月13 ?       00:00:00 nginx: master process /usr/local/nginx/sbin/nginx
+nginx      867 30261  0 5月16 ?       00:23:16 nginx: worker process
+nginx      868 30261  0 5月16 ?       00:00:13 nginx: worker process
+nginx      869 30261  0 5月16 ?       00:00:01 nginx: worker process
+nginx      870 30261  0 5月16 ?       00:00:00 nginx: worker process
+root     23021 30261  0 11:06 ?        00:00:00 nginx: master process /usr/local/nginx/sbin/nginx
+nginx    23022 23021  0 11:06 ?        00:00:00 nginx: worker process
+nginx    23032 23021  0 11:06 ?        00:00:00 nginx: worker process
+nginx    23033 23021  0 11:06 ?        00:00:00 nginx: worker process
+nginx    23034 23021  0 11:06 ?        00:00:00 nginx: worker process
+
+# 向旧Nginx master发送退出worker指令, master 进程不会自动退出, 此时如果新进程有问题, 还可以重启旧进程的worker
+$ kill -WINCH 30261
+$ ps -ef|grep nginx 
+root     30261     1  0 3月13 ?       00:00:00 nginx: master process /usr/local/nginx/sbin/nginx
+nginx      867 30261  0 5月16 ?       00:23:16 nginx: worker process is shutting down
+nginx      868 30261  0 5月16 ?       00:00:13 nginx: worker process is shutting down
+nginx      900 30261  0 5月06 ?       01:03:45 nginx: worker process is shutting down
+nginx    18185 30261  0 4月24 ?       00:09:19 nginx: worker process is shutting down
+```
+
+热升级流程:
+1. 将旧Nginx文件换成新Nginx文件(注意备份)
+2. 向Master进程发送 USR2 信号
+3. Master进程修改pid文件名, 加后缀.oldbin
+4. Master进程用新Nginx文件启动新Master进程
+5. 向老Master进程发送 QUIR 信号, 关闭老Master进程
+6. 回滚: 向老Master发送 HUP, 向新Master发送 QUIT
+
+
+# 四、Nginx 模块
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # 四、location 中的正则表达式
 ## 4.1 location 的作用
