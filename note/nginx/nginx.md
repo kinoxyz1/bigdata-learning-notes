@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 ---
 # 一、Nginx 安装部署
 ## 1.1 安装编译工具及库文件
@@ -276,7 +270,139 @@ nginx    18185 30261  0 4月24 ?       00:09:19 nginx: worker process is shuttin
 6. 回滚: 向老Master发送 HUP, 向新Master发送 QUIT
 
 
-# 四、Nginx 模块
+# 四、Nginx HTTP 模块
+
+
+## 4.1 处理 HTTP 请求头部的流程
+
+这部分需要补充计算机组成相关的知识. 相关链接如下:
+
+[03 | 基础篇：经常说的 CPU 上下文切换是什么意思？（上）](https://time.geekbang.org/column/article/69859)
+
+[如果这篇文章说不清epoll的本质，那就过来掐死我吧！ （1）](https://zhuanlan.zhihu.com/p/63179839)
+
+[如果这篇文章说不清epoll的本质，那就过来掐死我吧！ （2）](https://zhuanlan.zhihu.com/p/64138532)
+
+[如果这篇文章说不清epoll的本质，那就过来掐死我吧！ （3）](https://zhuanlan.zhihu.com/p/64746509)
+
+[图解 | 深入揭秘 epoll 是如何实现 IO 多路复用的！](https://mp.weixin.qq.com/s/OmRdUgO1guMX76EdZn11UQ)
+
+[I/O 多路复用：select/poll/epoll
+](https://www.xiaolincoding.com/os/8_network_system/selete_poll_epoll.html#%E6%9C%80%E5%9F%BA%E6%9C%AC%E7%9A%84-socket-%E6%A8%A1%E5%9E%8B)
+
+首先启动 Nginx, 对应的配置如下:
+```bash
+$ cat nginx.conf
+worker_processes  1;
+events {
+    use epoll;
+    worker_connections  1024;
+}
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+    server {
+        listen       80;
+        server_name  localhost;
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}
+
+$ ./sbin/nginx
+$ ps -ef|grep nginx
+root      4156     1  0 13:30 ?        00:00:00 nginx: master process ./sbin/nginx
+nobody   16675  4156  0 16:32 ?        00:00:00 nginx: worker process
+$ ll /proc/16675/fd   # 查看当前进程的文件描述符
+dr-x------ 2 nobody nogroup  0 5月  22 16:33 ./
+dr-xr-xr-x 9 nobody nogroup  0 5月  22 16:32 ../
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 0 -> /dev/null
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 1 -> /dev/null
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 10 -> 'anon_inode:[eventpoll]'            # epoll 本身的 fd 是 10
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 11 -> 'anon_inode:[eventfd]'              # eventfd 的 fd 是 11
+l-wx------ 1 nobody nogroup 64 5月  22 16:33 2 -> /usr/local/nginx/logs/error.log      # error.log 文件的fd 是 2
+l-wx------ 1 nobody nogroup 64 5月  22 16:33 4 -> /usr/local/nginx/logs/access.log     # access.log 文件的fd 是 4
+l-wx------ 1 nobody nogroup 64 5月  22 16:33 5 -> /usr/local/nginx/logs/error.log      # error.log 文件的fd 是 5
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 6 -> 'socket:[40184994]'                  # 已连接的 socket 的 fd 是 6
+lrwx------ 1 nobody nogroup 64 5月  22 16:33 7 -> 'socket:[40188263]'                  # 已连接的 socket 的 fd 是 7
+```
+整个启动的伪代码如下:
+```java
+int main(){
+    listen(lfd, ...);                              # 监听端口
+
+    cfd1 = accept(...);							   # 接收客户端连接, 阻塞, 生成 fd1
+    cfd2 = accept(...);							   # 接收客户端连接, 阻塞, 生成 fd2
+    efd = epoll_create(...);					   # 创建 epfd
+
+    epoll_ctl(efd, EPOLL_CTL_ADD, cfd1, ...);	   # epoll_ctl 将需要监听的 socket(fd1) 放到红黑树中
+    epoll_ctl(efd, EPOLL_CTL_ADD, cfd2, ...);	   # epoll_ctl 将需要监听的 socket(fd2) 放到红黑树中
+    epoll_wait(efd, ...)						   # epoll_wait 是阻塞的, 监听红黑树中的socket是否有事件发生
+}
+```
+
+Nginx 在启动的时候, 监听了 80端口, 并且创建了两个 socket, 分别是 6/7, 在内核中创建了 epoll 对象本身(fd=10), 还创建了 eventfd(fd=11), eventfd 是用来实现线程间/进程间时间唤醒的机制, 它可以唤醒 epoll_wait 中的 worker, strace 查看该进程:
+```bash
+$ strace -p 16675
+strace: Process 16675 attached
+epoll_wait(10,
+```
+epoll_wait 等待文件描述符10的事件
+
+现在请求Nginx
+```bash
+$ curl localhost:80
+epoll_wait(10, [{EPOLLIN, {u32=2662486032, u64=22843298566160}}], 512, -1) = 1
+# 客户端有socket连接上来了, 文件描述符是 3
+accept4(6, {sa_family=AF_INET, sin_port=htons(53188), sin_addr=inet_addr("127.0.0.1")}, [112->16], SOCK_NONBLOCK) = 3
+# epoll_ctl 将文件描述符 3 添加到 epoll 的红黑树中, 设置监听 EPOLLIN(可读)、EPOLLRDHUP(对端关闭连接)、EPOLLET(边沿触发)
+# 文件描述符 3 并不会立即进入就绪链表, 除非内核判断该 socket 当前可读
+epoll_ctl(10, EPOLL_CTL_ADD, 3, {EPOLLIN|EPOLLRDHUP|EPOLLET, {u32=2662486480, u64=22843298566608}}) = 0
+# 客户端发送了数据, 内核唤醒线程, 将 fd=3 放入就绪列表, epoll_wait 返回后, Nginx 处理该链接数据
+epoll_wait(10, [{EPOLLIN, {u32=2662486480, u64=22843298566608}}], 512, 60000) = 1
+# 读取客户端请求
+recvfrom(3, "GET / HTTP/1.1\r\nHost: localhost\r"..., 1024, 0, NULL, NULL) = 73
+stat("/usr/local/nginx/html/index.html", {st_mode=S_IFREG|0644, st_size=21, ...}) = 0
+# 打开 index.html 文件
+openat(AT_FDCWD, "/usr/local/nginx/html/index.html", O_RDONLY|O_NONBLOCK) = 8
+fstat(8, {st_mode=S_IFREG|0644, st_size=21, ...}) = 0
+# 写响应数据
+writev(3, [{iov_base="HTTP/1.1 200 OK\r\nServer: nginx/1"..., iov_len=236}], 1) = 236
+sendfile(3, 8, [0] => [21], 21)         = 21
+# 写 access.log 日志文件
+write(4, "127.0.0.1 - - [22/May/2025:16:56"..., 85) = 85
+# socket 关闭
+close(8)                                = 0
+setsockopt(3, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+epoll_wait(10, [{EPOLLIN|EPOLLRDHUP, {u32=2662486480, u64=22843298566608}}], 512, 65000) = 1
+recvfrom(3, "", 1024, 0, NULL, NULL)    = 0
+close(3)                                = 0
+epoll_wait(10,
+```
+
+以下是 操作系统内核 - 事件模块 - HTTP 模块 的流程图
+
+![Nginx处理http请求头的流程](../../img/nginx/http/Nginx处理http请求头的流程.png)
+
+在三次握手中, 只完成了前两次握手, 这个TCP连接仅仅处于就绪队列中, Nginx并不会感知到, 只有当第三次握手完成后, 内核才会触发 Nginx 的 epoll_wait 通知有读事件(返回文件句柄fd), 用 accept 方法, 它会分配 TCP 连接的连接内存池(Nginx 中内存池分为 连接内存池 和 请求内存池), 连接内存池的大小由 `connection_pool_size` 决定, 默认 512 字节, `connection_pool_size` 仅仅维护着 TCP 连接相关的参数。
+
+然后 HTTP 模块接收请求的处理, 当触发 accept 后, ngx_http_init_connection 回调方法就会被执行, 新建立的连接的读事件就会通过 epoll_ctl 函数添加到 epoll 中并且添加定时器, 定时器的作用是: 当指定之间内没有收到请求就超时(`client_header_timeout`)。
+
+当客户端的数据发过来后, 内核会响应 ACK, 同时, 事件模块的 epoll_wait 会拿到这个请求, 这个请求的回调方法是 `ngx_http_wait_request_handler`, 它会分配读取用户数据的读缓冲区 `client_header_buffer_size: 1k`, `client_header_buffer_size` 的内存是从 `client_header_timeout` 中分出来的(`client_header_timeout` 可以扩展), 这个参数也不是越大越好, 如果用户发送的数据量小, 这个内存设置的很大, 也是很浪费内存的; 
+
+![Nginx处理http请求头的流程2](../../img/nginx/http/Nginx处理http请求头的流程2.png)
+
+如果用户的数据超过了设置的 1k,
+
+
 
 
 

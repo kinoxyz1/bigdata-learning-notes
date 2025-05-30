@@ -300,7 +300,6 @@
 <summary>Nginx</summary>
 
 - [nginx 基础](note/nginx/nginx.md)
-- [nginx 进程管理](note/nginx/nginx进程管理.md)
 
 </details>
 
@@ -591,6 +590,14 @@
 
 * [TCP/IP网络模型](note/计算机网络/TCPIP/TCPIP网络模型.md)
 * [wireshark 设置抓 HTTP/2 数据包](note/计算机网络/wireshark/wireshark抓HTTP2数据包.md)
+
+
+</details>
+
+<details>
+<summary>计算机组成</summary>
+
+* [阻塞IO/非阻塞IO/多路复用IO](note/计算机组成/IO/多路复用IO.md)
 
 
 </details>
