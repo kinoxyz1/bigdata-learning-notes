@@ -394,9 +394,38 @@ epoll_wait(10,
 
 在三次握手中, 只完成了前两次握手, 这个TCP连接仅仅处于就绪队列中, Nginx并不会感知到, 只有当第三次握手完成后, 内核才会触发 Nginx 的 epoll_wait 通知有读事件(返回文件句柄fd), 用 accept 方法, 它会分配 TCP 连接的连接内存池(Nginx 中内存池分为 连接内存池 和 请求内存池), 连接内存池的大小由 `connection_pool_size` 决定, 默认 512 字节, `connection_pool_size` 仅仅维护着 TCP 连接相关的参数。
 
-然后 HTTP 模块接收请求的处理, 当触发 accept 后, ngx_http_init_connection 回调方法就会被执行, 新建立的连接的读事件就会通过 epoll_ctl 函数添加到 epoll 中并且添加定时器, 定时器的作用是: 当指定之间内没有收到请求就超时(`client_header_timeout`)。
+然后 HTTP 模块接收请求的处理, 当触发 accept 后, ngx_http_init_connection 回调方法就会被执行, 新建立的连接的读事件就会通过 epoll_ctl 函数添加到 epoll 中并且添加定时器, 定时器的作用是: 当指定时间内, 请求头还未完整发完, 就超时(`client_header_timeout`), Nginx 会返回 408 状态码到客户端。
 
-当客户端的数据发过来后, 内核会响应 ACK, 同时, 事件模块的 epoll_wait 会拿到这个请求, 这个请求的回调方法是 `ngx_http_wait_request_handler`, 它会分配读取用户数据的读缓冲区 `client_header_buffer_size: 1k`, `client_header_buffer_size` 的内存是从 `client_header_timeout` 中分出来的(`client_header_timeout` 可以扩展), 这个参数也不是越大越好, 如果用户发送的数据量小, 这个内存设置的很大, 也是很浪费内存的; 
+`client_header_timeout` 参数的验证:
+```bash 
+$ cat nginx.conf   # 确保重启Nginx让配置生效
+http {
+    ...
+    client_header_timeout 10s;
+    ...
+}
+
+# telnet 127.0.0.1 80
+Trying 127.0.0.1...
+Connected to localhost.
+Escape character is '^]'.
+# 10s 后, 会输出这行日志, 
+Connection closed by foreign host.   
+```
+以下是tcpdump的结果:
+```bash
+tcpdump tcp -i lo0 -t -s 0 -c 100 and dst port 80 and src host 127.0.0.1
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on lo0, link-type NULL (BSD loopback), snapshot length 524288 bytes
+# telnet 会打印下面两行日志
+IP localhost.54727 > localhost.http: Flags [S], seq 2169026392, win 65535, options [mss 16344,nop,wscale 6,nop,nop,TS val 1950842678 ecr 0,sackOK,eol], length 0
+IP localhost.54727 > localhost.http: Flags [.], ack 2893272354, win 6380, options [nop,nop,TS val 1950842678 ecr 1099374196], length 0
+# 超过10s后会再打印两行日志
+IP localhost.54727 > localhost.http: Flags [.], ack 2, win 6380, options [nop,nop,TS val 1950852681 ecr 1099384199], length 0
+IP localhost.54727 > localhost.http: Flags [F.], seq 0, ack 2, win 6380, options [nop,nop,TS val 1950852681 ecr 1099384199], length 0
+```
+
+当客户端的数据发过来后, 内核会响应 ACK, 同时, 事件模块的 epoll_wait 会拿到这个请求, 这个请求的回调方法是 `ngx_http_wait_request_handler`, 它会分配读取用户数据的读缓冲区 `client_header_buffer_size: 1k`, `client_header_buffer_size` 的内存是从 `connection_pool_size` 中分出来的(`connection_pool_size` 可以扩展), 这个参数也不是越大越好, 如果用户发送的数据量小, 这个内存设置的很大, worker 进程也会分配这么多内存出来; 
 
 ![Nginx处理http请求头的流程2](../../img/nginx/http/Nginx处理http请求头的流程2.png)
 
