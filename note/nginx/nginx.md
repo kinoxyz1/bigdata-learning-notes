@@ -425,21 +425,232 @@ IP localhost.54727 > localhost.http: Flags [.], ack 2, win 6380, options [nop,no
 IP localhost.54727 > localhost.http: Flags [F.], seq 0, ack 2, win 6380, options [nop,nop,TS val 1950852681 ecr 1099384199], length 0
 ```
 
-当客户端的数据发过来后, 内核会响应 ACK, 同时, 事件模块的 epoll_wait 会拿到这个请求, 这个请求的回调方法是 `ngx_http_wait_request_handler`, 它会分配读取用户数据的读缓冲区 `client_header_buffer_size: 1k`, `client_header_buffer_size` 的内存是从 `connection_pool_size` 中分出来的(`connection_pool_size` 可以扩展), 这个参数也不是越大越好, 如果用户发送的数据量小, 这个内存设置的很大, worker 进程也会分配这么多内存出来; 
+`client_header_timeout` 和 `keepalive_timeout` 的区别:
+- `client_header_timeout`: Nginx在指定之间内, 未收到完整的 Header, 就会超时。比如 Header 包含一个超大的 Cookie, 就可能被这个参数关闭连接;
+- `keepalive_timeout`: Nginx 在三次握手后, http 层面完成了 `请求-响应`, 在等待下次 `请求-响应` 间, 超过了这个参数设置的秒, 会触发超时. 这个参数控制的是 HTTP 超时, 而不是 TCP 超时, 也就是说它关闭的是 HTTP。
+
+
+当客户端的数据发过来后, 内核会响应 ACK, 同时, 同时, 事件模块的 epoll_wait 会拿到这个请求, 这时会调用设置回调方法 `ngx_http_wait_request_handler`, 下面是它的说明:
+1. `ngx_http_wait_request_handler` 将接受到的用户请求读取到用户态中, 读取到用户态就需要操作系统分配对应的内存;
+2. 分配的内存大小参数是 `client_header_buffer_size: 1k`, 它会分配读取用户数据的读缓冲区;
+3. `client_header_buffer_size` 的内存是从 `connection_pool_size` 中分出来的(`connection_pool_size` 可以扩展), 这个参数也不是越大越好, 如果用户发送的数据量小, 这个内存设置的很大, worker 进程也会分配这么多内存出来; 如果用户的数据超过了设置的 1k, 会根据 `large_client_header_buffers 2 4k` 进行扩容.
+
+下图是Nginx 处理HTTP 请求头部的流程, 取自 [极客时间陶辉老师-Nginx核心知识150讲](https://time.geekbang.org/course/detail/100020301-71458) 的课件截图
 
 ![Nginx处理http请求头的流程2](../../img/nginx/http/Nginx处理http请求头的流程2.png)
 
-如果用户的数据超过了设置的 1k,
+对于图片中的流程我是表示质疑的, 理由如下:
+
+一个客户端连接到Nginx, 必定经过TCP握手, 前两次握手在操作系统上属于半连接状态, 只有第三次握手之后, 才会触发Nginx的epoll, 这个在上面说过, 这里要明确的第一个参数就是 `connection_pool_size` 维护着TCP连接的参数, 连接建立完成之后, 客户端就开始真的发送数据, 客户端发来的数据首先是放到操作系统内核中的, 这是大小可以由参数 `client_header_buffer_size` 控制, 如果请求头超过了 `client_header_buffer_size` 大小, 就会扩容, 按照 `large_client_header_buffers 2 4k` 进行扩容, 每次扩容是创建一个新的空间, 把之前的数据拷贝过来, 释放之前占用的空间, 假如请求头真的太大太多, 扩容之后还存不下, 就会报错: `Request Header Or Cookie Too Large`. 
+
+> 上述整个过程, 数据是未经过状态机解析的, 这点要明白.
+
+当请求头接收到了之后, 会经过状态机解析, 状态机会解析出URI、Method等等信息, 解析出来的数据存放到 `request_pool_size` 中, `request_pool_size` 如果需要扩容, 并不由 `large_client_header_buffers` 参数决定,  `request_pool_size` 扩容是在本身的pool上进行追加, 每次追加的大小受到操作系统影响.
+
+
+在这期间, 会涉及一个参数 `client_header_timeout`, 这个参数是说客户端发送的请求中, 因为请求头过大, 导致在 `client_header_timeout` 时间内`没有传输完/未解析完` 请求头, 就会超时, 如果及时传输完了, 就移除超时定时器, 然后开始11个阶段的http请求处理。
 
 
 
+### 4.1.1 TCP 连接建立阶段
+
+#### 4.1.1.1 tcp 连接建立流程
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant OS_Kernel
+    participant Nginx
+    Client->>OS_Kernel: SYN
+    OS_Kernel-->>Client: SYN+ACK
+    Client->>OS_Kernel: ACK
+    Note over OS_Kernel,Nginx: 三次握手完成
+    OS_Kernel->>Nginx: epoll事件触发
+    Nginx->>Nginx: 分配connection_pool
+```
+
+#### 4.1.1.2 连接池管理
+
+- `connection_pool_size`:  维护 TCP 连接 的核心参数
+  - 存储连接状态、SSL上下文等元数据;
+  - 声明周期绑定TCP连接(Keep-Alive期间持续存在)
+- 连接池特点:
+  - 每个TCP连接对应一个连接池;
+  - 连接关闭时自动释放资源;
+  - 支持连接复用, 减少重复创建开销;
+
+### 4.1.2 请求头接收阶段
+
+#### 4.1.2.1 缓冲区层级结构
+
+```mermaid
+graph TD
+    A[操作系统内核缓冲区] --> B[client_header_buffer]
+    B --> C{是否溢出？}
+    C -- 是 --> D[large_client_header_buffers]
+    C -- 否 --> E[状态机解析]
+    D --> F{缓冲区链空间耗尽？}
+    F -- 是 --> G[返回400错误]
+    F -- 否 --> E
+```
+
+#### 4.1.2.2 缓冲机制详解
+
+1. 初始缓冲层:
+   1. `client_header_buffer_size`:  默认1k;
+   2. 存储请求行和初始头部数据;
+   3. 空间不足时触发扩容;
+2. 动态扩容层:
+   1. `large_client_header_buffers`: `2 4k`;
+   2. 缓冲区耗尽时返回 `400 Bad Request`
+
+3. 错误场景:
+   1. 单行超过缓冲区大小: `414 Request-URI Too Large`;
+   2. 总头部超过缓冲区大小: `400 Bad Request`;
 
 
 
+### 4.1.3 请求头解析阶段
+
+#### 4.1.3.1 解析流程
+
+```mermaid
+flowchart TB
+    A[检测到\r\n\r\n] --> B[创建request_pool]
+    B --> C[状态机解析请求行]
+    C --> D[存储method/URI/version]
+    D --> E[解析头字段]
+    E --> F[存储key-value]
+    F --> G{request_pool空间不足？}
+    G -- 是 --> H[追加新内存块]
+    G -- 否 --> I[继续解析]
+```
 
 
 
+#### 4.1.3.2 请求内存池特性
 
+1. `request_pool_size`:
+   1. 存储解析后的结构化数据(URI、Method、Header 等);
+   2. 默认4k初始大小;
+   3. 生命周期绑定HTTP请求(非TCP连接);
+2. 扩容机制:
+   1. 空间不足时自动追加内存块;
+   2. 块大小由系统内存分配策略决定;
+   3. 典型追加大小: 16kb(Linux glibc);
+   4. 与 `large_client_header_buffers` 完全没关系;
+
+
+
+### 4.1.4 超时控制机制
+
+#### 4.1.4.1 `client_header_timeout` 作用于
+
+```mermaid
+timeline
+    title client_header_timeout 控制范围
+    section 包含阶段
+      接收首字节 ： 0ms
+      传输数据 ： 持续计时
+      扫描结束符 ： 关键检测点
+    section 排除阶段
+      结构化解析 ： 定时器已移除
+      HTTP处理阶段 ： 不受此限
+```
+
+#### 4.1.4.2 超时场景分析
+
+1. 触发条件:
+   1. 客户端传输速率低于阈值;
+   2. 网络丢包导致传输中断
+   3. 客户端恶意不发送结束符
+2. 典型表现:
+   1. 返回 `408 Request Timeout`;
+   2. 连接资源立即被释放;
+   3. 错误日志: `client time out ... while reading client request headers`;
+
+3. 验证方法:
+
+   ```bash
+   # 模拟慢速攻击
+   $ vim test.py
+   import socket
+   import time
+   
+   # 配置目标主机和端口（通常是80）
+   HOST = 'localhost'  # 可以是IP或域名
+   PORT = 80
+   
+   # 模拟行为：
+   # 1. 建立 TCP 连接
+   # 2. 发送部分 header
+   # 3. 停顿超过 Nginx 设置的 client_header_timeout（比如设为 5 秒，就停 6 秒）
+   # 4. 继续发送剩下的 header
+   # 5. 尝试读取响应（通常会被 Nginx 强制关闭）
+   
+   # 建立 socket 连接
+   sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+   sock.settimeout(10)  # 设置最大等待时间，防止卡住
+   sock.connect((HOST, PORT))
+   
+   try:
+       print("[*] Step 1: Sending partial headers...")
+       sock.sendall(b"GET / HTTP/1.1\r\n")
+       sock.sendall(f"Host: {HOST}\r\n".encode())
+   
+       print("[*] Step 2: Sleeping for 6 seconds to trigger client_header_timeout...")
+       time.sleep(6)  # > client_header_timeout (e.g., if it's 5s)
+   
+       print("[*] Step 3: Sending the rest of the headers...")
+       sock.sendall(b"Connection: close\r\n\r\n")
+   
+       print("[*] Step 4: Reading response from server...")
+       response = sock.recv(1024)
+       print("[*] Response received:")
+       print(response.decode(errors="ignore"))
+   
+   except socket.timeout:
+       print("[!] Socket timeout: server didn't respond (possibly closed connection)")
+   except socket.error as e:
+       print(f"[!] Socket error: {e}")
+   finally:
+       sock.close()
+   
+   
+   
+   # Nginx配置
+   http {
+       connection_pool_size 512;
+       client_header_timeout 3s;
+       keepalive_timeout 5s;
+       client_header_buffer_size 1k;
+       large_client_header_buffers 1 1k;
+       request_pool_size 256;
+   
+       log_format  main  '$remote_addr - $remote_user [$time_local] '
+                     '"$request" $status $body_bytes_sent '
+                     '"$http_referer" "$http_user_agent" '
+                     'request_time=$request_time '
+                     'connection=$connection connection_requests=$connection_requests '
+                     'host="$host" upstream_addr="$upstream_addr" '
+                     'http_version=$server_protocol '
+                     'body_bytes_sent=$body_bytes_sent '
+                     'request_length=$request_length';
+   
+       error_log /usr/local/nginx/logs/error.log info;
+   }
+   
+   $ python3 test.py
+   
+   # 日志输出
+   ==> logs/error.log <==
+   2025/06/03 19:26:19 [info] 29913#0: *41 client timed out (110: Connection timed out) while reading client request headers, client: 127.0.0.1, server: localhost, request: "GET / HTTP/1.1", host: "localhost"
+   
+   ==> logs/access.log <==
+   127.0.0.1 - - [03/Jun/2025:19:26:19 +0800] "GET / HTTP/1.1" 408 0 "-" "-"
+   ```
+
+   
 
 
 
