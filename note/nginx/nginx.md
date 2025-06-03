@@ -578,7 +578,7 @@ timeline
    import time
    
    # 配置目标主机和端口（通常是80）
-   HOST = 'localhost'  # 可以是IP或域名
+   HOST = '192.168.1.153'  # 可以是IP或域名
    PORT = 80
    
    # 模拟行为：
@@ -599,15 +599,23 @@ timeline
        sock.sendall(f"Host: {HOST}\r\n".encode())
    
        print("[*] Step 2: Sleeping for 6 seconds to trigger client_header_timeout...")
-       time.sleep(6)  # > client_header_timeout (e.g., if it's 5s)
+       time.sleep(30)  # > client_header_timeout (e.g., if it's 5s)
    
        print("[*] Step 3: Sending the rest of the headers...")
        sock.sendall(b"Connection: close\r\n\r\n")
    
        print("[*] Step 4: Reading response from server...")
-       response = sock.recv(1024)
-       print("[*] Response received:")
-       print(response.decode(errors="ignore"))
+       response = b""
+       while True:
+           chunk = sock.recv(1024)
+           if not chunk:  # 收到空数据表示连接关闭
+               break
+           response += chunk
+   
+       if response:
+           print(response.decode(errors="ignore"))
+       else:
+           print("[!] No response (connection closed by server)")
    
    except socket.timeout:
        print("[!] Socket timeout: server didn't respond (possibly closed connection)")
@@ -615,7 +623,6 @@ timeline
        print(f"[!] Socket error: {e}")
    finally:
        sock.close()
-   
    
    
    # Nginx配置
@@ -641,6 +648,12 @@ timeline
    }
    
    $ python3 test.py
+   python3 test.py
+   [*] Step 1: Sending partial headers...
+   [*] Step 2: Sleeping for 6 seconds to trigger client_header_timeout...
+   [*] Step 3: Sending the rest of the headers...
+   [*] Step 4: Reading response from server...
+   [!] No response (connection closed by server)
    
    # 日志输出
    ==> logs/error.log <==
@@ -649,13 +662,32 @@ timeline
    ==> logs/access.log <==
    127.0.0.1 - - [03/Jun/2025:19:26:19 +0800] "GET / HTTP/1.1" 408 0 "-" "-"
    ```
-
    
+   上面看到 python 仍然输出了 Step 3...等日志, 正常来说应该是不会有的, 所以用wireshark抓包, 分析过程如下:
 
+   ![wireshark抓包](../../img/nginx/http/client_header_timeout.png)
 
+   - 序号1-3数据报文: TCP 3次握手.
+   - 序号4-7: python 发送数据包, 服务器回应 ACK.
+   - 序号8: Nginx `client_header_timeout` 参数生效. Nginx 主动断开连接, 发送 [FIN,ACK] 数据报文, 此时服务端TCP状态是 `FIN_WAIT_1`.
+   - 序号9: 客户端回应[FIN,ACK], 发送 [ACK], 此时服务端TCP状态是 `FIN_WAIT_2`. 此时此刻, TCP 处于半连接状态, 也就是服务端不再接收客户端数据, 但是, **客户端仍然可以发送数据给服务端**
+   - 序号10: python sleep 结束, 发送数据.
+   - 序号11: 客户端发送 [FIN,ACK].
+   - 序号12-13: 服务端(Nginx)拒接连接, 发送 [RST].
 
+   对应的TCP连接截图
 
+   python sleep 前:
 
+   ![wireshark抓包](../../img/nginx/http/client_header_timeout2.png)
+
+    python sleep, 并且超过 Nginx `client_header_timeout` 设置时间, TCP连接处于半连接状态
+
+   ![wireshark抓包](../../img/nginx/http/client_header_timeout3.png)
+
+   python sleep 结束, TCP 连接完全关闭
+
+   ![wireshark抓包](../../img/nginx/http/client_header_timeout4.png)
 
 
 
