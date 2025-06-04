@@ -691,10 +691,58 @@ timeline
 
 
 
+## 4.2 HTTP 请求的 11 个阶段
+
+![HTTP请求的11个阶段](../../img/nginx/http/HTTP请求的11个阶段.png)
+
+![11个阶段的顺序处理](../../img/nginx/http/11个阶段的顺序处理.png)
+
+
+### 4.2.1 postread 阶段: 发现真实IP realip
+
+https://nginx.org/en/docs/http/ngx_http_realip_module.html
+
+说明: 
+   1. ngx_http_realip_module 模块用于将客户端地址和可选端口更改为指定头字段中发送的地址和可选端口。
+   2. 此模块不是默认构建的，应使用 --with-http_realip_module 配置参数。
+
+变量:
+   - `realip_remote_addr`: 保留原始客户端地址
+   - `realip_remote_port`: 保留原始客户端端口
+
+realip提供的指令:
+   ```bash
+   # 定义已知能够发送正确替换地址的可信地址。如果指定特殊值 unix: 则所有 UNIX 域套接字都将被信任。也可以使用主机名 (1.13.1) 指定可信地址。
+   Syntax:  set_real_ip_from address | CIDR | unix:;
+   Default: --
+   Context: http,server,location
+   
+   # 定义请求标头字段，其值将用于替换客户端地址。
+   # 包含可选端口的请求头字段值 也用于替换客户端端口（1.11.0）。 地址和端口应根据 RFC 3986 。
+   Syntax:  real_ip_header field | X-Real-IP | x-Forwarded-For | proxy_protocol;
+   Default: real_ip_header X-Real_IP;
+   Context: http,server,location
+   
+   # 如果禁用递归搜索，则原始客户端地址 匹配其中一个受信任的地址被最后一个替换 在请求头字段中发送的地址由 real_ip_header 指令。
+   # 如果启用了递归搜索，则与其中一个可信地址匹配的原始客户端地址将被请求标头字段中发送的最后一个非可信地址替换。
+   Syntax:  real_ip_recursive on | off;
+   Default: real_ip_recursive off;
+   Context: http,server,location
+   ```
 
 
 
 
+### 4.2.2 rewrite 阶段: rewrite 模块 return
+
+
+### 4.2.3 rewrite 阶段: rewrite 模块 重写URL
+
+### 4.2.4 rewrite 阶段: rewrite 模块 条件判断
+
+### 4.2.5 find_config 阶段: 找到请求处理的 location 指令
+
+### 4.2.6 preaccess 阶段: 对连接做限制的 limit_conn 模块
 
 
 
