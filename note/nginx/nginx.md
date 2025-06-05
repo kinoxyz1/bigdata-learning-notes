@@ -712,14 +712,14 @@ https://nginx.org/en/docs/http/ngx_http_realip_module.html
 
 realip提供的指令:
    ```bash
-   # 定义已知能够发送正确替换地址的可信地址。如果指定特殊值 unix: 则所有 UNIX 域套接字都将被信任。也可以使用主机名 (1.13.1) 指定可信地址。
+   # 定义合法的来源地址。如果指定特殊值 unix: 则所有 UNIX 域套接字都将被信任。也可以使用主机名 (1.13.1) 指定可信地址。
    Syntax:  set_real_ip_from address | CIDR | unix:;
    Default: --
    Context: http,server,location
    
-   # 定义请求标头字段，其值将用于替换客户端地址。
-   # 包含可选端口的请求头字段值 也用于替换客户端端口（1.11.0）。 地址和端口应根据 RFC 3986 。
-   Syntax:  real_ip_header field | X-Real-IP | x-Forwarded-For | proxy_protocol;
+   # 来源合法, 取 real_ip_header 设置的记录, 可以是 X-Real-IP 和 X-Forwarded-For、proxy_protocol.
+   # 这个值会替换 $remote_addr 的记录.
+   Syntax:  real_ip_header field | X-Real-IP | X-Forwarded-For | proxy_protocol;
    Default: real_ip_header X-Real_IP;
    Context: http,server,location
    
@@ -729,6 +729,126 @@ realip提供的指令:
    Default: real_ip_recursive off;
    Context: http,server,location
    ```
+
+案例, 能够分析出如下几个变量的值, 就算过关:
+```bash
+$remote_addr
+$http_x_real_ip
+$proxy_add_x_forwarded_for
+$realip_remote_addr
+$realip_remote_port
+```
+
+案例步骤:
+```bash
+$ ip addr show lo0
+1: lo0: <UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384 status UNKNOWN
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8
+    inet6 ::1/128
+    inet6 fe80::1/64
+    inet 192.168.1.201/24
+    inet 192.168.1.202/24
+    inet 192.168.1.203/24
+
+$ ip addr show en0
+14: en0: <UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500 status UP
+    link/ether 12:ce:36:31:f3:bb brd ff:ff:ff:ff:ff:ff
+    inet6 fe80::1c0f:4f83:602:31c0/64
+    inet 192.168.1.149/23 brd 192.168.1.255    
+
+$ vim nginx.conf
+# 增加日志
+log_format custom_log_format '$remote_addr - [$time_local] '
+                             'XFF="$http_x_forwarded_for" '
+                             'X-Real-IP="$http_x_real_ip" '
+                             'realip_remote_addr="$realip_remote_addr" '
+                             'proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for"';
+$ vim realip.conf
+server {
+    listen 192.168.1.149:80;
+
+    location / {
+        proxy_bind 192.168.1.201;
+
+        access_log /opt/homebrew/etc/nginx/logs/149.log custom_log_format;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        proxy_pass http://192.168.1.202:80;
+    }
+}
+
+server {
+    listen 192.168.1.202:80;
+
+    location / {
+        proxy_bind 192.168.1.202;
+
+        access_log /opt/homebrew/etc/nginx/logs/202.log custom_log_format;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        set_real_ip_from 192.168.0.0/22;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
+
+        proxy_pass http://192.168.1.203:80;
+    }
+}
+
+server {
+    listen 192.168.1.203:80;
+
+    location / {
+        proxy_bind 192.168.1.203;
+
+        access_log /opt/homebrew/etc/nginx/logs/203.log custom_log_format;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        set_real_ip_from 192.168.0.0/22;
+        real_ip_header X-Forwarded-For;
+        real_ip_recursive on;
+
+        proxy_pass http://192.168.1.204:80;
+    }
+}
+
+server {
+    listen 192.168.1.204:80;
+
+    location / {
+        proxy_bind 192.168.1.204;
+
+        access_log /opt/homebrew/etc/nginx/logs/204.log custom_log_format;
+
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        return 200 "----- Final Nginx (204) -----\nremote_addr: $remote_addr\nX-Real-IP: $http_x_real_ip\nX-Forwarded-For: $http_x_forwarded_for\nrealip_remote_addr: $realip_remote_addr\nproxy_add_x_forwarded_for: $proxy_add_x_forwarded_for\n";
+    }
+}
+
+$ curl http://192.168.1.149:80 -H "X-Forwarded-For: 2.2.2.2,3.3.3.3,4.4.4.4"
+Hello Client
+
+# 输出日志
+==> logs/204.log <==
+192.168.1.203 - [05/Jun/2025:14:31:07 +0800] XFF="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153, 4.4.4.4, 4.4.4.4" X-Real-IP="4.4.4.4" realip_remote_addr="192.168.1.203" proxy_add_x_forwarded_for="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153, 4.4.4.4, 4.4.4.4, 192.168.1.203"
+
+==> logs/203.log <==
+4.4.4.4 - [05/Jun/2025:14:31:07 +0800] XFF="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153, 4.4.4.4" X-Real-IP="4.4.4.4" realip_remote_addr="192.168.1.202" proxy_add_x_forwarded_for="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153, 4.4.4.4, 4.4.4.4"
+
+==> logs/202.log <==
+4.4.4.4 - [05/Jun/2025:14:31:07 +0800] XFF="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153" X-Real-IP="192.168.1.153" realip_remote_addr="192.168.1.201" proxy_add_x_forwarded_for="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153, 4.4.4.4"
+
+==> logs/149.log <==
+192.168.1.153 - [05/Jun/2025:14:31:07 +0800] XFF="2.2.2.2,3.3.3.3,4.4.4.4" X-Real-IP="-" realip_remote_addr="192.168.1.153" proxy_add_x_forwarded_for="2.2.2.2,3.3.3.3,4.4.4.4, 192.168.1.153"
+```
 
 
 
