@@ -698,7 +698,7 @@ timeline
 ![11个阶段的顺序处理](../../img/nginx/http/11个阶段的顺序处理.png)
 
 
-### 4.2.1 postread 阶段: 发现真实IP realip
+### 4.2.1 post read 阶段: realip 模块 发现真实IP 
 
 https://nginx.org/en/docs/http/ngx_http_realip_module.html
 
@@ -853,14 +853,46 @@ Hello Client
 ```
 
 
+### 4.2.2 rewrite 阶段
+#### 4.2.2.1 rewrite 模块 return
 
 
-### 4.2.2 rewrite 阶段: rewrite 模块 return
+https://nginx.org/en/docs/http/ngx_http_realip_module.html
 
 
-### 4.2.3 rewrite 阶段: rewrite 模块 重写URL
+return提供的指令:
+   ```bash
+   Syntax:  return code [text];
+            return code URL;
+            return URL;           # 默认code=302
+   Default: --
+   Context: server,location,if
+   
+   Syntax:  error_page code ... [=[response]]] uri;
+            return code URL;
+            return URL;           # 默认code=302
+   Default: --
+   Context: http,server,location,if in location
+   ```
+返回状态码:
+- Nginx 自定义
+  - 444: 关闭连接
+- HTTP 1.0 标准
+  - 301: HTTP 永久重定向; 浏览器会缓存, 下次访问会直接访问重定向方;
+  - 302: 临时重定向, 禁止被缓存;
+- HTTP 1.1 标准
+  - 303: 临时重定向, 允许改变方法, 禁止被缓存;
+  - 307: 临时重定向, 不允许改变方法, 禁止被缓存;
+  - 308: 永久重定向, 不允许改变方法;
 
-### 4.2.4 rewrite 阶段: rewrite 模块 条件判断
+案例:
+```bash
+
+```
+
+#### 4.2.2.2 rewrite 模块 重写URL
+
+#### 4.2.2.3 rewrite 模块 条件判断
 
 ### 4.2.5 find_config 阶段: 找到请求处理的 location 指令
 
