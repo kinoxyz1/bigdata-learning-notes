@@ -750,6 +750,8 @@ $ ip addr show lo0
     inet 192.168.1.201/24
     inet 192.168.1.202/24
     inet 192.168.1.203/24
+    inet 192.168.1.204/24
+    
 
 $ ip addr show en0
 14: en0: <UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500 status UP
