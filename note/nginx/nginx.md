@@ -1225,10 +1225,136 @@ longest regular expressions match!
 
 
 
-### 4.2.6 preaccess 阶段: 对连接做限制的 limit_conn 模块
+### 4.2.6 preaccess 
+#### 4.2.6.1 对连接做限制的 limit_conn 模块
+
+https://nginx.org/en/docs/http/ngx_http_limit_conn_module.html
+
+`ngx_http_limit_conn_module` 模块用于 限制每个 `自定义KYE` 的连接数.
+
+什么是`自定义KEY`, 示例配置:
+```bash
+# 这里的 自定义KEY 就是 $binary_remote_addr 变量的值
+limit_conn_zone $binary_remote_addr zone=one:10;
+
+# 这里的 自定义KEY 就是 $remote_addr 变量的值
+limit_conn_zone $remote_addr zone=one:10;
+
+# 这里的 自定义KEY 就是 $http_x_real_ip 变量的值
+limit_conn_zone $http_x_real_ip zone=one:10;
+```
+
+limit_conn模块的指令:
+```bash
+# 设置共享内存, 该区域将保存各种KEY的状态. 包括当前连接数. KEY 可以包含文本、变量、组合. KEY 为空的请求不予处理.
+# 如果该区域内存空间耗尽, 服务器将返回 `limit_conn_status 503(default: 503)` 状态码
+Syntax:  limit_conn_zone key zone=name:size;
+Default: --
+Context: http,server,location
+
+# 使用示例: 设置一个10m大小, 名为one的共享内存. 
+limit_conn_zone $remote_addr zone=one:10;
+
+---
+# 设置响应被拒绝的请求的状态码
+Syntax:  limit_conn_status code;
+Default: limit_conn_status 503;
+Context: http,server,location
+
+---
+# 设置共享内存区域, 以及该区域自定义KEY允许的最大连接数.
+# 只有当服务器正在处理请求, 并且已经读取整个请求的Header时, 该连接才会被计数.
+Syntax:  limit_conn zone number;
+Default: --
+Context: http,server,location
+```
+
+案例:
+```bash
+log_format limit
+                '$remote_addr - $remote_user [$time_local] "$request" '
+                '$status $body_bytes_sent "$http_referer" '
+                '$binary_remote_addr '
+                '$http_user_agent "$http_x_forwarded_for"'
+                'XFF="$http_x_forwarded_for" '
+                'X-Real-IP="$http_x_real_ip" '
+                'realip_remote_addr="$realip_remote_addr" '
+                'proxy_add_x_forwarded_for="$proxy_add_x_forwarded_for"';
+
+limit_conn_zone $binary_remote_addr zone=one:10m;
+
+server {
+        listen 192.168.1.149:80;
+        access_log /opt/homebrew/etc/nginx/logs/limit.log limit;
+
+        root /opt/homebrew/etc/nginx/html/;
+        location / {
+                set_real_ip_from 192.168.0.0/22;
+                real_ip_header X-Forwarded-For;
+                real_ip_recursive on;
+
+                # 连接数限制后, 响应状态码返回 500
+                limit_conn_status 500;
+                limit_conn_log_level warn;
+                # 响应速率限制 50字节/s
+                limit_rate 100;
+                # 每个IP只允许8次连接
+                limit_conn one 8;
+
+
+                # 使用共享空间 one, 同一个ip调用时, 支持5个突发请求, nodelay 表示立即响应
+                # limit_req zone=one burst=5; # nodelay;
+        }
+}
+```
+![Nginx_Limit_Conn_压测1](../../img/nginx/http/Nginx_Limit_Conn_压测1.png)
+
+![Nginx_Limit_Conn_压测2](../../img/nginx/http/Nginx_Limit_Conn_压测2.png)
+
+![Nginx_Limit_Conn_压测3](../../img/nginx/http/Nginx_Limit_Conn_压测3.png)
+
+压测日志:
+```bash
+3.3.3.3 - - [06/Jun/2025:15:03:47 +0800] "GET / HTTP/1.1" 500 177 "-" \x03\x03\x03\x03 Apache-HttpClient/4.5.14 (Java/1.8.0_432) "1.1.1.1,2.2.2.2,3.3.3.3"XFF="1.1.1.1,2.2.2.2,3.3.3.3" X-Real-IP="-" realip_remote_addr="192.168.1.149" proxy_add_x_forwarded_for="1.1.1.1,2.2.2.2,3.3.3.3, 3.3.3.3"
+3.3.3.3 - - [06/Jun/2025:15:03:47 +0800] "GET / HTTP/1.1" 500 177 "-" \x03\x03\x03\x03 Apache-HttpClient/4.5.14 (Java/1.8.0_432) "1.1.1.1,2.2.2.2,3.3.3.3"XFF="1.1.1.1,2.2.2.2,3.3.3.3" X-Real-IP="-" realip_remote_addr="192.168.1.149" proxy_add_x_forwarded_for="1.1.1.1,2.2.2.2,3.3.3.3, 3.3.3.3"
+3.3.3.3 - - [06/Jun/2025:15:03:47 +0800] "GET / HTTP/1.1" 500 177 "-" \x03\x03\x03\x03 Apache-HttpClient/4.5.14 (Java/1.8.0_432) "1.1.1.1,2.2.2.2,3.3.3.3"XFF="1.1.1.1,2.2.2.2,3.3.3.3" X-Real-IP="-" realip_remote_addr="192.168.1.149" proxy_add_x_forwarded_for="1.1.1.1,2.2.2.2,3.3.3.3, 3.3.3.3"
+...
+3.3.3.3 - - [06/Jun/2025:15:03:50 +0800] "GET / HTTP/1.1" 200 476 "-" \x03\x03\x03\x03 Apache-HttpClient/4.5.14 (Java/1.8.0_432) "1.1.1.1,2.2.2.2,3.3.3.3"XFF="1.1.1.1,2.2.2.2,3.3.3.3" X-Real-IP="-" realip_remote_addr="192.168.1.149" proxy_add_x_forwarded_for="1.1.1.1,2.2.2.2,3.3.3.3, 3.3.3.3"
+...
+```
 
 
 
+#### 4.2.6.2 preaccess 阶段: 对连接做限制的 limit_req 模块
+
+### 4.2.7 access 阶段
+#### 4.2.7.1 对ip做限制的access模块
+
+#### 4.2.7.2 对用户名密码做限制的auth_basic模块
+
+#### 4.2.7.3 使用第三方做权限控制的auth_request模块
+
+#### 4.2.7.4 satisty 指令
+
+### 4.2.8 precontent 阶段
+#### 4.2.8.1 按序访问资源的try_files模块
+
+#### 4.2.8.2 mirror 模块
+
+### 4.2.9 content 阶段
+#### 4.2.9.1 root 和 alias 指令
+
+#### 4.2.9.2 static 模块
+
+
+#### 4.2.9.3 index和autoindex 模块
+
+#### 4.2.9.4 concat 模块
+
+### 4.2.10 log阶段
+#### 4.2.10.1 access 日志
+
+#### 4.2.10.2 过滤模块
 
 
 # 五、反向代理
