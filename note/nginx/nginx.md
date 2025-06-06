@@ -853,14 +853,20 @@ Hello Client
 ```
 
 
-### 4.2.2 rewrite 阶段
-#### 4.2.2.1 rewrite 模块 return
+### 4.2.2 server_rewrite 阶段 和 rewrite 
 
+https://nginx.org/en/docs/http/ngx_http_rewrite_module.html
 
-https://nginx.org/en/docs/http/ngx_http_realip_module.html
+- `server_rewrite` 是第二阶段;
+- `rewrite` 是第四阶段;
 
+这两个阶段拥有同一个 `rewrite` 模块, 执行顺序是 `server_rewrite` -> `find_config` -> `rewrite`.
 
-return提供的指令:
+#### 4.2.2.1 rewrite 模块 return 指令
+
+https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return
+
+return指令:
    ```bash
    Syntax:  return code [text];
             return code URL;
@@ -885,16 +891,323 @@ return提供的指令:
   - 307: 临时重定向, 不允许改变方法, 禁止被缓存;
   - 308: 永久重定向, 不允许改变方法;
 
+如何区分 `return` 指令属于哪个阶段:
+1. `server_rewrite` 阶段: `return` 指令直接出现在 `server {` 下面;
+2. `rewrite` 阶段: `return` 指令出现在 `location {` 下面;
+
+所以, `server` 下面的 `return` 比 `location` 下面的 `return` 先发挥作用.
+
+
 案例:
 ```bash
+server {
+        listen 192.168.1.149:80;
 
+        root /opt/homebrew/etc/nginx/html/;
+        error_page 404 =308 404.html;
+        return 405;
+
+        location / {
+                return 404 "return ";
+        }
+}
+```
+这个案例中, 第一个 `return 405` 最先生效, 后续都不会执行.
+```bash
+$ curl 192.168.1.149:80
+<html>
+<head><title>405 Not Allowed</title></head>
+<body>
+<center><h1>405 Not Allowed</h1></center>
+<hr><center>nginx/1.27.4</center>
+</body>
+</html>
+```
+注释掉 `return 405` 之后, location 下的 `return` 最先生效
+```bash
+$ curl -v 192.168.1.149:80/1
+*   Trying 192.168.1.149:80...
+* Connected to 192.168.1.149 (192.168.1.149) port 80
+> GET / HTTP/1.1
+> Host: 192.168.1.149
+> User-Agent: curl/8.9.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 404 Not Found
+< Server: nginx/1.27.4
+< Date: Thu, 05 Jun 2025 08:21:03 GMT
+< Content-Type: application/octet-stream
+< Content-Length: 7
+< Connection: keep-alive
+<
+* Connection #0 to host 192.168.1.149 left intact
+return %
+```
+把 location 下的 return 也注释掉,
+```bash
+$ curl -v -L 192.168.1.149:80/1
+*   Trying 192.168.1.149:80...
+* Connected to 192.168.1.149 (192.168.1.149) port 80
+> GET /1 HTTP/1.1
+> Host: 192.168.1.149
+> User-Agent: curl/8.9.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 308 Permanent Redirect
+< Server: nginx/1.27.4
+< Date: Thu, 05 Jun 2025 08:25:30 GMT
+< Content-Type: text/html
+< Content-Length: 171
+< Connection: keep-alive
+< Location: 404.html
+* Ignoring the response-body
+<
+* Connection #0 to host 192.168.1.149 left intact
+* Issue another request to this URL: 'http://192.168.1.149:80/404.html'
+* Found bundle for host: 0x600003bc89f0 [serially]
+* Can not multiplex, even if we wanted to
+* Re-using existing connection with host 192.168.1.149
+> GET /404.html HTTP/1.1
+> Host: 192.168.1.149
+> User-Agent: curl/8.9.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 200 OK
+< Server: nginx/1.27.4
+< Date: Thu, 05 Jun 2025 08:25:30 GMT
+< Content-Type: text/html
+< Content-Length: 4
+< Last-Modified: Thu, 05 Jun 2025 06:54:58 GMT
+< Connection: keep-alive
+< ETag: "68413f42-4"
+< Accept-Ranges: bytes
+<
+404
+* Connection #0 to host 192.168.1.149 left intact
 ```
 
-#### 4.2.2.2 rewrite 模块 重写URL
+`error_page` 位于第十个阶段(content), 它的作用是当 server 和 location 都没有return, error_page 就发挥作用
 
-#### 4.2.2.3 rewrite 模块 条件判断
+
+#### 4.2.2.2 rewrite 模块 rewrite 指令 - 重写URL
+
+https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#rewrite
+
+rewrite指令:
+   ```bash
+   Syntax:  rewrite regex replacement [flag];
+   Default: --
+   Context: server,location,if
+   ```
+功能:
+- 将 regex 指定的 url 替换成 replacement 这个新的 url. 可以使用正则表达式及变量提取.
+- 当 replacement 以 http:// 或 https:// 或者 $schema 开头, 则直接返回 302 重定向.
+- 替换后的 url 根据 flag 指定的方式进行处理:
+  - `last`: 用 replacement 这个 uri 进行新的 location 匹配;
+  - `break`: break 指令停止当前脚本指令的执行, 等价于独立的 break 指令;
+  - `redirect`: 返回 302 重定向;
+  - `permanent`: 返回 301 重定向; 
+  - 空着: 继续执行rewrite下面的指令;
+
+
+案例1:
+```bash
+$ cat html/three/1.txt
+three/1.txt
+
+$ vim rewrite.conf
+server {
+	listen 192.168.1.149:80;
+
+	types {}
+	default_type text/html;
+
+	location /one {
+		rewrite /one(.*) /two$1 last;
+		return 200 "one";
+	}
+	location /two {
+	    # curl http://192.168.1.149:80/1.txt 的结果
+	    ## break: 停止执行, 返回 html/three/1.txt 中的内容
+	    ## last: 重新进行 location 匹配, 返回 three
+	    ## redirect: 发两次请求(302), 返回 three
+	    ## permanent: 发两次请求(301), 返回 three
+	    ## 空着: 重新进行 location 匹配, 返回 two
+		rewrite /two(.*) /three$1 break;  
+		return 200 "two";
+	}
+	location /three {
+		return 200 "three";
+	}
+}
+```
+案例2:
+```bash
+server {
+        listen 192.168.1.149:80;
+
+        types {}
+        default_type text/html;
+
+        root /opt/homebrew/etc/nginx/html/three;
+
+        location /one {
+                rewrite /one(.*) $1 permanent;
+        }
+        location /two {
+                rewrite /two(.*) $1 redirect;
+        }
+        location /three {
+                rewrite /three(.*) http://192.168.1.149:80$1;
+        }
+        location /four {
+                rewrite /four(.*) http://192.168.1.149:80$1 permanent;
+        }
+        location /five {
+                rewrite /five(.*) http://192.168.1.149:80$1 break;
+        }
+}
+```
+
+
+#### 4.2.2.3 rewrite 模块 if 指令 - 条件判断
+
+https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#if
+
+```bash
+if ($http_user_agent ~ MSIE) {
+    rewrite ^(.*)$ /msie/$1 break;
+}
+
+if ($http_cookie ~* "id=([^;]+)(?:;|$)") {
+    set $id $1;
+}
+
+if ($request_method = POST) {
+    return 405;
+}
+
+if ($slow) {
+    limit_rate 10k;
+}
+
+if ($invalid_referer) {
+    return 403;
+}
+```
 
 ### 4.2.5 find_config 阶段: 找到请求处理的 location 指令
+
+https://nginx.org/en/docs/http/ngx_http_core_module.html#location
+
+rewrite指令:
+```bash
+Syntax:  location [ = | ~ | ~* | ^~ ] uri {...}
+         location @name {...}
+Default: --
+Context: server,location
+```
+location 后面有多种写法:
+```bash
+# 精确匹配 /Test1
+location = /Test1 
+
+# 大小写敏感的正则匹配
+location ~ /Test1/$ 
+
+# 大小写敏感的正则匹配
+location ~* /Test1/$ 
+
+# 前缀匹配上/Test1 之后, 不再进行正则匹配
+location ^~ /Test1/
+
+# 前缀匹配
+location /Test1 
+```
+location 匹配优先级流程图:
+```mermaid
+flowchart TD
+A[遍历匹配全部前缀字符串 location] --> B{匹配上 = 字符串}
+B -- 是 --> C[使用匹配上的 = 精确匹配 location]
+B -- 否 --> D{匹配上 ^~ 字符串}
+D -- 否 --> F[记住最长匹配的前缀字符串 location]
+D -- 是 --> E[使用匹配上的 ^~ 字符串 location]
+F --> G[按 nginx.conf 中的顺序依次匹配正则表达式 location]
+G --> H{匹配}
+H -- 是 --> I[使用匹配上的正则表达式]
+H -- 否 --> J[所有正则表达式都不匹配<br>使用最长匹配的前缀字符串 location]
+```
+
+location 案例:
+```bash
+$ vim location.conf
+server {
+    listen 192.168.1.149:80;
+    # 大小写敏感的正则匹配
+    location ~ /Test/$ {
+        return 200 'first regular expressions match!\n';
+    }
+    # 忽略大小写的正则匹配
+    location ~* /Test1/(\w+)$ {
+        return 200 'longest regular expressions match!\n';
+    }
+    # 匹配上之后不再进行正则匹配
+    location ^~ /Test1/ {
+        return 200 'stop regular expressions match!\n';
+    }
+    # 普通的前缀匹配
+    location  /Test1/Test2 {
+        return 200 'longest prefix string match!\n';
+    }
+    # 普通的前缀匹配
+    location  /Test1 {
+        return 200 'prefix string match!\n';
+    }
+    # 精确匹配
+    location  = /Test1 {
+        return 200 'exact match! /Test1 \n';
+    }
+    # 精确匹配
+    location  = /Test1/ {
+        return 200 'exact match! /Test1/ \n';
+    }
+}
+```
+测试:
+```bash
+$ curl http://192.168.1.149:80/Test1
+exact match! /Test1
+
+$ curl http://192.168.1.149:80/Test1/
+exact match! /Test1/
+
+$ curl http://192.168.1.149:80/Test11
+prefix string match!
+
+$ curl http://192.168.1.149:80/Test1/11
+stop regular expressions match!
+
+$ curl http://192.168.1.149:80/Test1/Test2
+longest regular expressions match!
+```
+`curl http://192.168.1.149:80/Test1/Test2` 匹配的详细流程:
+1. Nginx 先遍历出所有前缀匹配的 location, 得到如下4个结果:
+   ```bash
+   location ~* /Test1/(\w+)$
+   location ^~ /Test1/
+   location /Test1/Test2 
+   location /Test1
+   ```
+2. 是否有精确匹配? **没有**
+3. 是否有 ^~ 匹配? **有, 但是路径不完全匹配, 必须要匹配正则的**
+4. 是否有正则匹配? **有忽略大小写的正则匹配, 正好合适**
+5. 返回 `longest regular expressions match!`
+
+
+
 
 ### 4.2.6 preaccess 阶段: 对连接做限制的 limit_conn 模块
 
