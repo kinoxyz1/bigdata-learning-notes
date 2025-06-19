@@ -1222,9 +1222,6 @@ longest regular expressions match!
 4. 是否有正则匹配? **有忽略大小写的正则匹配, 正好合适**
 5. 返回 `longest regular expressions match!`
 
-
-
-
 ### 4.2.6 preaccess 
 #### 4.2.6.1 对连接做限制的 limit_conn 模块
 
@@ -1322,8 +1319,6 @@ server {
 3.3.3.3 - - [06/Jun/2025:15:03:50 +0800] "GET / HTTP/1.1" 200 476 "-" \x03\x03\x03\x03 Apache-HttpClient/4.5.14 (Java/1.8.0_432) "1.1.1.1,2.2.2.2,3.3.3.3"XFF="1.1.1.1,2.2.2.2,3.3.3.3" X-Real-IP="-" realip_remote_addr="192.168.1.149" proxy_add_x_forwarded_for="1.1.1.1,2.2.2.2,3.3.3.3, 3.3.3.3"
 ...
 ```
-
-
 
 #### 4.2.6.2 preaccess 阶段: 对连接做限制的 limit_req 模块
 

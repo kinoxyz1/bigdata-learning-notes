@@ -1422,6 +1422,9 @@ spec:
               number: 80
 ```
 
+### 3.2.8 annotation doc
+https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
+
 
 
 # 四、NetworkPolicy
