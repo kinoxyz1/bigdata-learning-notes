@@ -19,7 +19,7 @@ wireshark 点 设置 -> Protocols -> TLS -> (Pre)-Master-Secret log filename 这
 
 再重启 Chrome， Macbook 可以这样启动:
 ```bash
-$ nohup /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome > dev/null 2>&1 &
+$ open -a "Google Chrome"
 ```
 
 
