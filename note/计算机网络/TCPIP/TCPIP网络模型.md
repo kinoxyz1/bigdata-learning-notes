@@ -1114,6 +1114,8 @@ tcpdump 参数说明:
 - `-tttt`: 显示详细时间;
 - `-w`: 保存为文件;
 
+#### 2.2.2.2 wireshark
+![wireshark_第一次抓包](../../../img/计算机网络/TCPIP/传输层/7.wireshark_第一次抓包.png)
 
 
 
