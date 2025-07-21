@@ -925,6 +925,22 @@ TCP 是面向连接的、可靠的、基于字节流的传输层通信协议.
 
 ![1.TCP头部基本格式](../../../img/计算机网络/TCPIP/传输层/1.TCP头部基本格式.png)
 
+- 源端口号: 确定发送方的进程;
+- 目标端口号: 确定接收方的进程;
+- 序列号: 确保数据有序传输;
+- 确认应答号: 期望接收的下一个字节的序号, 用于确认收到对方数据;
+- 首部长度: TCP头部长度, 告诉接收方从哪个位置开始是数据;
+- 保留位: 未使用;
+- 标志位: TCP 的状态;
+- 窗口大小: 告诉对方自己还有多少缓冲空间可以接受数据, 用于实现流量控制;
+- 校验和: 校验数据在传输过程中是否损坏;
+- 紧急指针: 很少用;
+- 选项: 
+  - MSS: 最大报文段长度;
+  - SACK: 选择性确认;
+  - 时间戳: 用于 RTT 估算;
+  - 窗口扩大因子: 扩大窗口尺寸, 提升吞吐;
+
 #### 2.1.4 如何唯一确定一个TCP连接
 
 TCP 四元组:
@@ -968,6 +984,154 @@ IP: `xxx.xxx.xxx.xxx`, 用二进制表示: 最小`00000000.00000000.00000000.000
 ## 2.2 TCP 连接建立
 
 ### 2.2.1 三次握手
+![三次握手](../../../img/计算机网络/TCPIP/传输层/2.三次握手.png)
+
+- 服务端进程启动, 监听某个端口, 此时服务端处于 `LISTEN` 状态, 客户端处于 `CLOSE`状态.
+
+   ![3.三次握手_第一个报文](../../../img/计算机网络/TCPIP/传输层/3.三次握手_第一个报文.png)
+
+- 客户端连接服务端, 此时客户端会随机初始化序列号, 将此序列号置于TCP首部的 `序号`字段中, 同时把 `SYN`标志位置改为 `1` 表示是 `SYN` 报文。接着把第一个 `SYN`报文发送给服务端，表示向服务端发起连接, 该报文不包含应用层数据, 之后客户端处于 `SYN-SENT` 状态。
+
+    ![4.三次握手_第二个报文](../../../img/计算机网络/TCPIP/传输层/4.三次握手_第二个报文.png)
+
+- 服务端收到客户端的 `SYN` 报文后, 首先服务端也会随机初始化自己的序列号`server_isn`, 将此序列号填入 TCP 首部的序号字段中, 然后把 TCP 首部的 确认应答号 字段填入 `client_isn+1`, 接着把 `SYN` 和 `ACK` 标志位置为 `1`, 最后把该报文发给客户端, 该报文也不包含应用层数据, 之后服务端处于 `SYN-RCVD` 状态.
+
+  ![5.三次握手_第三个报文](../../../img/计算机网络/TCPIP/传输层/5.三次握手_第三个报文.png)
+
+- 客户端收到服务端报文后, 还要向服务端回应最后一个应答报文, 首先该应答报文 TCP 首部 `ACK` 标志位置为 `1`, 其次 确认应答号 字段填入 `server_isn + 1`, 最后把报文发送给服务端, 这次报文可以携带客户端到服务端的数据, 之后客户端处于 `ESTABLISHED` 状态.
+- 服务端收到客户端应答报文后, 也进入 `ESTABLISHED` 状态.
+
+
+
+
+
+
+
+
+
+
+---
+
+```bash
+# (窗口1) 登录 server 端: 192.168.1.249
+$ python3 -m http.server 9999
+
+# (窗口2) 登录 client 端: 192.168.1.80
+$ iptables -I INPUT -p tcp --sport 9999 --src 192.168.1.249 --tcp-flags SYN,ACK SYN,ACK -j DROP
+# (窗口2) 用 Ipv4 访问(窗口3执行完再回车)
+$ curl -4 http://192.168.1.249:9999
+
+# (窗口3) 登录 client 端: 192.168.1.80, tcpump 抓包
+$ tcpdump tcp -i eno1 -ttt -s 0 -c 100 and port 9999
+ 00:00:00.000000 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878300910 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000149 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806906733 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:01.009194 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878301919 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000295 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806907743 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:01.025114 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806908768 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:00.986549 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878303931 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000126 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806909755 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:02.021308 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806911776 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:02.106615 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878308059 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000140 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806913883 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:04.201257 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806918084 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:03.994554 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878316255 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000190 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806922079 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:08.033281 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806930112 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:08.090670 IP jz-desktop-04.45502 > jz-desktop-08.9999: Flags [S], seq 1885886001, win 64240, options [mss 1460,sackOK,TS val 1878332379 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000136 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806938203 ecr 1878300910,nop,wscale 7], length 0
+ 00:00:16.229243 IP jz-desktop-08.9999 > jz-desktop-04.45502: Flags [S.], seq 1282794954, ack 1885886002, win 65160, options [mss 1460,sackOK,TS val 2806954432 ecr 1878300910,nop,wscale 7], length 0
+
+# (窗口4): 登录 client 端: 192.168.1.80
+$ ss -tnp | grep 9999
+SYN-SENT0      1                192.168.1.80:35454          192.168.1.249:9999   users:(("curl",pid=8728,fd=3))
+
+# (窗口5): 登录 server 端: 192.168.1.249
+$ ss -tnp | grep 9999
+##### 什么都没有
+
+
+# 清理规则
+$ iptables -D INPUT -p tcp --sport 9999 --src 192.168.1.249 --tcp-flags SYN,ACK SYN,ACK -j DROP
+```
+
+验证 SYN,ACK 重试次数, 可以将 client 的 SYN 重试次数减少:
+
+```bash
+# 查看Client SYN 重试次数
+$ cat /proc/sys/net/ipv4/tcp_syn_retries
+5
+# 查看Server SYN,ACK 重试次数
+$ cat /proc/sys/net/ipv4/tcp_synack_retries
+5
+# 修改 SYN 重试次数
+$ echo 1 > /proc/sys/net/ipv4/tcp_syn_retries
+# client 端
+$ curl -4 http://192.168.1.249:9999
+# 抓包可以看到
+$ tcpdump tcp -i eno1 -ttt -s 0 -c 100 and port 9999
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on eno1, link-type EN10MB (Ethernet), capture size 262144 bytes
+ 00:00:00.000000 IP jz-desktop-04.46900 > jz-desktop-08.9999: Flags [S], seq 3599805842, win 64240, options [mss 1460,sackOK,TS val 1879586206 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000025 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808192038 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:01.020982 IP jz-desktop-04.46900 > jz-desktop-08.9999: Flags [S], seq 3599805842, win 64240, options [mss 1460,sackOK,TS val 1879587227 ecr 0,nop,wscale 7], length 0
+ 00:00:00.000015 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808193059 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:01.021184 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808194080 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:02.015980 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808196096 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:04.031959 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808200128 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:08.196000 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808208324 ecr 1879586206,nop,wscale 7], length 0
+ 00:00:16.124024 IP jz-desktop-08.9999 > jz-desktop-04.46900: Flags [S.], seq 1917658423, ack 3599805843, win 65160, options [mss 1460,sackOK,TS val 2808224448 ecr 1879586206,nop,wscale 7], length 0
+```
+
+
+
+
+
+
+
+---
+
+
+### 2.2.2 抓TCP三次握手报文
+抓包常见的有两种方式:
+- [tcpdump](https://juejin.cn/post/6844904084168769549): 在命令行中使用;
+- wireshark: 支持可视化界面;
+
+#### 2.2.2.1 tcpdump
+![tcpdump_第一次抓包](../../../img/计算机网络/TCPIP/传输层/6.tcpdump_第一次抓包.png)
+
+数据包输出格式:
+```bash
+  时间戳 协议 源地址.源端口 > 目标地址.目标端口 网络包详细信息
+```
+
+tcpdump 参数说明:
+- `-i em1`: 抓取 em1 网卡的数据包;
+- `tcp`: 抓取 tcp 协议的数据包;
+- `-nn`: 不解析 ip 地址 和 端口号;
+- `host`: 抓取指定 ip 的数据包;
+- `port`: 抓取指定 port 的数据包;
+- `-S`: 数据包展示 绝对序列号;
+- `-tttt`: 显示详细时间;
+- `-w`: 保存为文件;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
