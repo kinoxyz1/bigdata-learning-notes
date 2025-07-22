@@ -11,6 +11,7 @@
 | | `table` | `command` | `chain` | `parameter` | `target` |
 | -- |-------|---------|-------|-----------| --- |
 | iptables | -t filter(默认) | -A<br />-D<br />-I<br />-R<br />-L<br />-F<br />-Z<br />-N<br />-X<br />-P | INPUT<br />OUTPUT<br />FORWARD<br />PREROUTING<br />POSTROUTING | -p<br />-s<br />-d<br />-i<br />-o<br />--sport<br />--dport | -j ACCEPT<br />-j DROP<br />-j REDIRECT<br />-j SNAT<br />-j DNAT<br />-j MASQUERADE<br />-j LOG<br />-j SEMARK |
+
 iptables 主要就是对 `table` 和 `chain` 的操作. 以下是详细解释:
 
 
