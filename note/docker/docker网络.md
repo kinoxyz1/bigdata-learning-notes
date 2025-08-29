@@ -8,6 +8,8 @@
 ---
 # 一、宿主机和容器的流量分配
 
+## 1.1 docker 流量流转情况
+
 一台崭新的Centos服务器, 默认有两个网卡:
 ```bash
 $ ip addr
@@ -18,20 +20,18 @@ $ ip addr
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:21:1f:a3 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892154095sec preferred_lft 1892154095sec
-    inet6 fe80::216:3eff:fe21:1fa3/64 scope link
+    link/ether 00:16:3e:23:e0:17 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159531sec preferred_lft 1892159531sec
+    inet6 fe80::216:3eff:fe23:e017/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当安装上 docker 后, 会增加一个网卡:
 ```bash
-3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
-    link/ether 02:42:d7:6f:b4:ff brd ff:ff:ff:ff:ff:ff
+3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
+    link/ether 02:42:29:4a:b8:4f brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
-       valid_lft forever preferred_lft forever
-    inet6 fe80::42:d7ff:fe6f:b4ff/64 scope link
        valid_lft forever preferred_lft forever
 ```
 创建一个容器
@@ -51,27 +51,27 @@ $ ip addr
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:21:1f:a3 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892152250sec preferred_lft 1892152250sec
-    inet6 fe80::216:3eff:fe21:1fa3/64 scope link
+    link/ether 00:16:3e:23:e0:17 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159368sec preferred_lft 1892159368sec
+    inet6 fe80::216:3eff:fe23:e017/64 scope link
        valid_lft forever preferred_lft forever
 3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
-    link/ether 02:42:d7:6f:b4:ff brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:29:4a:b8:4f brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
-    inet6 fe80::42:d7ff:fe6f:b4ff/64 scope link
+    inet6 fe80::42:29ff:fe4a:b84f/64 scope link
        valid_lft forever preferred_lft forever
-7: vethd1ab0f5@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
-    link/ether 4a:98:9c:c3:d0:dc brd ff:ff:ff:ff:ff:ff link-netnsid 0
-    inet6 fe80::4898:9cff:fec3:d0dc/64 scope link
+5: vethb736276@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether 9a:b0:77:75:45:36 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::98b0:77ff:fe75:4536/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当外部请求访问容器服务时, 网络顺序是:
 
 ```bash
-外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → vethd1ab0f5@if6 → eth0(172.17.0.2) → 容器内应用
+外网 → 主机eth0(172.18.207.68) → iptables/netfilter规则 → docker0(172.17.0.1) → vethb736276@if4 → eth0(172.17.0.2) → 容器内应用
 ```
 
 - `iptables`: 
@@ -83,8 +83,9 @@ $ ip addr
    # 所有发往本地的流量都要经过 DOCKER链 检查
    # pkts bytes: 已经处理了 358 个包, 共 26776 字节
    # ADDRTYPE match dst-type LOCAL: 只匹配目标是本机地址的数据包
+   # docker 安装后自动添加
    pkts bytes target     prot opt in     out     source               destination
-    358 26776 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+      1    40 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
   
   # 入站: 发往本机进程的数据包检查点, 它决定是否允许访问。确定这个快递确实是给我们这栋楼的 
   Chain INPUT (policy ACCEPT 137 packets, 10602 bytes)
@@ -97,6 +98,7 @@ $ ip addr
    # 处理本机程序访问容器的情况（如容器通过宿主机端口访问自己）
    # !127.0.0.0/8: 排除本地回环地址，避免影响localhost通信
    # 包计数为0说明暂时没有这种访问场景发生
+   # docker 安装后自动添加
    pkts bytes target     prot opt in     out     source               destination
       0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
   
@@ -108,7 +110,8 @@ $ ip addr
      # !docker0: 不是通过docker0网桥出去的流量（即去往外网的流量）
      # MASQUERADE: 将容器内网IP伪装成宿主机IP，让外网能正确响应
      # 16个包，999字节: 说明有容器访问过外网
-     16   999 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
+     # docker 安装后自动添加
+      0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
      
      # 规则2: 容器通过宿主机端口访问自己时的地址伪装（特殊场景）
      # 172.17.0.2 -> 172.17.0.2: 容器访问自己
@@ -118,6 +121,7 @@ $ ip addr
       0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
   
   # Docker自定义链: 处理所有Docker相关的端口映射和网络转发
+  # docker 安装后自动添加
   Chain DOCKER (2 references)
    pkts bytes target     prot opt in     out     source               destination
       # 规则1: Docker内部通信直接放行（优化规则）
@@ -138,7 +142,7 @@ $ ip addr
 
 - `docker0`: docker 网桥，充当网关做网络转发
 
-- `vethd1ab0f5@if6`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
+- `vethb736276@if4`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
   - **成对出现**: 总是以一对的形式存在，数据从一端进入，会从另一端出来
   - **双向通信**: 两端可以互相发送和接受数据包
   - **夸命名空间**: 可以将两端分别放在不同的网络命令空间中
@@ -146,13 +150,118 @@ $ ip addr
 - `eth0`: 容器内的网卡名, veth 的另一端，从主机端 veth 进入的数据包会从这一端出来
 - `容器内应用`: 真正的服务进程
 
+## 1.2 docker安装后干了啥
+
+1. 在主机上添加了一个网卡: `docker0`
+
+2. 在 `iptables` `nat` 表中添加如下内容:
+
+   ```bash
+   Chain PREROUTING (policy ACCEPT 141 packets, 10850 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       # 添加一条记录
+       0     0 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+       
+   Chain OUTPUT (policy ACCEPT 26 packets, 1770 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       # 添加一条记录
+       0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+       
+   Chain POSTROUTING (policy ACCEPT 26 packets, 1770 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       # 添加一条记录
+       0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
+   
+   # 添加一条 Chain 
+   Chain DOCKER (2 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
+   ```
+
+   
+
+## 1.3 总结
+
+完整的数据流程
+
+```mermaid
+sequenceDiagram
+    participant C as 👤 客户端
+    participant H as 🖥️ 宿主机
+    participant P as 📥 PREROUTING
+    participant D as 🐳 DOCKER链
+    participant B as 🌉 docker0网桥
+    participant N as 🐋 nginx容器
+    participant O as 📤 POSTROUTING
+    
+    Note over C,N: Docker 端口映射完整流程
+    
+    C->>H: ① curl localhost:8080
+    H->>P: ② 数据包进入 PREROUTING
+    P->>D: ③ 转发到 DOCKER 链
+    
+    Note over D: 🔍 检查规则:<br/>!docker0 & tcp dpt:8080
+    
+    D->>D: ④ DNAT: 8080→172.17.0.2:80
+    D->>B: ⑤ 转发到 docker0 网桥
+    B->>N: ⑥ 路由到容器 172.17.0.2:80
+    
+    Note over N: ⚡ nginx 处理 HTTP 请求
+    
+    N->>B: ⑦ HTTP 响应返回
+    B->>O: ⑧ 进入 POSTROUTING
+    
+    Note over O: 🔍 检查是否需要 MASQUERADE
+    
+    O->>H: ⑨ 响应准备发送
+    H->>C: ⑩ 客户端收到响应
+    
+    Note over C: ✅ 端口映射完成！
+```
 
 
-总结:
 
-当执行 docker run .... 的时候, 会在系统创建 iptables 的 nat 表，具体如下(假设完全不同iptables):
+```mermaid
+graph TD
+    subgraph "🌍 外部网络"
+        A["👤 客户端"]
+    end
+    
+    subgraph "🖥️ 宿主机 (Docker Host)"
+        subgraph "📋 iptables NAT 表"
+            B["📥 PREROUTING"]
+            C["🐳 DOCKER 链"]
+            D["📤 POSTROUTING"]
+        end
+        
+        subgraph "🌉 Docker 网桥 (docker0)"
+            E["172.17.0.1"]
+        end
+    end
+    
+    subgraph "📦 Docker 容器网络"
+        F["🐋 nginx 容器<br/>172.17.0.2:80"]
+    end
+    
+    A -->|"curl localhost:8080"| B
+    B --> C
+    C -->|"DNAT: 8080→172.17.0.2:80"| E
+    E --> F
+    F -->|"HTTP 响应"| E
+    E --> D
+    D -->|"MASQUERADE (如需要)"| A
+    
+    style A fill:#e1f5fe
+    style F fill:#f3e5f5
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+```
 
->    - Chain PREROUTING
+
+
+1. Docker 底层就是 iptables 规则
+2. `端口映射 = DNAT:` 目标地址转换
+3. `容器上网 = MASQUERADE`: 源地址伪装实现
 
 
 
