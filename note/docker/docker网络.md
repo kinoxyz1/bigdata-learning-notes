@@ -12,7 +12,6 @@
 
 一台崭新的Centos服务器, 默认有两个网卡:
 ```bash
-$ ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
@@ -20,17 +19,17 @@ $ ip addr
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:23:e0:17 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159531sec preferred_lft 1892159531sec
-    inet6 fe80::216:3eff:fe23:e017/64 scope link
+    link/ether 00:16:3e:23:96:b4 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159770sec preferred_lft 1892159770sec
+    inet6 fe80::216:3eff:fe23:96b4/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当安装上 docker 后, 会增加一个网卡:
 ```bash
 3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
-    link/ether 02:42:29:4a:b8:4f brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:06:b1:29:3c brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
 ```
@@ -43,7 +42,6 @@ $ docker run -d --name nginx -p 8080:80 nginx
 宿主机网卡会多一个网卡
 
 ```bash
-$ ip addr
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
@@ -51,27 +49,27 @@ $ ip addr
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:23:e0:17 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159368sec preferred_lft 1892159368sec
-    inet6 fe80::216:3eff:fe23:e017/64 scope link
+    link/ether 00:16:3e:23:96:b4 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159744sec preferred_lft 1892159744sec
+    inet6 fe80::216:3eff:fe23:96b4/64 scope link
        valid_lft forever preferred_lft forever
 3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
-    link/ether 02:42:29:4a:b8:4f brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:06:b1:29:3c brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
-    inet6 fe80::42:29ff:fe4a:b84f/64 scope link
+    inet6 fe80::42:6ff:feb1:293c/64 scope link
        valid_lft forever preferred_lft forever
-5: vethb736276@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
-    link/ether 9a:b0:77:75:45:36 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-    inet6 fe80::98b0:77ff:fe75:4536/64 scope link
+5: veth4d3005b@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether 9a:58:7c:41:67:09 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::9858:7cff:fe41:6709/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当外部请求访问容器服务时, 网络顺序是:
 
 ```bash
-外网 → 主机eth0(172.18.207.68) → iptables/netfilter规则 → docker0(172.17.0.1) → vethb736276@if4 → eth0(172.17.0.2) → 容器内应用
+外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → veth4d3005b@if4 → eth0(172.17.0.2) → 容器内应用
 ```
 
 - `iptables`: 
@@ -80,7 +78,7 @@ $ ip addr
 
   ```bash
   $ iptables -t filter -nL -v
-  Chain INPUT (policy ACCEPT 20669 packets, 45M bytes)
+  Chain INPUT (policy ACCEPT 210 packets, 13722 bytes)
    pkts bytes target     prot opt in     out     source               destination
   
   Chain FORWARD (policy DROP 0 packets, 0 bytes)
@@ -92,7 +90,7 @@ $ ip addr
       0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
       0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
   
-  Chain OUTPUT (policy ACCEPT 6419 packets, 587K bytes)
+  Chain OUTPUT (policy ACCEPT 135 packets, 66861 bytes)
    pkts bytes target     prot opt in     out     source               destination
   
   Chain DOCKER (1 references)
@@ -125,7 +123,7 @@ $ ip addr
    # ADDRTYPE match dst-type LOCAL: 只匹配目标是本机地址的数据包
    # docker 安装后自动添加
    pkts bytes target     prot opt in     out     source               destination
-      1    40 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+      2    80 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
   
   # 入站: 发往本机进程的数据包检查点, 它决定是否允许访问。确定这个快递确实是给我们这栋楼的 
   Chain INPUT (policy ACCEPT 137 packets, 10602 bytes)
@@ -182,7 +180,7 @@ $ ip addr
 
 - `docker0`: docker 网桥，充当网关做网络转发
 
-- `vethb736276@if4`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
+- `veth4d3005b@if4`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
   - **成对出现**: 总是以一对的形式存在，数据从一端进入，会从另一端出来
   - **双向通信**: 两端可以互相发送和接受数据包
   - **夸命名空间**: 可以将两端分别放在不同的网络命令空间中
@@ -308,20 +306,20 @@ graph TD
 上面已经详细的描述了docker 网络的关系, 现在实战分析在主机上 ping 容器的案例
 
 ```bash
-# ping 之前 iptables 的情况
+# ping 之前 iptables nat 表的情况
 $ iptables -t nat -nL -v
-Chain PREROUTING (policy ACCEPT 40 packets, 2670 bytes)
+Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination
-   41  2710 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+    2    80 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
 
-Chain INPUT (policy ACCEPT 40 packets, 2670 bytes)
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination
 
-Chain OUTPUT (policy ACCEPT 173 packets, 13084 bytes)
+Chain OUTPUT (policy ACCEPT 57 packets, 4328 bytes)
  pkts bytes target     prot opt in     out     source               destination
     0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
 
-Chain POSTROUTING (policy ACCEPT 173 packets, 13084 bytes)
+Chain POSTROUTING (policy ACCEPT 57 packets, 4328 bytes)
  pkts bytes target     prot opt in     out     source               destination
     0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
     0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
@@ -331,13 +329,46 @@ Chain DOCKER (2 references)
     0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
     0     0 DNAT       tcp  --  !docker0 *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080 to:172.17.0.2:80
     
+# ping 之前 iptables filter 表的情况
+$ iptables -t filter -nL -v
+Chain INPUT (policy ACCEPT 283 packets, 19167 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+
+Chain OUTPUT (policy ACCEPT 199 packets, 83552 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain DOCKER (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 ACCEPT     tcp  --  !docker0 docker0  0.0.0.0/0            172.17.0.2           tcp dpt:80
+
+Chain DOCKER-ISOLATION-STAGE-1 (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-ISOLATION-STAGE-2 (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DROP       all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-USER (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
 # docker 容器的 ip: 172.17.0.2(nginx)
 $ ping 172.17.0.2
 PING 172.17.0.2 (172.17.0.2) 56(84) bytes of data.
-64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.134 ms
+64 bytes from 172.17.0.2: icmp_seq=1 ttl=64 time=0.059 ms
 64 bytes from 172.17.0.2: icmp_seq=2 ttl=64 time=0.065 ms
-64 bytes from 172.17.0.2: icmp_seq=3 ttl=64 time=0.046 ms
-64 bytes from 172.17.0.2: icmp_seq=4 ttl=64 time=0.041 ms
 ```
 
 在分析ping 的流量顺序之前，需要澄清一些东西，网络请求入站、出站的处理顺序，系统是会交替使用本地路由表和iptables表的，如下:
@@ -370,110 +401,121 @@ graph TD
     E --> F[从网卡发出]
 ```
 
-
-
-1. 
-
-
-
-
-
-
-
-
-
-
-
-
-
 问题: 
 
-1. ping 会走到 `Chain PREROUTING` 吗？
-2. ping 会走到 `Chain DOCKER` 吗？
+1. ping 会走 filter 表吗？
+2. ping 会走 nat 表吗？
 
-再查看iptables 的 net 表
+3. ping 会走到哪些链呢？
 
-```bash
-$ iptables -t nat -nL -v
-Chain PREROUTING (policy ACCEPT 41 packets, 2714 bytes)
- pkts bytes target     prot opt in     out     source               destination
-   42  2754 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+答:
 
-Chain INPUT (policy ACCEPT 41 packets, 2714 bytes)
- pkts bytes target     prot opt in     out     source               destination
+1. ping 会走 filter 表。
 
-Chain OUTPUT (policy ACCEPT 195 packets, 14714 bytes)
- pkts bytes target     prot opt in     out     source               destination
-    0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+2. ping 会走 nat 表。
 
-Chain POSTROUTING (policy ACCEPT 195 packets, 14714 bytes)
- pkts bytes target     prot opt in     out     source               destination
-    0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
-    0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
+3. 具体走了哪些链看如下iptables表
+   ```bash
+   ## nat 表
+   Chain PREROUTING (policy ACCEPT 5 packets, 248 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       7   328 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+   
+   Chain INPUT (policy ACCEPT 5 packets, 248 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+   
+   Chain OUTPUT (policy ACCEPT 107 packets, 8130 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+   
+   Chain POSTROUTING (policy ACCEPT 107 packets, 8130 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
+       0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
+   
+   Chain DOCKER (2 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
+       0     0 DNAT       tcp  --  !docker0 *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080 to:172.17.0.2:80
+   
+   ## filter 表
+   Chain INPUT (policy ACCEPT 481 packets, 33066 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+   
+   Chain FORWARD (policy DROP 0 packets, 0 bytes)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+       0     0 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+       0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+       0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+       0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+       0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+   
+   Chain OUTPUT (policy ACCEPT 337 packets, 121K bytes)
+    pkts bytes target     prot opt in     out     source               destination
+   
+   Chain DOCKER (1 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 ACCEPT     tcp  --  !docker0 docker0  0.0.0.0/0            172.17.0.2           tcp dpt:80
+   
+   Chain DOCKER-ISOLATION-STAGE-1 (1 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+       0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   
+   Chain DOCKER-ISOLATION-STAGE-2 (1 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 DROP       all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+       0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   
+   Chain DOCKER-USER (1 references)
+    pkts bytes target     prot opt in     out     source               destination
+       0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   ```
 
-Chain DOCKER (2 references)
- pkts bytes target     prot opt in     out     source               destination
-    0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
-    0     0 DNAT       tcp  --  !docker0 *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080 to:172.17.0.2:80
-```
+   对比 nat 表和之前的可以看到  pkts 从 2 -> 7, bytes 从 80 -> 328，所以可以得出，请求走到了 nat 表的 PREROUTING 链，但是由于ping 的 172.17.0.2，不匹配 PREROUTING 链的条件(`ADDRTYPE match dst-type LOCAL`)，所以没有进入 DOCKER 链，其他链也是一样没有进入过。
 
-可以看到，ping 走到了 `Chain PREROUTING`, 但是没有走 `Chain DOCKER`。
+   
 
-理由如下: 
+   那经过 PREROUTING 链之后，数据流转到了哪里呢？
 
-- 当执行 `ping 172.17.0.2`后，进入  `Chain PREROUTING` 链，该链的数据包和字节数增加，但是不匹配该链中的记录，因为该链匹配的是 LOCAL 的地址。也就是说 `curl localhost:8080` 才会匹配该链，再进入 DOCKER 链。
+   
 
-- 此时会调用系统的路由表找到下一跳是docker0网卡，对应的ip地址是172.17.0.1
+   根据上面的 **入站流量处理顺序** ，iptables 的 PREROUTING 链过后，会进入系统的路由表，决定下一跳应该去哪里，查看路由表:
+   ```bash
+   $ ip route show
+   default via 172.18.207.253 dev eth0
+   169.254.0.0/16 dev eth0 scope link metric 1002
+   172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+   172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.67
+   ```
 
-  ```bash
-  $ ip route show
-  default via 172.18.207.253 dev eth0
-  169.254.0.0/16 dev eth0 scope link metric 1002
-  # 会找到下一跳应该是 docker0
-  172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
-  172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.68
-  [root@iZwz90stcgbdd4gzggkfozZ ~]#
-  ```
+   其中有一条 `172.17.0.0/16` 的记录表明，从 `172.17.0.0/16` 来的流量，下一跳应该走 docker0 网卡，该网卡的ip 是 172.17.0.1。
 
-- 然后再经过 iptables 的 filter 表，filter 表没有对应的过滤记录，表示放行
+   
 
-  ```bash
-  $ iptables -t filter -nL -v
-  Chain INPUT (policy ACCEPT 20978 packets, 45M bytes)
-   pkts bytes target     prot opt in     out     source               destination
-  
-  Chain FORWARD (policy DROP 0 packets, 0 bytes)
-   pkts bytes target     prot opt in     out     source               destination
-      0     0 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
-      0     0 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
-      0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
-      0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
-      0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
-      0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
-  
-  Chain OUTPUT (policy ACCEPT 6642 packets, 632K bytes)
-   pkts bytes target     prot opt in     out     source               destination
-  
-  Chain DOCKER (1 references)
-   pkts bytes target     prot opt in     out     source               destination
-      0     0 ACCEPT     tcp  --  !docker0 docker0  0.0.0.0/0            172.17.0.2           tcp dpt:80
-  
-  Chain DOCKER-ISOLATION-STAGE-1 (1 references)
-   pkts bytes target     prot opt in     out     source               destination
-      0     0 DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
-      0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
-  
-  Chain DOCKER-ISOLATION-STAGE-2 (1 references)
-   pkts bytes target     prot opt in     out     source               destination
-      0     0 DROP       all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
-      0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
-  
-  Chain DOCKER-USER (1 references)
-   pkts bytes target     prot opt in     out     source               destination
-      0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
-  ```
+   找到下一跳之后，又会进入 iptables 的 filter 表，由 filter 表决定下一步该怎么处理。
 
-- docker0 会通过mac地址找到真正的容器，将请求发过去
+   
+
+   filter 表的记录上可以看见，所有链的字节数都是0，这是为什么呢？
+
+   **答案：这是因为主机ping容器属于本地桥接通信，不需要经过复杂的iptables filter规则处理。**
+
+   详细解释：
+   1. **本地桥接通信**：主机ping容器172.17.0.2是通过docker0网桥的本地通信，属于二层桥接转发
+   2. **路由决策结果**：根据路由表`172.17.0.0/16 dev docker0`，流量直接通过docker0网桥转发
+   3. **绕过filter规则**：由于是同一网桥下的通信，Linux内核可以直接进行桥接转发，无需经过这些为复杂网络场景设计的filter表规则
+   4. **规则设计用途**：filter表中的DOCKER-USER、DOCKER-ISOLATION等链主要是为了处理：
+      - 容器间网络隔离
+      - 端口映射转发（如8080:80）
+      - 跨网桥通信控制
+      - 外部访问容器的安全策略
+   5. **与端口映射的区别**：这与外部访问容器端口（如访问宿主机8080端口转发到容器80端口）的场景完全不同。端口映射需要经过DNAT、FORWARD链等复杂处理，而本地ping直接通过网桥二层转发
+
+   **总结**：主机直接ping容器IP是一种优化的本地通信路径，走的是桥接转发而非iptables转发，因此filter表相关链的字节数保持为0。
+
+
 
 
 
