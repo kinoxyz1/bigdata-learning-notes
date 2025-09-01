@@ -517,7 +517,131 @@ graph TD
 
 
 
+## 1.5 主机 curl 容器的流量流转情况
 
+先清空 iptables 表记录的字节数
+
+```bash
+## filter 表
+$ iptables -t filter -Z
+$ iptables -t nat -Z
+```
+
+执行curl命令
+
+```bash
+$ curl http://172.18.207.67:8080
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+再次查看 iptables 表记录的字节数
+
+```bash
+## nat 表
+$ iptables -t nat -nvL 
+Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+
+Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain OUTPUT (policy ACCEPT 3 packets, 226 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    1    60 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
+
+Chain POSTROUTING (policy ACCEPT 4 packets, 286 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
+    0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
+
+Chain DOCKER (2 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
+    1    60 DNAT       tcp  --  !docker0 *       0.0.0.0/0            0.0.0.0/0            tcp dpt:8080 to:172.17.0.2:80
+
+## filter 表
+$ iptables -t filter -nvL
+Chain INPUT (policy ACCEPT 27 packets, 2579 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain FORWARD (policy DROP 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+    0     0 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
+
+Chain OUTPUT (policy ACCEPT 23 packets, 6866 bytes)
+ pkts bytes target     prot opt in     out     source               destination
+
+Chain DOCKER (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 ACCEPT     tcp  --  !docker0 docker0  0.0.0.0/0            172.17.0.2           tcp dpt:80
+
+Chain DOCKER-ISOLATION-STAGE-1 (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-ISOLATION-STAGE-2 (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 DROP       all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+
+Chain DOCKER-USER (1 references)
+ pkts bytes target     prot opt in     out     source               destination
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+```
+
+从 nat 表可以看到，PREROUTING 链没有任何字节记录，反而是 OUTPUT 链有字节变动。
+
+从 filter 表可以看到，INPUT 和 OUTPUT 均有字节变动。
+
+**解释:** 访问 `curl 172.18.207.67:8080`
+
+1. 因为 `172.18.207.67` 是本机ip，所以它不会经过 `PREROUTING` 链，而是进入 `OUTPUT` 链。此时会匹配到 `DOCKER` 链，所以 `DOCKER` 链也出现了字节变动，`DOCKER` 链中的第二条记录，会命中 DNAT 规则，把目标  `172.18.207.67:8080` 改写成 `172.17.0.2:80`
+
+2. nat 表结束之后，会进行路由判定，决定下一跳是哪里，查看本地路由表:
+   ```bash
+   $ ip route show 
+   default via 172.18.207.253 dev eth0
+   169.254.0.0/16 dev eth0 scope link metric 1002
+   172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+   172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.67
+   ```
+
+   根据这个路由表可以看到 172.17.0.2 在 docker0 网卡上，ip是 172.17.0.1。
+
+3. 本地路由表判定结束后，会进入 filter 表，从上面filter表的记录分析，因为这是从宿主机自己发出的，所以它走的是 OUTPUT -> 容器 -> INPUT(容器进程)，并不会进入 FORWARD。
+
+   > 注意: FORWARD 只处理 "不是本机发出/不是本机接收，只是路由转发"的流量
+
+   
 
 
 # 二、容器之间的互联
