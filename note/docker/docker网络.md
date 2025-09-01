@@ -410,7 +410,7 @@ graph TD
 
 答:
 
-1. ping 会走 filter 表。
+1. ping 不会走 filter 表。
 
 2. ping 会走 nat 表。
 
