@@ -520,7 +520,7 @@ graph TD
       - 数据包进入宿主机 **filter INPUT 链**，默认允许。
       - 最终 ping 命令收到响应。
    
-   **核心总结: **
+   **核心总结:**
    
    - **ping 容器 IP 并没有绕过 filter 表**，而是走了 **宿主机 OUTPUT → docker0 → 容器 INPUT → 容器 OUTPUT → docker0 → 宿主机 INPUT** 的完整路径。
    
