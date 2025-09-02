@@ -19,17 +19,17 @@
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:23:96:b4 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159770sec preferred_lft 1892159770sec
-    inet6 fe80::216:3eff:fe23:96b4/64 scope link
+    link/ether 00:16:3e:12:87:f3 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159878sec preferred_lft 1892159878sec
+    inet6 fe80::216:3eff:fe12:87f3/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当安装上 docker 后, 会增加一个网卡:
 ```bash
 3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
-    link/ether 02:42:06:b1:29:3c brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:86:49:84:d7 brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
 ```
@@ -49,27 +49,27 @@ $ docker run -d --name nginx -p 8080:80 nginx
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:23:96:b4 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.67/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159744sec preferred_lft 1892159744sec
-    inet6 fe80::216:3eff:fe23:96b4/64 scope link
+    link/ether 00:16:3e:12:87:f3 brd ff:ff:ff:ff:ff:ff
+    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
+       valid_lft 1892159829sec preferred_lft 1892159829sec
+    inet6 fe80::216:3eff:fe12:87f3/64 scope link
        valid_lft forever preferred_lft forever
 3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
-    link/ether 02:42:06:b1:29:3c brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:86:49:84:d7 brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
-    inet6 fe80::42:6ff:feb1:293c/64 scope link
+    inet6 fe80::42:86ff:fe49:84d7/64 scope link
        valid_lft forever preferred_lft forever
-5: veth4d3005b@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
-    link/ether 9a:58:7c:41:67:09 brd ff:ff:ff:ff:ff:ff link-netnsid 0
-    inet6 fe80::9858:7cff:fe41:6709/64 scope link
+5: vethe3147f9@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether ae:77:52:e9:e8:1e brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::ac77:52ff:fee9:e81e/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当外部请求访问容器服务时, 网络顺序是:
 
 ```bash
-外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → veth4d3005b@if4 → eth0(172.17.0.2) → 容器内应用
+外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → vethe3147f9@if4 → eth0(172.17.0.2) → 容器内应用
 ```
 
 - `iptables`: 
@@ -78,7 +78,7 @@ $ docker run -d --name nginx -p 8080:80 nginx
 
   ```bash
   $ iptables -t filter -nL -v
-  Chain INPUT (policy ACCEPT 210 packets, 13722 bytes)
+  Chain INPUT (policy ACCEPT 198 packets, 37671 bytes)
    pkts bytes target     prot opt in     out     source               destination
   
   Chain FORWARD (policy DROP 0 packets, 0 bytes)
@@ -90,7 +90,7 @@ $ docker run -d --name nginx -p 8080:80 nginx
       0     0 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
       0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
   
-  Chain OUTPUT (policy ACCEPT 135 packets, 66861 bytes)
+  Chain OUTPUT (policy ACCEPT 172 packets, 73360 bytes)
    pkts bytes target     prot opt in     out     source               destination
   
   Chain DOCKER (1 references)
@@ -119,11 +119,11 @@ $ docker run -d --name nginx -p 8080:80 nginx
   # 预路由: 数据包当到达服务器的时候的第一个检查点。类似快递到分拣中心, 检查收件地址, 决定送到哪里
   Chain PREROUTING (policy ACCEPT 141 packets, 10850 bytes)
    # 所有发往本地的流量都要经过 DOCKER链 检查
-   # pkts bytes: 已经处理了 358 个包, 共 26776 字节
+   # pkts bytes: 已经处理了 0 个包, 共 0 字节
    # ADDRTYPE match dst-type LOCAL: 只匹配目标是本机地址的数据包
    # docker 安装后自动添加
    pkts bytes target     prot opt in     out     source               destination
-      2    80 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
+      0     0 DOCKER     all  --  *      *       0.0.0.0/0            0.0.0.0/0            ADDRTYPE match dst-type LOCAL
   
   # 入站: 发往本机进程的数据包检查点, 它决定是否允许访问。确定这个快递确实是给我们这栋楼的 
   Chain INPUT (policy ACCEPT 137 packets, 10602 bytes)
@@ -180,7 +180,7 @@ $ docker run -d --name nginx -p 8080:80 nginx
 
 - `docker0`: docker 网桥，充当网关做网络转发
 
-- `veth4d3005b@if4`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
+- `vethe3147f9@if4`: veth 是一种Linux 的虚拟网络设备，它具备以下特点:
   - **成对出现**: 总是以一对的形式存在，数据从一端进入，会从另一端出来
   - **双向通信**: 两端可以互相发送和接受数据包
   - **夸命名空间**: 可以将两端分别放在不同的网络命令空间中
@@ -643,12 +643,11 @@ Chain DOCKER-USER (1 references)
 
 
 
-## 1.5 远程 curl 容器的流量流转情况
+## 1.6 远程 curl 容器的流量流转情况
 
 先清空 iptables 表记录的字节数
 
 ```bash
-## filter 表
 $ iptables -t filter -Z
 $ iptables -t nat -Z
 ```
@@ -694,11 +693,11 @@ Chain PREROUTING (policy ACCEPT 0 packets, 0 bytes)
 Chain INPUT (policy ACCEPT 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination
 
-Chain OUTPUT (policy ACCEPT 10 packets, 738 bytes)
+Chain OUTPUT (policy ACCEPT 6 packets, 456 bytes)
  pkts bytes target     prot opt in     out     source               destination
     0     0 DOCKER     all  --  *      *       0.0.0.0/0           !127.0.0.0/8          ADDRTYPE match dst-type LOCAL
 
-Chain POSTROUTING (policy ACCEPT 11 packets, 802 bytes)
+Chain POSTROUTING (policy ACCEPT 7 packets, 520 bytes)
  pkts bytes target     prot opt in     out     source               destination
     0     0 MASQUERADE  all  --  *      !docker0  172.17.0.0/16        0.0.0.0/0
     0     0 MASQUERADE  tcp  --  *      *       172.17.0.2           172.17.0.2           tcp dpt:80
@@ -710,19 +709,19 @@ Chain DOCKER (2 references)
 
 ## filter 表
 $ iptables -t filter -nvL
-Chain INPUT (policy ACCEPT 114 packets, 23513 bytes)
+Chain INPUT (policy ACCEPT 57 packets, 4214 bytes)
  pkts bytes target     prot opt in     out     source               destination
 
 Chain FORWARD (policy DROP 0 packets, 0 bytes)
  pkts bytes target     prot opt in     out     source               destination
-   11  1526 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
-   11  1526 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
-    5   341 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
+   11  1549 DOCKER-USER  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   11  1549 DOCKER-ISOLATION-STAGE-1  all  --  *      *       0.0.0.0/0            0.0.0.0/0
+    5   364 ACCEPT     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0            ctstate RELATED,ESTABLISHED
     1    64 DOCKER     all  --  *      docker0  0.0.0.0/0            0.0.0.0/0
     5  1121 ACCEPT     all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
     0     0 ACCEPT     all  --  docker0 docker0  0.0.0.0/0            0.0.0.0/0
 
-Chain OUTPUT (policy ACCEPT 87 packets, 15711 bytes)
+Chain OUTPUT (policy ACCEPT 40 packets, 10331 bytes)
  pkts bytes target     prot opt in     out     source               destination
 
 Chain DOCKER (1 references)
@@ -732,7 +731,7 @@ Chain DOCKER (1 references)
 Chain DOCKER-ISOLATION-STAGE-1 (1 references)
  pkts bytes target     prot opt in     out     source               destination
     5  1121 DOCKER-ISOLATION-STAGE-2  all  --  docker0 !docker0  0.0.0.0/0            0.0.0.0/0
-   11  1526 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   11  1549 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
 
 Chain DOCKER-ISOLATION-STAGE-2 (1 references)
  pkts bytes target     prot opt in     out     source               destination
@@ -741,7 +740,7 @@ Chain DOCKER-ISOLATION-STAGE-2 (1 references)
 
 Chain DOCKER-USER (1 references)
  pkts bytes target     prot opt in     out     source               destination
-   11  1526 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
+   11  1549 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
 ```
 
 从 nat 表可以看到，所有链均有字节变动。
@@ -750,20 +749,127 @@ Chain DOCKER-USER (1 references)
 
 **解释:** `curl http://47.115.147.69:8080  # 公网IP`
 
-1. 此时ip已经变更公网，流量会先经过 nat 表的 `PREROUTING` 链，在这个链中，有
+1. 此时ip已经变更公网，DNAT会做一层转换，将 `47.115.147.69` 转成内网IP: `172.18.207.68`。
+
+2. 流量会进入eth0网卡，由于这个数据报文不是本机产生的，所以首先经过iptables的nat表的PREROUTING链而不是直接进入OUTPUT链，它会匹配到 DOCKER链，然后将8080端口转成`172.17.0.2:80`。
+
+3. 现在经过 DNAT 将 `172.18.207.68` 转成了`172.17.0.2:80`(docker 容器地址)，根据本机的网络配置看到，这不是eth0网卡IP，所以应该走转发而不是INPUT，其次要明确知道了`172.17.0.2:80`之后下一跳是哪里，所以会经过本地路由表
+
+   ```bash
+   $ ip route show
+   default via 172.18.207.253 dev eth0
+   169.254.0.0/16 dev eth0 scope link metric 1002
+   172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+   172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.68
+   ```
+
+   `172.17.0.2` 属于 docker0 网段 → FORWARD 流量将通过 docker0 → veth pair → 容器网络命名空间。
+
+4. 知道下一跳之后，接下来会经过 iptables 的 filter表，前一步确定了这是一个转发请求而不是 INPUT ，所以会进入 FORWARD 链，根据 FORWARD 链的记录，以下是 FORWARD 链的记录的详细分析:
+
+   - DOCKER-USER: 包经过该链的规则，执行 RETURN 后继续匹配 FORWARD 链下一条规则。计数 pkts/bytes 增加，说明包经过此链。
+
+   - DOCKER-ISOLATION-STAGE-1: 容器隔离链，包经过 RETURN 后继续匹配下一条规则。计数也增加。
+   - DOCKER-ISOLATION-STAGE-2 链：隔离第二阶段规则，包继续匹配。计数变化说明包经过。
+   - **DOCKER 链**：匹配到 ACCEPT 规则，包被允许通过宿主机 docker0 网卡发送到容器对应的 veth 接口。
+
+   > 注意：FORWARD 链规则顺序匹配，遇到终止规则（ACCEPT / DROP）时包停止匹配；RETURN 规则仅返回调用链继续匹配。
+
+5. veth pair 流量说明: 宿主机 docker0 网卡将包通过 veth pair 送入 Docker 容器命名空间。这是包进入容器的关键物理路径。
+
+6. 容器收到网络报文并且处理后，会做出回应(回包)
+
+   1. 回包从容器 veth 接口 → 宿主机 docker0 → FORWARD 链 → nat 表 POSTROUTING 链。
+   2. POSTROUTING 链的 MASQUERADE 规则将源地址改写为宿主机 IP，并通过 eth0 发回远程客户端。
+   3. 回包计数增加，验证流量确实经过 MASQUERADE。
+
+7. 总结: Linux 内核 netfilter 的钩子链调用顺序，在代码里面是写死的，如下（具体可以查看更详细的文章）:
+
+   1. PREROUTING 和 INPUT 钩子在 `NF_INET_PRE_ROUTING` 和 `NF_INET_LOCAL_IN`
+   2. OUTPUT 钩子在 `NF_INET_LOCAL_OUT`
+   3. FORWARD 在 `NF_INET_FORWARD`
+   4. POSTROUTING 在 `NF_INET_POST_ROUTING`
+
+   > 所有包都会沿着这条链子走一遍，区别只是：**路由查找结果不同 → 决定走 INPUT 还是 FORWARD**。
+
+   **关键判断:**
+
+   1. 数据包来源
+      - 从网卡收进来的：一定先过 **PREROUTING**
+      - 本机自己产生的：一定先过 **OUTPUT**，不会过 PREROUTING
+   2. 路由查找之后，决定走 INPUT 还是 FORWARD
+      - **路由目的地 = 本机地址**（包括 127.0.0.1、本机 IP、被 DNAT 成本机的 IP）：→ **INPUT**
+      - **路由目的地 = 其它机器（不管是物理机、虚机还是容器 veth）**：→ **FORWARD**
+   3. 包要发出去时
+      - 都会经过 **POSTROUTING**（这里可以做 SNAT/MASQUERADE）。
+
+​	**常见场景:**
+
+​	1. `外部 → 本机进程`: `PREROUTING → 路由(目的=本机) → INPUT`
+
+​	2. `外部 → 容器（端口映射 DNAT 到 172.17.x.x）`:`PREROUTING(DNAT) → 路由(目的=容器IP) → FORWARD → 容器`
+
+​	3. `本机进程 → 容器（127.0.0.1:8080）`:`OUTPUT(DNAT) → 路由(容器IP) → FORWARD → 容器`
+
+​	4. `容器 → 外部`: `FORWARD → POSTROUTING(SNAT/MASQUERADE) → 出口网卡`
 
 
 
+```mermaid
+graph TD
+    subgraph "🌍 公网"
+        A["👤 客户端"]
+    end
+    
+    subgraph "🖥️ 宿主机 (Docker Host)"
+        subgraph "📋 iptables NAT 表"
+            B["📥 PREROUTING"]
+            C["🐳 DOCKER 链"]
+            D["📤 POSTROUTING"]
+        end
+        subgraph "🌉 docker0 网桥"
+            E["172.17.0.1"]
+        end
+    end
+    
+    subgraph "📦 Docker 容器网络"
+        F["🐋 nginx 容器<br/>172.17.0.2:80"]
+    end
 
+    %% 公网访问容器
+    A -->|🔵 TCP SYN:8080| B
+    B -->|🔵 进入 DOCKER 链| C
+    C -->|🔵 DNAT 8080 → 172.17.0.2:80| E
+    E -->|🔵 veth→容器| F
+    F -->|🔵 HTTP 响应| E
+    E -->|🔵 MASQUERADE POSTROUTING| D
+    D -->|🔵 响应返回公网| A
 
+    %% 宿主机访问容器
+    H["🖥️ Host curl 172.17.0.2:80"] -->|🟢 直接走 docker0 veth| F
+    F -->|🟢 HTTP 响应| H
 
+    %% 宿主机 ping 容器
+    G["🖥️ Host ping 172.17.0.2"] -->|🟠 ICMP Echo| E
+    E -->|🟠 veth→容器| F
+    F -->|🟠 ICMP Reply| E
+    E -->|🟠 返回 Host| G
 
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+    style G fill:#ffe0b2
+    style F fill:#f3e5f5
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+
+```
 
 
 
 
 
 # 二、容器之间的互联
+
 启动一个 tomcat1 容器
 ```bash
 $ docker run -itd -P --name tomcat1 tomcat:7
