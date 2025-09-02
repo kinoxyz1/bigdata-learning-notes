@@ -410,7 +410,7 @@ graph TD
 
 答:
 
-1. ping 不会走 filter 表。
+1. ping 会走 filter 表。
 
 2. ping 会走 nat 表。
 
@@ -473,49 +473,62 @@ graph TD
        0     0 RETURN     all  --  *      *       0.0.0.0/0            0.0.0.0/0
    ```
 
-   对比 nat 表和之前的可以看到  pkts 从 2 -> 7, bytes 从 80 -> 328，所以可以得出，请求走到了 nat 表的 PREROUTING 链，但是由于ping 的 172.17.0.2，不匹配 PREROUTING 链的条件(`ADDRTYPE match dst-type LOCAL`)，所以没有进入 DOCKER 链，其他链也是一样没有进入过。
+   ping 的流量顺序:
 
+   1. 宿主机发包:
+
+      - 本地进程发出的 ICMP 包先进入 **`nat OUTPUT` 链**。
+      - ping 不匹配任何 DNAT/SNAT 规则，包计数为 0。
    
-
-   那经过 PREROUTING 链之后，数据流转到了哪里呢？
-
+   2. 路由决策:
    
-
-   根据上面的 **入站流量处理顺序** ，iptables 的 PREROUTING 链过后，会进入系统的路由表，决定下一跳应该去哪里，查看路由表:
-   ```bash
-   $ ip route show
-   default via 172.18.207.253 dev eth0
-   169.254.0.0/16 dev eth0 scope link metric 1002
-   172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
-   172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.67
-   ```
-
-   其中有一条 `172.17.0.0/16` 的记录表明，从 `172.17.0.0/16` 来的流量，下一跳应该走 docker0 网卡，该网卡的ip 是 172.17.0.1。
-
+      - 查询路由表：
    
-
-   找到下一跳之后，又会进入 iptables 的 filter 表，由 filter 表决定下一步该怎么处理。
-
+        ```bash
+        $ ip route show
+        default via 172.18.207.253 dev eth0
+        172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1
+        172.18.192.0/20 dev eth0 proto kernel scope link src 172.18.207.67
+        ```
    
+      - `172.17.0.0/16 dev docker0` 表明目标是容器网络，下一跳走 `docker0`。
+   
+   3. filter OUTPUT 链:
+   
+      - 包检查是否允许发送，默认 ACCEPT。
+      - pkts/bytes 显示为 0，因为没有显式规则匹配 ICMP。
 
-   filter 表的记录上可以看见，所有链的字节数都是0，这是为什么呢？
+   4. docker0 网桥转发:
 
-   **答案：这是因为主机ping容器属于本地桥接通信，不需要经过复杂的iptables filter规则处理。**
+      - 将数据包从宿主机发送到容器的 veth 接口。
 
-   详细解释：
-   1. **本地桥接通信**：主机ping容器172.17.0.2是通过docker0网桥的本地通信，属于二层桥接转发
-   2. **路由决策结果**：根据路由表`172.17.0.0/16 dev docker0`，流量直接通过docker0网桥转发
-   3. **绕过filter规则**：由于是同一网桥下的通信，Linux内核可以直接进行桥接转发，无需经过这些为复杂网络场景设计的filter表规则
-   4. **规则设计用途**：filter表中的DOCKER-USER、DOCKER-ISOLATION等链主要是为了处理：
-      - 容器间网络隔离
-      - 端口映射转发（如8080:80）
-      - 跨网桥通信控制
-      - 外部访问容器的安全策略
-   5. **与端口映射的区别**：这与外部访问容器端口（如访问宿主机8080端口转发到容器80端口）的场景完全不同。端口映射需要经过DNAT、FORWARD链等复杂处理，而本地ping直接通过网桥二层转发
-
-   **总结**：主机直接ping容器IP是一种优化的本地通信路径，走的是桥接转发而非iptables转发，因此filter表相关链的字节数保持为0。
-
-
+   5. 容器内核接收:
+   
+      - 进入 **filter INPUT 链**，默认 ACCEPT。
+   
+   6. 容器处理 ICMP echo:
+   
+      - nginx 容器接收到 ping 包，准备响应。
+   
+   7. 容器输出:
+   
+      - 经过 **filter OUTPUT 链**，默认允许。
+      - 返回到 docker0 网桥。
+   
+   8. 宿主机接收响应:
+   
+      - 数据包进入宿主机 **filter INPUT 链**，默认允许。
+      - 最终 ping 命令收到响应。
+   
+   **核心总结: **
+   
+   - **ping 容器 IP 并没有绕过 filter 表**，而是走了 **宿主机 OUTPUT → docker0 → 容器 INPUT → 容器 OUTPUT → docker0 → 宿主机 INPUT** 的完整路径。
+   
+   - **pkts/bytes 为 0** 只是因为 filter 链中没有显式匹配规则处理 ICMP 包，默认 ACCEPT。
+   
+   - 与访问宿主机端口映射（如 curl localhost:8080）不同，ping 是 **本地主机到容器的直接桥接通信**，不经过 FORWARD 链，也不触发 DNAT。
+   
+   - Docker 的 DOCKER-USER、DOCKER-ISOLATION 等链主要处理 **跨网桥转发、端口映射、安全策略**，ping 不匹配这些规则。
 
 ## 1.5 主机 curl 容器的流量流转情况
 
