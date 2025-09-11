@@ -19,17 +19,17 @@
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:12:87:f3 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159878sec preferred_lft 1892159878sec
-    inet6 fe80::216:3eff:fe12:87f3/64 scope link
+    link/ether 00:16:3e:13:66:0a brd ff:ff:ff:ff:ff:ff
+    inet 172.18.3.187/20 brd 172.18.15.255 scope global dynamic eth0
+       valid_lft 1892158778sec preferred_lft 1892158778sec
+    inet6 fe80::216:3eff:fe13:660a/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当安装上 docker 后, 会增加一个网卡:
 ```bash
 3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default
-    link/ether 02:42:86:49:84:d7 brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:91:18:ae:57 brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
 ```
@@ -49,27 +49,27 @@ $ docker run -d --name nginx -p 8080:80 nginx
     inet6 ::1/128 scope host
        valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
-    link/ether 00:16:3e:12:87:f3 brd ff:ff:ff:ff:ff:ff
-    inet 172.18.207.68/20 brd 172.18.207.255 scope global dynamic eth0
-       valid_lft 1892159829sec preferred_lft 1892159829sec
-    inet6 fe80::216:3eff:fe12:87f3/64 scope link
+    link/ether 00:16:3e:13:66:0a brd ff:ff:ff:ff:ff:ff
+    inet 172.18.3.187/20 brd 172.18.15.255 scope global dynamic eth0
+       valid_lft 1892158747sec preferred_lft 1892158747sec
+    inet6 fe80::216:3eff:fe13:660a/64 scope link
        valid_lft forever preferred_lft forever
 3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
-    link/ether 02:42:86:49:84:d7 brd ff:ff:ff:ff:ff:ff
+    link/ether 02:42:91:18:ae:57 brd ff:ff:ff:ff:ff:ff
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
        valid_lft forever preferred_lft forever
-    inet6 fe80::42:86ff:fe49:84d7/64 scope link
+    inet6 fe80::42:91ff:fe18:ae57/64 scope link
        valid_lft forever preferred_lft forever
-5: vethe3147f9@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
-    link/ether ae:77:52:e9:e8:1e brd ff:ff:ff:ff:ff:ff link-netnsid 0
-    inet6 fe80::ac77:52ff:fee9:e81e/64 scope link
+5: vethb331178@if4: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP group default
+    link/ether ce:79:8a:73:b1:13 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet6 fe80::cc79:8aff:fe73:b113/64 scope link
        valid_lft forever preferred_lft forever
 ```
 
 当外部请求访问容器服务时, 网络顺序是:
 
 ```bash
-外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → vethe3147f9@if4 → eth0(172.17.0.2) → 容器内应用
+外网 → 主机eth0(172.18.207.67) → iptables/netfilter规则 → docker0(172.17.0.1) → vethb331178@if4 → eth0(172.17.0.2) → 容器内应用
 ```
 
 - `iptables`: 
@@ -195,6 +195,7 @@ $ docker run -d --name nginx -p 8080:80 nginx
 2. 在 `iptables` `nat` 表中添加如下内容:
 
    ```bash
+   $ iptables -t nat -nvL
    Chain PREROUTING (policy ACCEPT 141 packets, 10850 bytes)
     pkts bytes target     prot opt in     out     source               destination
        # 添加一条记录
@@ -215,7 +216,7 @@ $ docker run -d --name nginx -p 8080:80 nginx
     pkts bytes target     prot opt in     out     source               destination
        0     0 RETURN     all  --  docker0 *       0.0.0.0/0            0.0.0.0/0
    ```
-
+   
    
 
 ## 1.3 总结

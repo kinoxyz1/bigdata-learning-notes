@@ -178,6 +178,51 @@ Cache-Control: public max-age=600                 # 缓存 600s
 
 > 这里有个有意思的地方, 在上面解释过浏览器的刷新和回车的区别, 这里配置上协商缓存之后, 在浏览器点击刷新, 会发现是先使用了协商缓存, 再回车走的是强制缓存。
 
+
+#### 缓存和CDN
+CDN 是一个 "内容分发网络", CDN的基本原理是广泛采用各种缓存服务器，将这些缓存服务器分布到用户访问相对集中的地区或网络中，在用户访问网站时，利用全局负载技术将用户的访问指向距离最近的工作正常的缓存服务器上，由缓存服务器直接响应用户请求。
+
+如果Nginx没有设置 `Cache-Control` 或 `Expires` 响应头, CDN 会使用自己的缓存策略, 将文件缓存一段时间。这可能导致线上的服务更新之后, 浏览器加载的时候仍然加载旧的文件。
+
+以下是一个解决方案:
+```bash
+server {
+    listen 80;
+    server_name your.domain.com;
+    root /usr/share/nginx/html;
+
+    # index 页面永远不缓存
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+    }
+
+    # 带 Hash 的静态资源 - 永久缓存
+    # 文件名中的 Hash 确保了内容变化时文件名也会变化，所以可以放心地让浏览器永久缓存。
+    # `immutable` 告诉浏览器这个文件内容永远不会变，连校验请求都无需发送。
+    location ~* \.[a-f0-9]{8}\.(css|js)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 其他静态资源（如图片、字体） - 长期缓存
+    # 这些文件通常不带 Hash，但也不常变动，可以设置一个较长的缓存时间。
+    location ~* \.(jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf)$ {
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # 单页应用（SPA）路由处理
+    # 这是保证 React/Vue 等路由正常工作的关键。
+    # 重要的是，它会将所有未匹配到具体文件的请求都交由 index.html 处理。
+    # 由于我们已为 /index.html 单独设置了不缓存规则，所以这里是安全的。
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
 ### 1.1.4 HTTP 特性
 优点:
 1. 简单: Header 和 Body 都是 key-value 格式.
