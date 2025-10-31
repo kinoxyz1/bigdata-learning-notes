@@ -279,6 +279,7 @@
 <summary>postgresql</summary>
 
 - [pg-filedump](note/postgresql/pg-filedump抢救数据.md)
+- [pg_dump备份/恢复数据](note/postgresql/pg_dump备份恢复数据.md)
 </details>
 
 <details>
