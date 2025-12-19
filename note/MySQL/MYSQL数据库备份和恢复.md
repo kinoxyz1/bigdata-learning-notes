@@ -488,7 +488,7 @@ mysql -uroot -p < atguigu.sql
 否则需要指定数据库名称，如下所示
 
 ```mysql
-mysql -uroot -p atguigu4< atguigu.sql
+mysql -uroot -p atguigu4 < atguigu.sql
 ```
 
 ### 3.2 全量备份恢复
